@@ -1,7 +1,7 @@
 ---
-title: "persistent-sessions — Tyler's sessions come back after a reboot or a crash; plain `claude` makes one"
+title: "persistent-sessions — Tyler's sessions are recreated after a crash and at boot; plain `claude` makes one"
 description: "Mirrored from the fleet knowledge base: wi/components/persistent-sessions.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/persistent-sessions.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -18,7 +18,7 @@ owns:
   - _infra/systemd/persistent-sessions.timer
 ```
 
-# persistent-sessions — Tyler's sessions come back after a reboot or a crash; plain `claude` makes one
+# persistent-sessions — Tyler's sessions are recreated after a crash and at boot; plain `claude` makes one
 
 ## WHAT IT IS
 
@@ -60,7 +60,7 @@ only with you"*). An unattended agent runs on a non-refreshing token and has no 
   can stop a reboot (2026-10-28, 2026-10-30). `install` pre-trusts every folder of the restore set.
 
 - **The manifest** is `_infra/persistent-sessions.tsv`: one row per session — tmux name, directory, Plan
-  issue, an optional pinned resume id, and the unix **user** it runs as (`architect` for the Architect rows `architect-fleet` and `architect-upwork`, which share `/home/architect` (`architect-upwork` was `architect-2` until 2026-10-30); `scout` for the `scout` row in `/home/scout`, which pins a resume id). **To keep a session alive, add its row and merge**: the script
+  issue, an optional pinned resume id, and the unix **user** it runs as (`architect` for the Architect rows `architect-fleet` and `architect-upwork`, which share `/home/architect` (`architect-upwork` was `architect-2` until 2026-10-30); `scout` for the `scout` row in `/home/scout`, which pins a resume id; `herald`, Tyler's X agent (knowledge#10836), runs as `herald` in `/home/herald/herald`). **To keep a session alive, add its row and merge**: the script
   reads `origin/main` of the box's knowledge clone with `git show` at every run (never the clone's dirty
   worktree), and falls back to its last good copy in `~/.local/state/persistent-sessions/manifest.tsv`.
 - **The resume id is derived, not stored.** It is the newer of two witnesses: the record Claude keeps in
@@ -144,7 +144,10 @@ until its next relaunch, but its hook calls the installed script, so the id fix 
   then its id is refreshed only when `start` or `list` runs. A `/clear` in it followed by a clean
   `tmux kill-server` before either runs would resume the pre-clear conversation. A reboot is unaffected
   (Claude's own record survives it).
-- **No real reboot has been observed yet** (VERIFY knowledge#10133). Every piece is exercised separately —
-  the unit is enabled with `Linger=yes`, `start` recreates a killed session
-  with Remote Control on — but not the chain end to end. The next reboot is the test:
-  `uptime -s; journalctl --user -u persistent-sessions -b -o short-iso --no-pager; ~/.local/bin/persistent-sessions list` as `architect`.
+- **The one observed reboot did not come back unattended** (VERIFY knowledge#10133). Measured 2026-10-31
+  as `architect` with `journalctl --user -u persistent-sessions -b -o short-iso`: after the 2026-10-28
+  19:13 UTC boot the unit started at 19:13:20, launched the `architect` session, reported it *"BLOCKED on
+  Claude's folder-trust prompt"* and exited 1; the 19:32:20 run found it *"already live"*. So the unit
+  fires at boot, but a session can stop at the trust prompt until someone consents. Re-check after the next
+  reboot with `uptime -s; journalctl --user -u persistent-sessions -b -o short-iso --no-pager;
+  ~/.local/bin/persistent-sessions list` as `architect`.

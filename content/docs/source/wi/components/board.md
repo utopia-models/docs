@@ -1,7 +1,7 @@
 ---
 title: "board — the ONE tracker, and the only thing allowed to be one"
 description: "Mirrored from the fleet knowledge base: wi/components/board.md"
-updated: 2026-10-04
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/board.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -88,7 +88,7 @@ command instead of the answer:
 
 | you want | run |
 |---|---|
-| open issues | `gh api repos/utopia-models/knowledge/issues --jq 'length'` |
+| open issues | `gh api 'search/issues?q=repo:utopia-models/knowledge+is:issue+is:open' --jq .total_count` |
 | Feature n/n rollups, one GraphQL call | `bash _infra/scripts/feature-progress.sh` |
 | one issue, with comments | `gh api repos/utopia-models/knowledge/issues/<n>` |
 | the live Lane / Status / iteration options | `gh api graphql` against `PVT_kwDOEZ-Tjc4Bb8OG` |

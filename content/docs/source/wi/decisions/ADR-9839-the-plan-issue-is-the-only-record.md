@@ -1,7 +1,7 @@
 ---
 title: "ADR-9839 — The Plan issue is the only record of a planning session; one loop hook reads the card"
 description: "Mirrored from the fleet knowledge base: wi/decisions/ADR-9839-the-plan-issue-is-the-only-record.md"
-updated: 2026-10-23
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/decisions/ADR-9839-the-plan-issue-is-the-only-record.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -28,6 +28,10 @@ references:
 ```
 
 # ADR-9839 — The Plan issue is the only record of a planning session; one loop hook reads the card
+
+**Status note (2026-10-31):** when this was decided the plan registry still ran beside the Plan issue (see
+Decision and Consequences, "until P7"). ADR-10109 (decided 2026-10-25) completed that
+retirement, and from then on the Plan issue is the only record.
 
 ## Context
 

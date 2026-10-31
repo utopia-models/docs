@@ -1,7 +1,7 @@
 ---
 title: "feedback/ — corrections, compacted into behavior"
 description: "Mirrored from the fleet knowledge base: _process/feedback-corpus.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_process/feedback-corpus.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -34,9 +34,9 @@ dispatches; `every-tree-holds-another-agents-work` governs a dispatched master, 
 issue. Each rule file declares `audience:` — `master`, `agent`, or `all`; absent means `agent`, so an
 unclassified rule still reaches the Architect and simply does not tax four master boxes unread.
 `_generated/bundle-architect.md` carries **every** active rule with its trigger paragraph and case pointer; `_generated/bundle-master.md`
-carries the master-facing rule sentences only, and has a **computed** ceiling — whatever is left of
-30,000 B after the doctrine a master box auto-loads (1,594 B as of 2026-08-14). The generator refuses to
-write a master slice that would breach it, so the budget cannot be exceeded quietly.
+carries the master-facing rule sentences only, and has a ceiling of 30,000 B (`MASTER_PREFIX_CEILING`
+in `_infra/scripts/process-build.py`, read 2026-10-31). The build exits 1 when the master bundle is over
+it, so the budget cannot be exceeded quietly.
 
 The polarity is deliberate: `~/.claude/rules/RULES.md` is a TRACKED symlink on the agent box and an
 UNTRACKED one on all four master boxes, and brain-pull is `git merge --ff-only` — a tracked file landing
@@ -64,7 +64,8 @@ act is the one that did not happen.
 
 So compaction became something a session **does** rather than something a counter **reports** — see
 the observation log below. Same day, same corpus, three autonomous reviews: **134 → 124 → 23.** The
-20,000-byte ceiling remains the backstop that eventually forces the issue by refusing to generate.
+17,500-byte architect-bundle ceiling (`ARCHITECT_PREFIX_CEILING`, read 2026-10-31) remains the backstop
+that eventually forces the issue: the build exits 1 while the bundle is over it.
 
 ## Upstream of `cases/` — the observation log (#4856)
 

@@ -1,7 +1,7 @@
 ---
 title: "credentials-web — the human face of the vault"
 description: "Mirrored from the fleet knowledge base: wi/components/credentials-web.md"
-updated: 2026-09-29
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/credentials-web.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -101,8 +101,8 @@ gh repo view utopia-models/credentials-ui --json pushedAt,defaultBranchRef
 - ⚠ **A dated "returned 200" line is a measurement, and it rots.** This doc states no such date on purpose:
   the `curl` above is the claim.
 - ⚠ **An exit-143 (SIGTERM) failure alert is usually collateral, not a crash.** The process is a
-  `next-server` owned by `nova` — the same unix user every dispatched run on this box executes as — so a
-  run that cleans up its own preview with a class-wide `pkill -f next-server` kills this too.
+  `next-server` owned by `nova`, the same unix user the nova master's dispatched runs execute as (each
+  master is its own unix user on novaserver), so a nova run that cleans up its own preview with a class-wide `pkill -f next-server` kills this too.
   `Restart=always` brings it back in ~6s and fleet-notify files the failure (#8180, 2026-09-29: a sibling
   run's `pkill -f 'next-server' -u nova` at 16:48:53.214Z, exit 143 the same second). Find the killer by
   grepping the box's session transcripts for the kill at that timestamp, not the app's logs. Since

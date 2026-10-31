@@ -24,7 +24,7 @@ owns:
 
 ## WHAT IT IS
 
-The layer that answers three different questions about a credential, none of which `infisical` answers:
+The layer that answers four different questions about a credential, none of which `infisical` answers:
 
 | question | who answers it |
 |---|---|
@@ -131,7 +131,7 @@ m.units("credential-health")
 
 ## DETERMINE CURRENT STATE
 
-Four measurements and one liveness read; none of them consults a stored scope list:
+Five measurements and one liveness read; none of them consults a stored scope list:
 
 ```bash
 # the record vs the live vault

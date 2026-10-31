@@ -1,7 +1,7 @@
 ---
 title: "feedback-loop — a correction given once, loaded where it is about to be repeated"
 description: "Mirrored from the fleet knowledge base: wi/components/feedback-loop.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/feedback-loop.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -55,7 +55,7 @@ flowchart TD
     IDX --> RA["bundle-architect.md — every active rule<br/>+ trigger + case pointers"]
     RM -->|"~/.claude/rules/ symlink, one per class"| BOX["win · nova · cloud · dust"]
     RA -->|"symlink, agent box only"| AG["the Architect"]
-    DEL["feedback-deliver.sh"] -.->|"two-sided link check → regen → commit → push<br/>🔴 STILL CALLS THE DELETED feedback-index.py"| IDX
+    DEL["feedback-deliver.sh"] -.->|"two-sided link check → regen → commit → push"| IDX
 ```
 
 **Two files, because there are two audiences** (#5357). Every rule declares `audience:` — `master`,
@@ -127,41 +127,22 @@ m.calls(".github/workflows/probes.yml", "_infra/scripts/process-build.py")
 
 ## KNOWN BROKEN
 
-- 🔴 **No rule in the corpus declares `audience: master`, so the master slice is 2 rules out of 30.**
-  Measured this session:
+- 🔴 **No rule in the corpus declares `audience: master`, so the master slice is 2 rules out of 35.**
+  Measured 2026-10-31:
 
   ```
   grep -h '^audience:' _rules/*.md | sort | uniq -c
-       27 audience: agent
+       33 audience: agent
         2 audience: all
   ```
 
-  (30 files, all of which now declare one.) The two that reach a master box are the two marked `all`.
+  (35 files, all of which now declare one.) The two that reach a master box are the two marked `all`.
   The generator's ceiling is a refusal to OVERFLOW, not a floor, so a corpus that has simply never had
   a master-facing rule written looks identical — to `--check`, to `feedback-deliver.sh` and to
   `feedback-sweep.sh` — to one deliberately curated down to two. (The 30,000 B `MASTER_PREFIX_CEILING`
-  is bound above; the master bundle is well under it, and 28 of the 30 rules are the reason.)
-- 🔴 **`feedback-sweep.sh` still calls `feedback-index.py`, which #7316 deleted, so the PR suite for
-  this corpus cannot run.** `process-build.py` replaced the generator; `feedback-deliver.sh` was
-  repointed at it in `079a05f12`, and the test harness beside it was not. Measured this session:
-
-  ```
-  grep -n 'feedback-index' _infra/scripts/feedback-deliver.sh _infra/tests/feedback-sweep.sh
-  _infra/tests/feedback-sweep.sh:25:INDEX="$ROOT/_infra/scripts/feedback-index.py"
-  _infra/tests/feedback-sweep.sh:42:  ln -sf "$INDEX"   "$R/_infra/scripts/feedback-index.py"
-  _infra/tests/feedback-sweep.sh:79:  python3 "$R/_infra/scripts/feedback-index.py" >/dev/null
-
-  bash _infra/tests/feedback-sweep.sh ; echo EXIT:$?
-  ✘ not found: .../_infra/scripts/feedback-index.py
-  EXIT:1
-  ```
-
-  `feedback-sweep.sh` is a `guard.yml` step, so that red is on every PR — and it is red for a
-  missing-file reason, which means it grades NOTHING about the corpus it is named for. Repointing it
-  is not a rename: `process-build.py` has a different CLI and writes six bundles (five classes + the peaky agent bundle) rather than two
-  files, and the harness symlinks the generator into a synthetic tree.
-- ⚠ **Both CI checks are ADVISORY, and `guard.yml` says so in its own comment** — *"it reports, it
-  does not gate"*. `guard.yml` runs `_infra/tests/feedback-sweep.sh` and
+  is bound above; the master bundle is well under it, and 33 of the 35 rules are the reason.)
+- ⚠ **Both CI checks are ADVISORY, and `probes.yml` says so in its own comment** — *"it reports, it
+  does not gate"*. `probes.yml` runs `_infra/tests/feedback-sweep.sh` and
   `python3 _infra/scripts/process-build.py --check` on every PR, but branch protection is unavailable
   on this plan tier, so a red drift check stops nothing. It is information; read it.
 - ⚠ **The upstream buffer is agent-box-only and unreadable from here.**

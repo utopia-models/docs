@@ -1,7 +1,7 @@
 ---
 title: "Every working tree holds another agent's uncommitted work. Branch first, never `reset --hard`."
 description: "Mirrored from the fleet knowledge base: _rules/every-tree-holds-another-agents-work.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_rules/every-tree-holds-another-agents-work.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -46,7 +46,10 @@ the opposite default, from a narrow 2026-05-22 correction, was wrong for three m
 Create and check out the feature branch myself at the start of work, and again when I spec something
 new. Sync with `merge --ff-only`; `reset --hard` silently discards a concurrent master's WIP and
 untracked files. **Never `git stash` in a shared clone** — the stash stack is global, so one shell pops
-another's work into its tree. `git add -A` so Tyler's parallel edits ride along. Before writing into a
+another's work into its tree. `git add -A` so Tyler's parallel edits ride along: that is his
+standing correction (2026-05-31, case `2026-07-01-agent-always-add-all`), because he wants his in-flight
+changes committed rather than stranded dirty, and `.gitignore` keeps secrets out. Including another
+shell's work is the safe direction; discarding it is not. Before writing into a
 clone with no per-run worktree, read `git status` and `git branch -vv` — a sibling dispatch may already
 be mid-fix. A checkout in one Bash call may not still be HEAD in the next, so verify the branch in the
 same command that commits.

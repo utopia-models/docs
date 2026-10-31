@@ -1,7 +1,7 @@
 ---
 title: "master-liveness-checks — the three live probes for master account/process/auth state (no script owns this)"
 description: "Mirrored from the fleet knowledge base: wi/components/master-liveness-checks.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/master-liveness-checks.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -116,21 +116,22 @@ curl -s https://www.utopiamodels.ai/api/fleet-accounts | jq '.accounts[]|{email,
 **Check 2 — is a session actually running:**
 
 ```bash
-ssh nova@100.71.25.43 "pgrep -u <win|nova|cloud|dust> -fa claude"
+ssh nova@<host> "pgrep -u <win|nova|cloud|dust> -fa claude"
 ```
 
 **Check 3 — the one instrument that answers "can a NEW dispatch actually authenticate,
 right now":**
 
 ```bash
-ssh -n -o BatchMode=yes -o ConnectTimeout=10 nova@100.71.25.43 \
-  'sudo -n -u <win|nova|cloud|dust> env XDG_RUNTIME_DIR=/run/user/$(id -u <master>) \
-   systemd-run --user --unit=probe-alive-$$ --collect -- \
-   /usr/bin/bash -c "claude -p \"say ALIVE\" --output-format json; exit 0"'
+M=<win|nova|cloud|dust>; U=probe-alive-$(date +%s)   # the unit name is chosen HERE, once
+ssh -n -o BatchMode=yes -o ConnectTimeout=10 nova@<host> \
+  "sudo -n -u $M env XDG_RUNTIME_DIR=/run/user/\$(id -u $M) \
+   systemd-run --user --unit=$U --collect -- \
+   /usr/bin/bash -c 'claude -p \"say ALIVE\" --output-format json; exit 0'"
 sleep 20
-ssh -n -o BatchMode=yes -o ConnectTimeout=10 nova@100.71.25.43 \
-  'sudo -n -u <master> env XDG_RUNTIME_DIR=/run/user/$(id -u <master>) \
-   journalctl --user -u probe-alive-$$ --no-pager -o cat'
+ssh -n -o BatchMode=yes -o ConnectTimeout=10 nova@<host> \
+  "sudo -n -u $M env XDG_RUNTIME_DIR=/run/user/\$(id -u $M) \
+   journalctl --user -u $U --no-pager -o cat"
 ```
 
 **Read the verdict from the JSON in the journal — `"is_error"` and `"result"` — NEVER from the unit's
@@ -220,5 +221,5 @@ working as designed.
 
 ## Composes with
 
-[fleet-context reliability, PLAN-313](https://github.com/utopia-models/knowledge/blob/b9b4874b1c5a5821b9b31b36cb3a0d8c4a765dc8/wi/work/plans/documents/2026-09/2026-09-19-plan-313-fleet-context-reliability-the-architect-s-master-agent-sta.md) ·
+fleet-context reliability, PLAN-313 (a plan document in the private repo) ·
 `wi/registry/organization.yaml`'s `cost_model` block (the registry-side half of fact class 1)

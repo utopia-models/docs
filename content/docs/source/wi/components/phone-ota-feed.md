@@ -1,7 +1,7 @@
 ---
 title: "phone-ota-feed — a static directory the RAW phone asks for updates"
 description: "Mirrored from the fleet knowledge base: wi/components/phone-ota-feed.md"
-updated: 2026-10-17
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/phone-ota-feed.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -42,7 +42,9 @@ flowchart LR
 Read the served state rather than trusting any version written here — the whole point of the file is
 that it changes without a commit, and the commands are in DETERMINE CURRENT STATE.
 
-**It is supervised, and the manifest's integrity field is the phone's only defence.**
+**It is supervised. The manifest's `sha256` is the phone's only check against a truncated or corrupt
+download; it does not stop tampering, since it is served from the same unauthenticated directory as the
+APK. Android's signing-key check at install is what rejects a substituted APK.**
 `Restart=always`/`RestartSec=5` bring it back after a crash or a reboot, and the box-wide
 `service.d/50-onfailure.conf` drop-in gives it `OnFailure=fleet-notify@phone-ota-feed.service`, so a
 unit failure upserts a board issue rather than going quiet. `version.json` carries a `sha256` for the

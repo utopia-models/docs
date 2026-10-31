@@ -1,7 +1,7 @@
 ---
 title: "Writing a spec a master can finish (the 8-point contract)"
 description: "Mirrored from the fleet knowledge base: _process/spec-contract.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_process/spec-contract.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -17,7 +17,6 @@ reader: `_process/steps/3-file.md` — read when a spec is being written
 **AGENT BOX ONLY** (`audience: agent`, #5341). A dispatched master READS a spec; only the Architect writes
 one. Masters get the one line that binds them, in `the-loop.md` § Specs.
 
-Post-rebuild dispatch runs 7/7 vs a ~20% baseline. The delta is brief quality, not model quality.
 1. **Values, never snapshots.** Write paths/IDs/URLs literally. Say how to DETERMINE current state and what must
    be TRUE when done — never assert what the state *is*. (Specs rot in hours: #2786's masters corrected four
    snapshot claims in under two.) **This includes the files the phase will CHANGE** — *"the hook"* is not a
@@ -110,7 +109,7 @@ Post-rebuild dispatch runs 7/7 vs a ~20% baseline. The delta is brief quality, n
    *"journalctl shows ≥24h of entries"*; the retention config it measured went live at 17:52Z and the
    criterion was graded at **18:16Z — twenty-four MINUTES later**. The config was live and correct;
    nothing anyone could change to the artifact could make the criterion true, only waiting could.
-   **Six masters were dispatched to retry the impossible** (measured 2026-08-22, #6587), and because a
+   **Six master runs were dispatched to retry the impossible** (measured 2026-08-22, #6587), and because a
    BLOCKER whose parent VERIFY is CLOSED has nothing pointing back at it, the false grade sat on the
    board for eight days. Grade the artifact that exists now — *"WHEN journald is queried on novaserver
    THE SYSTEM SHALL report `Storage=persistent` with `MaxRetentionSec` ≥ 24h, active"* — which is true

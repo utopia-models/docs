@@ -1,7 +1,7 @@
 ---
 title: "cadence — the fleet's units of TIME, orthogonal to its units of work"
 description: "Mirrored from the fleet knowledge base: wi/components/cadence.md"
-updated: 2026-10-25
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/cadence.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -129,18 +129,13 @@ bash _infra/scripts/mechanism-liveness.sh cadence-day
 
 ## KNOWN BROKEN
 
-- 🔴 **The day series has gaps, and the timer cannot be the whole explanation.** Measured this session:
-
-  ```
-  ls wi/work/cadence/days/
-  2026-08-24.md  2026-08-25.md  2026-08-26.md  2026-08-27.md  2026-08-28.md  2026-08-30.md
-  ```
-
-  `2026-08-29` is missing between two present days, and today (`2026-08-31`) has no file although the
-  02:00 America/Denver run is long past. `Persistent=true` is set, so a box that was down catches up on
-  the next start; a gap **between** two present days is not that. The carry-forward is subtractive, so
-  a missing day is not a lost day — the next run carries from whatever file it finds — but the series
-  is not the record it reads as.
+- 🔴 **The day series has gaps, and the timer cannot be the whole explanation.** Measured 2026-10-31:
+  `ls wi/work/cadence/days/` holds 57 files from `2026-08-24` to `2026-10-30`, and 11 days in that range
+  have no file: `2026-08-29`, `08-31`, `09-01`, `09-03`, `09-07`, `09-10`, `09-17`, `09-21`, `10-10`,
+  `10-12`, `10-13`. `Persistent=true` is set, so a box that was down catches up on the next start; a gap
+  **between** two present days is not that. The carry-forward is subtractive, so a missing day is not a
+  lost day — the next run carries from whatever file it finds — but the series is not the record it
+  reads as.
 - 🔴 **This component has no row in `wi/registry/components.yaml`**, so its two
   units are in **no** `units:` binding and `verify-unit-execstart.py --all` never proves their ExecStart
   targets exist. Measured: `grep -c 'id: cadence' wi/registry/components.yaml`

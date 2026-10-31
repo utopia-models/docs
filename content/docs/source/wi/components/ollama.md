@@ -1,7 +1,7 @@
 ---
 title: "ollama — local models on novaserver, and nothing that calls them"
 description: "Mirrored from the fleet knowledge base: wi/components/ollama.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/ollama.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -26,8 +26,9 @@ remain. `curl 127.0.0.1:11434` now refuses. `deep-research.sh` (nova) fails loud
 ## WHAT IT IS
 
 `ollama.service`, bound to `127.0.0.1:11434`: small local models for cheap, offline-capable work —
-classification, embeddings, quick transforms — on a box with no GPU. If it stops, nothing in the
-fleet changes: **no script, workflow, hook or unit in this repo calls it.**
+classification, embeddings, quick transforms — on a box with no GPU. If it stops, only one thing
+notices: `deep-research.sh` in nova's brain (`~/.claude/scripts/`, outside this repo), which defaults to
+`BACKEND=ollama`. **No script, workflow, hook or unit in this repo calls it.**
 
 🔴 **It is not a dispatch backend and cannot become one by configuration.** ADR-6723 makes the
 fleet 100% Claude Code on Claude subscriptions; `dispatch.sh` passes the literal
@@ -94,11 +95,12 @@ never recalled.
 
 ## KNOWN BROKEN
 
-- 🔴 **No caller anywhere.** `grep -rn "11434\|ollama" --include='*.sh' --include='*.py'
-  --include='*.mjs' --include='*.yml' _infra/ .github/` returns nothing. Under ADR-6723 that is the
+- 🔴 **No caller in this repo.** `grep -rln "11434\|ollama" --include='*.sh' --include='*.py'
+  --include='*.mjs' --include='*.yml' _infra/ .github/` returns only
+  `_infra/ansible/roles/system_units/defaults/main.yml`, which manages the unit itself (2026-10-31). Under ADR-6723 that is the
   expected state; recorded here so the next reader does not spend a run looking for the consumer.
-  🔴 Per the plan's own rule, low traffic is a deletion *candidate*, never a verdict — and unlike
-  `signoz`, this one really does have zero inbound.
+  🔴 Per the plan's own rule, low traffic is a deletion *candidate*, never a verdict — and its one
+  caller is nova's `deep-research.sh`, outside the repo's infra tree.
 - ⚠ **A 1.5B-7B model used for reasoning-shaped work fails silently.** The output is confident,
   fluent and wrong, and it arrives with a `200`. That is the failure mode to design against if
   anything ever does call this.

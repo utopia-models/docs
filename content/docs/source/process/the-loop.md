@@ -1,7 +1,7 @@
 ---
 title: "The loop — how work happens"
 description: "Mirrored from the fleet knowledge base: _process/the-loop.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_process/the-loop.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -126,5 +126,6 @@ looks and name in its own doc the external event it exists to catch. Sanctioned 
 (ATS polling qualifies, nothing else does).
 
 ## The hard stop (the only one)
-**Never write a secret into a tracked file.** Everything else is reversible via git and proceeds
-autonomously, fix-forward.
+**Never write a secret into a tracked file.** Everything else proceeds autonomously,
+fix-forward: code in git can be reverted, and what git cannot undo (a deploy, a migration, a sent message) is
+fixed forward.
