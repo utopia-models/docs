@@ -290,6 +290,7 @@ can close are on [The dispatch runtime](/docs/operating/dispatch-runtime).
 
 | Script | What it does |
 | --- | --- |
+| `_infra/scripts/sweep-dispatch.sh` | The scheduler: on a timer, picks the next dispatchable issue and a healthy master |
 | `_infra/scripts/dispatch.sh <master> <issue#> [repo]` | The Architect gives a master its issue **by starting the run** |
 | `_infra/scripts/task-runner.sh <issue#> [repo]` | Runs the task itself, on the master's own box |
 

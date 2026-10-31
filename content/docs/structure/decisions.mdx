@@ -216,8 +216,8 @@ replaced it for cross-machine agent messages. That delivery is durable and at-le
 where a human already reads.
 
 **The leftover units are gone now.** For a while they were not. This page once said there were *two*
-leftover units, *inactive and disabled*. Then a reader doing the pattern walk ran the command and found
-three, one of them active (knowledge#6665). On 2026-08-23 `nats-reload.path` was still `enabled` and
+leftover units, *inactive and disabled*. Then a reader ran the command and found
+three, one of them active. On 2026-08-23 `nats-reload.path` was still `enabled` and
 `active (waiting)`, a live path unit watching the config of a service that would never start again.
 Re-measured on the box on 2026-10-31, both commands print nothing:
 
