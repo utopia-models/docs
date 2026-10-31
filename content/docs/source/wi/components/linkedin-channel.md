@@ -1,7 +1,7 @@
 ---
 title: "linkedin-channel — the fleet sends connects and messages from Tyler's LinkedIn, at human pace"
 description: "Mirrored from the fleet knowledge base: wi/components/linkedin-channel.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/linkedin-channel.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -39,12 +39,15 @@ asset: a restricted account is worse than no channel, so every limit below exist
   (`~/.cache/nova-apply-venv`) under `xvfb-run`. Nothing stays resident between runs. `li_session.py login` signs
   in with `personal/LINKEDIN_PASSWORD`, or with `--reset` resets it first. Every 6-digit PIN LinkedIn sends goes to
   dev@, which the outreach `gmail` module reads. A "Check your LinkedIn app" challenge texts Tyler on the RAW phone
-  and waits 15 minutes for his tap. "Verify using SMS" is never taken: LinkedIn's number on file ends 21, Tyler's
+  and waits up to 15 minutes for his tap; all tap waits in one login share a 20-minute budget, inside the unit's
+  30-minute `TimeoutStartSec`. "Verify using SMS" is never taken: LinkedIn's number on file ends 21, Tyler's
   personal iPhone, which the fleet cannot read, and backing out of that page kills the challenge (500 page). After a
   login it copies the `li_at` cookie to `fleet-infra/LINKEDIN_LI_AT`.
 - **Self-healing login.** A tick that finds the profile signed out runs the login itself. It does this only between
   08:00 and 21:00 America/Denver, so a tap request never arrives at night, and at most once every 2 hours. Each
-  attempt writes a `login` ledger row, and a failed attempt fails the unit. It resets the password only until one
+  attempt writes a `login` ledger row BEFORE it starts (a run killed mid-wait still counts toward the 2 hours; when
+  the row came after, a 900s timeout killed every attempt and each tick re-texted Tyler, #10886) and one with the
+  outcome; a failed attempt fails the unit. It resets the password only until one
   reset has succeeded; after that it signs in with the stored password.
 - **The queue.** Targets come from two places, merged by profile URL. Rows in `~nova/.claude/state/net/linkedin/queue.jsonl` are written by
   `linkedin_channel.py queue` or `resolve`. Rows in ronin's `linkedin-queue.jsonl` (`company_target.queue_linkedin`, #10802) are read in place with
