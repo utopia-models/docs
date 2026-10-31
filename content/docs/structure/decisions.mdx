@@ -215,26 +215,19 @@ its own header claims.
 replaced it for cross-machine agent messages. That delivery is durable and at-least-once, and it shows up
 where a human already reads.
 
-**Three leftover units remain on the box, and one of them is active.** The file that documented them
-was itself deleted, so we name them here. This page used to say there were *two*, and that they were
-*inactive and disabled*. Then a reader doing the pattern walk ran the command and reported otherwise
-(knowledge#6665). We measured again on the box on 2026-08-23:
+**The leftover units are gone now.** For a while they were not. This page once said there were *two*
+leftover units, *inactive and disabled*. Then a reader doing the pattern walk ran the command and found
+three, one of them active (knowledge#6665). On 2026-08-23 `nats-reload.path` was still `enabled` and
+`active (waiting)`, a live path unit watching the config of a service that would never start again.
+Re-measured on the box on 2026-10-31, both commands print nothing:
 
 ```console
 $ systemctl list-unit-files | grep -i nats
-nats-reload.path       enabled   enabled
-nats-reload.service    static    -
-nats.service           disabled  enabled
-
 $ systemctl list-units --all | grep -i nats
-nats-reload.path      loaded active   waiting  Watch NATS config; reload server on change
-nats-reload.service   loaded inactive dead     Reload NATS on config change
-nats.service          loaded inactive dead     NATS JetStream fleet hub
 ```
 
-`nats-reload.path` is `enabled` and `active (waiting)`. It is a live path unit watching the config of a
-service that will never start again. Deleting something in a repository is half of the deletion, and the
-other half is the part that keeps running.
+Deleting something in a repository is half of the deletion. The other half is whatever keeps running on
+the box, and only a command run on the box shows it.
 
 ## Killed: the command center's generated infrastructure surface
 
@@ -339,7 +332,7 @@ observed.
 ## Never resurrect
 
 - **ralph** and every watchdog, heartbeat and supervisor built to watch over it.
-- **The NATS bus** and its three remaining leftover units.
+- **The NATS bus** and its reload units (removed from the box; re-measured 2026-10-31).
 - **The generated component catalog** and any fail-closed gate built on a generated map.
 - **Content-keyword gates** of any kind.
 - **Resident processes, heartbeat polls and scheduled health checks** as a way to know whether the

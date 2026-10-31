@@ -1,6 +1,6 @@
 ---
 title: The Utopia fleet
-description: One Ubuntu box runs five AI agents. A GitHub board is the work queue and git holds the state.
+description: One Ubuntu box runs four dispatch agents and a planner. A GitHub board is the work queue and git holds the state.
 _note: title/description drive the tab, OG image and llms.txt line. `app/docs/layout.tsx` hides the H1+lede on this page (Tyler, 2026-08-30) so it opens on the first heading.
 updated: 2026-10-31
 ---
@@ -9,7 +9,7 @@ updated: 2026-10-31
 
 I'm [Tyler Youk](https://tyleryouk.com), a software engineer. This site documents the agent fleet I
 designed and run. It is one Ubuntu server with Claude Code agents running as separate unix users. A GitHub
-project board is the only work queue, and git holds the state. I write the specs and the process the
+project board is the work queue, and git holds the state. I write the specs and the process the
 fleet follows, and I direct the agents that write the code.
 
 If you are a person, read these three things first.
@@ -34,14 +34,14 @@ one fetch. It was about 430 KB when I measured it on 2026-10-30, and it grows as
 (`curl -s https://docs.utopiamodels.ai/llms-full.txt | wc -c` gives today's size). An agent should start at
 [Start here for agents](/docs/agents), which explains how to poll [`/feed.json`](/feed.json) for changes.
 
-Five meta prompts follow. Each one runs to completion in the tool it names. Two of them get an agent to
+Five meta prompts follow, each written for the tool it names. Two of them get an agent to
 understand this fleet, one applies it to your own setup, and two build you a fleet of your own. Pick a
 tool and click copy.
 
 <HarnessToggle />
 
 ```text title="prompt-1|Understand this fleet|desktop|Reads the wiki in three passes and hands back a briefing that sorts every claim into measured and asserted. Finishes in one paste."
-You are reading a public wiki that documents a real, running AI agent fleet — one Ubuntu server, a GitHub project board as the only work queue, and no orchestration layer between the agents. I want you to understand it well enough to argue with it.
+You are reading a public wiki that documents a real, running AI agent fleet — one Ubuntu server, a GitHub project board as the work queue, and no orchestration layer between the agents. I want you to understand it well enough to argue with it.
 
 Work in three passes. Do not summarize until the third.
 
@@ -95,7 +95,7 @@ Then write:
 
 Skip the throat-clearing and the recap of what you just did. If a page contradicts another page, quote both and say which you believe. If you think a decision on that site is wrong, say so and why — an agreeable summary of someone else's architecture is worth less to me than a specific objection.
 
-This fleet has a live cockpit at https://utopiamodels.ai. Open it yourself rather than fetching it; it renders client-side, so a fetch returns an empty shell. Its board endpoint, above, is the part you can fetch.
+The board endpoint above is the live state. Fetch it rather than trusting any number written on a page.
 ```
 
 ```text title="prompt-2|Understand this fleet|claude-code,opencode,codex,cursor,gemini|Fans subagents across the wiki, checks the prose against the live board, and reports the drift. Finishes in one paste."
@@ -112,7 +112,7 @@ Run this first:
 
     curl -s https://docs.utopiamodels.ai/llms.txt | head -3
 
-You should get a line reading `# The fleet` followed by a bulleted entry for `/docs`. If you get empty output or a non-zero exit, curl is not reaching the host from this machine. Try `python3 -c "import urllib.request; r=urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20); print(r.status, len(r.read()))"`, which should print `200 1506`, or fall back to wget, or use whatever web-fetch tool you have. Tell me which one worked before continuing, because everything below depends on it.
+You should get a line reading `# Utopia Fleet Wiki` followed by a `## Start here` list. If you get empty output or a non-zero exit, curl is not reaching the host from this machine. Try `python3 -c "import urllib.request; r=urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20); print(r.status, len(r.read()))"`, which should print `200 1506`, or fall back to wget, or use whatever web-fetch tool you have. Tell me which one worked before continuing, because everything below depends on it.
 
 Now derive the page list rather than trusting one I typed:
 
@@ -629,7 +629,7 @@ Every page here follows four rules. They come from a full audit of the fleet's o
    an agent that means a real `claude -p` probe, for a surface an HTTP status code, and for a systemd unit
    `Result=success`.
 4. Generate facts that change, and write down facts that don't. Disk usage, uptime, node liveness and issue
-   counts all go out of date within days of being written down, so no prose page on this site states one.
+   counts all go out of date within days of being written down, so no prose page on this site states one without the date it was measured.
    Each such fact is either generated from the knowledge base when you request the page, or replaced by
    the command that measures it. That is why the rest of the prose can stay unchanged for a long time.
 
@@ -653,7 +653,7 @@ tailnet, and saying that is more useful than a status dot that might be a day ol
 
 ## The dispatch loop
 
-This is the whole runtime. It is two shell scripts, both readable end to end, plus systemd.
+This is the whole runtime: three shell scripts (a scheduler, a dispatcher and a runner), each readable end to end, plus systemd.
 
 ```text title="The dispatch loop"
 Architect (ETH)                          novaserver
@@ -685,8 +685,8 @@ I measured these on 2026-08-16, on the live fleet.
 - 14 places claim to be a source of truth, not the five that the fleet's own documentation implies.
 - Zero failed systemd units in any of the five service contexts on the server.
 
-These numbers describe one moment, which is why each has a date. For the current state, read the fleet's
-cockpit at [utopiamodels.ai](https://utopiamodels.ai).
+These numbers describe one moment, which is why each has a date. For the current state, fetch the board
+endpoint, `https://utopiamodels.ai/v1/board`.
 
 ## An honest description [#the-honest-framing]
 

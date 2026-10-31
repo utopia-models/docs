@@ -1,6 +1,6 @@
 ---
 title: The dispatch runtime
-description: Two shell scripts and systemd make up the entire agent runtime. There is no daemon, queue or watchdog. Starting a run is the assignment, and the close-out comment is the only sign that a run is alive.
+description: Three shell scripts and systemd make up the entire agent runtime. There is no daemon, queue or watchdog. Starting a run is the assignment, and the close-out comment is the only sign that a run is alive.
 updated: 2026-10-31
 ---
 
@@ -68,7 +68,7 @@ Reference, read it first:
 
   curl -s https://docs.utopiamodels.ai/docs/operating/dispatch-runtime.md
 
-That runtime is two shell scripts and systemd: no daemon, no queue, no watchdog. It runs on ONE machine with a handful of agents — that assumption is load-bearing in several of its choices, so if my situation differs, say so out loud rather than quietly assuming it holds.
+That runtime is three shell scripts and systemd: no daemon, no queue process, no watchdog. It runs on ONE machine with a handful of agents — that assumption is load-bearing in several of its choices, so if my situation differs, say so out loud rather than quietly assuming it holds.
 
 FIRST — WRITE YOUR CHECKLIST TO A FILE
 
@@ -193,10 +193,10 @@ The first two guards read a value and then act on it, and that kind of check has
 this fleet. Between reading the board and launching the unit, 26 to 27 seconds pass, so two dispatchers
 that read in the same second both pass the check.
 
-For a single agent, a fixed unit name with no random part closes that gap. Systemd refuses a duplicate unit
-name in the kernel, which makes it a real mutex and not a convention. But each user has a separate service
-manager, so the same unit name under two different accounts counts as two different names, and the kernel
-does not check the pair.
+For a single agent, a fixed unit name with no random part closes that gap. The user's systemd manager refuses a
+second unit with a name that is already loaded, which makes it a real mutex and not a convention. But each
+unix user has its own `systemd --user` manager, so the same unit name under two accounts is two names in two
+managers, and neither manager knows about the other.
 
 For the cross-agent case, a single file lock on the shared box covers it. The lock is held across both the
 probe *and* the launch. Both dispatch paths run the claim as the same unix user on the same machine: the

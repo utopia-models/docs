@@ -39,7 +39,7 @@ Add NEVER-EXISTED: a name cited in docs that never resolved. A citation is not a
 3 — WHERE A BARE CODE LIES
 
 Walk through the rows the page uses to prove a status code is not a state:
-  - the docs host that read 307, then 301, then 200 while its class changed twice — a check reading only the first code calls it healthy, broken and healthy again
+  - the docs host that read 307, then 301, then 200 while its class changed twice — a check reading only the first code reports 307, 301 and 200 in turn and cannot tell which change was a decision and which an accident
   - the object-storage host: `/` is 404, a real object is 200, and there is no index — not a fault
   - the admin UI that answers `200` with `redirects=0` and is completely gated, because it renders its login in page
 
@@ -201,14 +201,13 @@ while it was retired, and today it returns a plain `200` (see its row below).
 | `dmvresearch.io` | LIVE | DMV ad-bridge site | `200` |
 | `rawphones.com` | LIVE | The RAW brand site, the public front of the phone brand | `200`. A shared Vercel project serves it through a path rewrite (`x-matched-path: /raw/index.html`) |
 | `www.rawphones.com` | LIVE | Alias for the brand site | `308` to the apex |
-| `nothing.utopiamodels.ai` | LIVE | The RAW design "rip", a full reconstruction of a competitor's site that we use as a design reference | `200`. It is by far the heaviest page the fleet serves |
+| `nothing.utopiamodels.ai` | LIVE | The RAW design reference | `200`. It is by far the heaviest page the fleet serves |
 | `raw1.utopiamodels.ai` | LIVE | RAW design variant | `200` |
 | `raw2.utopiamodels.ai` | LIVE | RAW design variant | `200` |
 | `raw3.utopiamodels.ai` | LIVE | RAW design variant | `200` |
 | `os.utopiamodels.ai` | LIVE | The RTOS concept page | `200` |
 | `hack.utopiamodels.ai` | LIVE | The RAW investor deck | `200` |
 | `community.utopiamodels.ai` | LIVE | Community site, served by Cloudflare rather than Vercel | `200` |
-| `creatives.utopiamodels.ai` | GONE | The 5am agency's gallery of creative work. The name is plural. The singular name is a different host, and that one is dead | No DNS record, re-measured 2026-10-30. The agency domain it used to `301` to resolves to nothing either, since we froze 5am. We keep the row so that a reader who finds the name somewhere else learns it is gone instead of guessing |
 | `<secret-store-ui-host>` | LIVE | An admin UI for the secret store. The Cloudflare tunnel publishes it from a local port on the fleet's box | `200` and `redirects=0`, and still gated. Instead of redirecting to a login page, it renders a server-side Google SSO allow-list of exactly three accounts on the page itself. The usual reading, that "`redirects=0` means ungated", is exactly wrong here. See rule 2 at the foot of this page |
 | `<data-replica-host>` | LIVE | A data-replica host, paired with the two always-on services on one master's box | `200`. It has no registry row and no doc. It is a live public host on the company domain, and nothing would notice if it went down |
 | `org.utopiamodels.ai` | LIVE | A legacy name that redirects on purpose | `301` to `https://utopiamodels.ai/`, `redirects=1`. This matches the `occ-redirect` responder on the fleet's box |
@@ -218,6 +217,7 @@ while it was retired, and today it returns a plain `200` (see its row below).
 
 | Hostname | Class | Basis |
 | --- | --- | --- |
+| `creatives.utopiamodels.ai` | RETIRED-BY-DECISION | The 5am agency's gallery of creative work (plural; the singular name is a different, dead host). No DNS record, re-measured 2026-10-30; the agency domain it used to `301` to resolves to nothing either. The founder parked 5am (the NET-is-the-bet decision in the private knowledge repo). |
 | `raw.utopiamodels.ai` | RETIRED-BY-DECISION | `404 DEPLOYMENT_NOT_FOUND`, measured 2026-08-16. The founder retired it on 2026-08-06. This row is the reason the class exists. A doctrine file that loads automatically kept describing the host as live. A master read that file and was dispatched to restore the host, and we caused the resulting P0 ourselves. **Do not fix this. It is off on purpose.** |
 
 ## BROKEN
@@ -225,7 +225,7 @@ while it was retired, and today it returns a plain `200` (see its row below).
 | Hostname | Class | Basis |
 | --- | --- | --- |
 | `<tunnel-host>` | BROKEN | `530`, which is Cloudflare error 1033 (the tunnel origin is unreachable). The edge never returns a `530` on purpose. One govcon spec names a cost teardown that could explain it, but there is no decision record and no registry row. By this page's own rules we cannot call it retired, and a host nobody has classified counts as broken |
-| `creative.utopiamodels.ai` | BROKEN | `404 DEPLOYMENT_NOT_FOUND`. This is the singular form of the live plural `creatives.`. Either someone retired it without recording it, or nobody ever claimed the name. No registry says which, and that gap is the finding |
+| `creative.utopiamodels.ai` | BROKEN | `404 DEPLOYMENT_NOT_FOUND`. This is the singular form of `creatives.`. Either someone retired it without recording it, or nobody ever claimed the name. No registry says which, and that gap is the finding |
 | `booking.tyleryouk.com` | BROKEN | `404 DEPLOYMENT_NOT_FOUND`. Meanwhile, an agent's durable memory still has a whole entry describing a working partnership flow at this address |
 
 ## NEVER-EXISTED
