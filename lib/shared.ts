@@ -5,6 +5,6 @@ export const docsContentRoute = '/llms.mdx/docs';
 
 export const gitConfig = {
   user: 'utopia-models',
-  repo: 'docs-wiki',
+  repo: 'docs',
   branch: 'main',
 };

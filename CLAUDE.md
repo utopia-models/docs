@@ -1,11 +1,12 @@
-# docs-wiki — Utopia's public fleet documentation
+# docs — Utopia's public fleet documentation
 
 **Built from PLAN-178 (knowledge#5880).** A Fumadocs-based wiki that documents the Utopia fleet as it
 actually operates, styled as an exact rip of [ocp.wiki](https://ocp.wiki/docs). Fully public, no auth wall.
 
 **Deployed at:** https://docs.utopiamodels.ai
 
-**Repo:** utopia-models/docs-wiki
+**Repo:** utopia-models/docs (public; seeded 2026-10-31 from the current tree of the private, since-deleted
+`utopia-models/docs-wiki`, with no history — knowledge#10761). The Vercel project is still named `docs-wiki`.
 
 ## Project structure
 

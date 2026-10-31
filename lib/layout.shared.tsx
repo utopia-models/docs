@@ -49,8 +49,8 @@ export function baseOptions(): BaseLayoutProps {
         external: true,
       },
     ],
-    // The site's own repo is private and 404s for a logged-out reader (knowledge#9570), so the icon
-    // points at the public extraction of the dispatch layer the site documents.
-    githubUrl: 'https://github.com/utopia-models/dispatch-runtime',
+    // The site's own source, public since knowledge#10761 (a fresh repo: the private docs-wiki's history
+    // held personal data its tree did not).
+    githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };
 }

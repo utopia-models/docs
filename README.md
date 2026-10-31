@@ -1,4 +1,4 @@
-# docs-wiki — `docs.utopiamodels.ai`
+# docs — `docs.utopiamodels.ai`
 
 The Utopia fleet's public wiki. **Fully public, fully open — no auth, no gate.** That is a
 load-bearing property, not an oversight: anyone should be able to `curl` any page and read it.
@@ -73,7 +73,7 @@ sleep 60 && bash scripts/usage.sh 1     # the `probe` row appears, with curl's u
 ## Develop
 
 ```bash
-ssh cloud@100.71.25.43 'cd ~/dev/utopia-models/docs-wiki && pnpm install && pnpm dev'
+ssh cloud@100.71.25.43 'cd ~/dev/utopia-models/docs && pnpm install && pnpm dev'
 ```
 
 Then open `http://localhost:3000`.

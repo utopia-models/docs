@@ -137,7 +137,7 @@ export async function GET() {
 function fail(reason: string): Response {
   return new Response(
     `The resume could not be read from its source: ${reason}.\n` +
-      'See app/resume.pdf/route.ts in utopia-models/docs-wiki for how the source is resolved.\n',
+      'See app/resume.pdf/route.ts in utopia-models/docs for how the source is resolved.\n',
     { status: 502, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } },
   );
 }
