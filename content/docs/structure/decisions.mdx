@@ -215,7 +215,7 @@ its own header claims.
 replaced it for cross-machine agent messages. That delivery is durable and at-least-once, and it shows up
 where a human already reads.
 
-**Three leftover units remain on the box, and one of them is active.** The only file that documented them
+**Three leftover units remain on the box, and one of them is active.** The file that documented them
 was itself deleted, so we name them here. This page used to say there were *two*, and that they were
 *inactive and disabled*. Then a reader doing the pattern walk ran the command and reported otherwise
 (knowledge#6665). We measured again on the box on 2026-08-23:
@@ -327,7 +327,7 @@ the work.
 The fleet learned this the annoying way. Its dispatch scheduler ran for days at roughly **8% of proven
 capacity**. Three of four masters sat idle on a 12-core box with a load average below 1. The cause was
 caps of 1, 4 and 2, set against a failure mode that two other mechanisms already covered. The defence
-was real, but it guarded against the wrong failure.
+was real, but the caps were the wrong place to put it.
 
 ### Fix forward, never pre-gate
 

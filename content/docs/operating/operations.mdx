@@ -139,8 +139,8 @@ Every file changed with its path, the count of findings per category before and 
 ```
 
 Every command on this page names the box it runs on, for a measured reason. On 2026-08-16 we audited
-the fleet's own registry. At the time it had seventy-three self-checks, and seventy-two of them were safe
-to run from anywhere. We ran those seventy-two from the Architect box, and twenty-six failed. All
+the fleet's own registry. At the time it had seventy-three self-checks, and seventy-two of them were listed
+as safe to run from anywhere. We ran those seventy-two from the Architect box, and twenty-six failed. All
 twenty-six passed when we ran them again on the server. The registry was accurate but never said where
 to run anything, so following it from the wrong machine produced twenty-six false failures.
 
@@ -243,7 +243,7 @@ reason for each issue:
 bash _infra/scripts/sweep-dispatch.sh --explain
 ```
 
-Each rejected issue prints its reason, which is one of `lane-not-in-masters`, `has-hold-label`,
+Each rejected issue prints its own reason, for example `lane-not-in-masters`, `has-hold-label`,
 `is-a-grouper:has-open-subissues`, `last-marker-is-terminal`, `parent-closed` or `is-parked`. When many
 issues are open and none can be dispatched, the cause is almost always routing, not capacity. No master
 will ever pick up an issue that has no lane, or whose lane no master serves, however idle the fleet is.

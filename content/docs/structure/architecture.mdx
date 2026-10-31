@@ -206,7 +206,7 @@ on its tailnet address (written `100.x.x.x` on this site) and on the LAN.
 | CPU | AMD Ryzen 5 PRO 4650GE, 6 cores / 12 threads |
 | RAM | 30 GiB, plus 8 GiB of swap |
 | GPU | Integrated Radeon RX Vega 6. There is no NVIDIA card. `nvidia-smi` is not installed, and nothing on this box does GPU inference beyond what Ollama does on CPU |
-| Root filesystem | 295 GB. Disk space is the fleet's most persistent capacity problem. `disk-guard.timer` fires hourly and reclaims a few megabytes per pass. It runs, but the disk still fills faster than it frees space. A public page cannot read the current figure, so this row gives the command (`ssh nova@<tailnet-ip> 'df -h /'`) instead of a number |
+| Root filesystem | 295 GB. Disk space is the fleet's most persistent capacity problem. `disk-guard.timer` fires hourly and reclaims a few megabytes per pass. It is running, and it has not solved the problem. A public page cannot read the current figure, so this row gives the command (`ssh nova@<tailnet-ip> 'df -h /'`) instead of a number |
 | Reached by | `ssh nova@<tailnet-ip>` |
 
 **The bare alias does not resolve.** If you run `ssh` with just `nova` as the host, with no user and no
@@ -246,7 +246,7 @@ exists.
 
 The table deliberately leaves out the **binary**. `/usr/bin/claude` is where it resolves on novaserver
 and nowhere else. On the Architect's WSL box it resolves to a different path. So "every agent runs the
-same binary at the same path" is true of one box and false as a claim about the fleet. To settle it for
+same binary at the same path" is a claim about one box presented as a claim about the fleet. To settle it for
 a given account, run `sudo -u <account> -H command -v claude` on the box where that account lives.
 
 ### Existence is not liveness
@@ -255,8 +255,8 @@ a given account, run `sudo -u <account> -H command -v claude` on the box where t
 cannot execute a single turn.** This is the most important distinction on this page.
 
 A master can have a valid unix account, a credential file, a clean systemd state and working `gh` auth,
-and still be unable to run. The provider decides entitlement for the account, and nothing on the box
-records it. When an agent has no entitlement, it looks *busier* than a healthy one. Transient units keep
+and still be unable to run. Entitlement belongs to the account at the provider, not to anything on
+the box. When an agent has no entitlement, it looks *busier* than a healthy one. Transient units keep
 starting, keep dying within seconds, and keep posting their start messages.
 
 On 2026-08-16, a measurement found **three of the four masters able to run**. The fourth reported
@@ -405,7 +405,7 @@ that reads only `systemctl --user list-timers` undercounts how often every maste
 
 **A dead timer never fails, so `systemctl --failed` reports clean.** The box has had an *enabled* timer
 whose service unit was `not-found`, and dormant timers that had not fired in a week, while every failure
-query came back empty. No failures does not mean the thing works.
+query came back empty. An absence of failures does not mean the thing works.
 
 ## Secrets
 

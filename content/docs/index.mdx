@@ -617,7 +617,7 @@ Every page here follows four rules. They come from a full audit of the fleet's o
 1. Every command names its box. A command that works on one machine and fails on another is not a
    runbook. You will always see `ssh nova@<tailnet-ip> '<cmd>'`, never a bare alias. On 2026-08-16 the
    fleet's component registry held seventy-three rows, and seventy-two of them had a self-check that was
-   supposedly safe to run from anywhere. Run from the wrong box, twenty-six of those seventy-two failed.
+   listed as safe to run from anywhere. Run from the wrong box, twenty-six of those seventy-two failed.
    All twenty-six passed from the right one. Nothing in that registry records which box a command belongs
    to.
 2. RETIRED-BY-DECISION, BROKEN and LIVE are three different states. A hostname that returns 404 because
@@ -653,7 +653,7 @@ tailnet, and saying that is more useful than a status dot that might be a day ol
 
 ## The dispatch loop
 
-This is the whole runtime. It is two shell scripts, both short enough to read end to end, plus systemd.
+This is the whole runtime. It is two shell scripts, both readable end to end, plus systemd.
 
 ```text title="The dispatch loop"
 Architect (ETH)                          novaserver
@@ -691,7 +691,7 @@ cockpit at [utopiamodels.ai](https://utopiamodels.ai).
 ## An honest description [#the-honest-framing]
 
 The fleet is real, busy and well built. The runtime is two scripts with no daemon to watch over. The
-command center does not drift, because it stores nothing. Every failure gets announced: on 2026-08-16,
+command center provably does not drift, because it stores nothing. Failure announcements cover every run: on 2026-08-16,
 every transient run unit on every master had the `OnFailure` hook. Every box runs the same version of the
 doctrine files.
 

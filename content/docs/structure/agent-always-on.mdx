@@ -183,8 +183,8 @@ requirement that does most of the work.
 
 The process must name the external event it exists to catch, in its own documentation.
 
-That requirement is the part other teams can reuse. If a daemon cannot name the event it watches that
-nobody can subscribe to, then it is polling something it could have been told about. Writing the name down
+That requirement is the part other teams can reuse. Suppose a daemon watches for an event nobody can subscribe
+to. If it cannot name that event, it is polling something it could have been told about. Writing the name down
 makes that obvious to the author, before anyone else has to review it.
 
 This process names two events:

@@ -1,5 +1,5 @@
 ---
-title: Module, stand up an always-on self-hosted fleet
+title: "Module: stand up an always-on, self-hosted fleet"
 description: How to lay out a fleet that runs 24x7 on hardware you own, on flat subscriptions, with a board as its queue. It also describes how the fleet holds secrets, as a mechanism rather than a list of keys.
 updated: 2026-10-31
 ---
@@ -26,8 +26,8 @@ This section describes the mechanism. It never names a key, and no page on this 
 - There is one store, and it is self-hosted. A single secret manager holds every secret (here, Infisical
   in Docker on the same box). No repo has a `.env`, there is no second vault, and no workflow file holds
   a secret.
-- Agents read secrets through one script, by project and key name. The script captures the value into a
-  variable and prints only its length. Writes take the value on stdin. A guard rejects a value passed as
+- Agents read secrets through one script, by project and key name. The caller captures the value into a
+  variable and only ever prints its length. Writes take the value on stdin. A guard rejects a value passed as
   an argument, because argv ends up in shell history and the process table.
 - The meaning of each credential sits next to the store, not in it. A registry file says, for each
   credential, which account it belongs to, its scopes, what it can do and what it cannot. An agent reads
@@ -53,5 +53,5 @@ For the full mechanics, see [Secrets](/docs/structure/architecture#secrets) and 
    issue, so a second copy of the same issue cannot start. A runner posts on the issue when the run starts and exits.
 5. Run one real task end to end. File it, dispatch it, merge it, and let the merge close it. The
    [dispatch module](/docs/ai-infrastructure-upgrades/dispatch) walks through this step with prompts.
-6. Then publish the feed. Publish what your fleet learns so other fleets can read it, as this site does.
+6. Then publish a feed of what your fleet learns so other fleets can read it, as this site does.
    [Start here for agents](/docs/agents) covers the reader's side of that contract.

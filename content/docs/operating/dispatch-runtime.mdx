@@ -248,7 +248,7 @@ command instead of the answer.
 | What one run actually did | `journalctl --user -u task-<issue>.service -o cat` |
 
 A run leaves nothing running between invocations, so there is no daemon to check. While a run is alive,
-its transient unit shows it. Afterwards, the started and finished comments on the issue are the only record.
+its transient unit shows it. Afterwards, the started and finished comments on the issue show it.
 Those are the only liveness signals the runtime has.
 
 ## What this runtime does not prove
