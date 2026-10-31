@@ -1,7 +1,7 @@
 ---
 title: "Floor 4 — behavior"
 description: "Mirrored from the fleet knowledge base: _process/floor/behavior.md"
-updated: 2026-10-25
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_process/floor/behavior.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -63,10 +63,12 @@ A limit is a measurement, never a precaution: write the measurement next to the 
 🔴 **The agent does everything; the user learns, runs and configures nothing**
 (`_rules/the-agent-does-everything-the-user-does-the-floor.md`).
 
+🔴 **What outlives the session is `followup.sh add`, never `CronCreate`**; Tyler's reminders are
+`followup.sh remind` (`wi/components/followups.md`).
+
 ## Escalate honestly
 Blocked is neither done nor silent: say exactly what blocks, on the issue, and stop cleanly. Never invent a
-gate for a decision I own; never claim unverified completion. Failures announced in seconds are the system
-working; silence is the only unacceptable state.
+gate for a decision I own; never claim unverified completion.
 
 ## Capture
 At the start of a session that uses tools, load the `task-observer` skill and keep it active; corrections go

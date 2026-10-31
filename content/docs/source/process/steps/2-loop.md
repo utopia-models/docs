@@ -1,7 +1,7 @@
 ---
 title: "Step 2 — LOOP ⟳"
 description: "Mirrored from the fleet knowledge base: _process/steps/2-loop.md"
-updated: 2026-10-25
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_process/steps/2-loop.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -82,7 +82,14 @@ it, move to step 3`.** The loop ends when Tyler either:
 
 - **SELECTS `file it, move to step 3`** — *"the click ends it"* (Tyler, 2026-08-27; the rule itself is his,
   2026-08-22: *"Step 2 ends on Tyler clicking an option in an `AskUserQuestion` dialogue"*); **or**
-- **types** *"Plan is good, proceed with step 3, file it"*.
+- **types** *"Plan is good, proceed with step 3, file it"* — or any answer or message saying **"step 3"**, **"file
+  it"** or **"proceed"** (fleet-doctrine ≥ `0.106.0`, `plan_step.is_exit`; #10772: an exact-phrase match missed
+  *"This an interactive plan, so we can move to step 3"*). A stay or a negation (*"research more"*, *"don't proceed
+  yet"*, *"before we proceed…"*) is not the exit.
+
+🔴 **The loop is a PLANNING mechanism** (#10772). Once the Plan issue has filed anything (a sub-issue, or a `Features:`
+line naming one), both hooks fall silent and write `loop: closed` — an answer at step 3+ (*"Send it now"*) is
+operational, never a fork to research.
 
 🔴 **An approving remark is NEITHER.** *"looks good"*, *"nice"*, *"yes"* file nothing — the click is deliberate, a
 compliment is not, and that distinction is why the typed sentence exists. It survives.

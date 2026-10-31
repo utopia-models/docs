@@ -1,7 +1,7 @@
 ---
 title: "credential-health — is the credential ALIVE, is the record TRUE, and did it leak"
 description: "Mirrored from the fleet knowledge base: wi/components/credential-health.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/credential-health.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -80,7 +80,7 @@ that title on the live board, so nothing is stored), lane = `agent` (the Archite
 masters never stage a login — Tyler, 2026-10-25, knowledge#10215), parented under
 the lowest standing-hygiene Feature with room (GitHub caps a parent at 100 sub-issues). An agent that grades
 ok has its issue commented and closed. Read it by hand: `bash _infra/scripts/probe-logins.sh` (one line per
-agent: seat, want, HTTP, 7d, verdict — no token text). `probe-logins.sh --whoami` is the network-free half: the
+agent: seat, want, HTTP, 7d, verdict — no token text); `--tsv` prints the same grading machine-readable (`agent, verdict, http, 7d, seat, status`), which `dispatch.sh` reads to call an HTTP 401 `login-expired` (no reset time) instead of showing the account's weekly reset (#10774). `probe-logins.sh --whoami` is the network-free half: the
 account, tier, plan and credentials state each user holds right now, read from its own files (knowledge#10399).
 
 **The session half is the one that actually reaches every master.** `capabilities.sh --inject` runs at

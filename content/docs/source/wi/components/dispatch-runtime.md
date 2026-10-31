@@ -1,7 +1,7 @@
 ---
 title: "dispatch-runtime — the fleet's entire agent runtime, in two scripts"
 description: "Mirrored from the fleet knowledge base: wi/components/dispatch-runtime.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/dispatch-runtime.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -113,7 +113,7 @@ died before the trap ran.
 
 | you want | run |
 |---|---|
-| which masters are dark right now | `_infra/scripts/dispatch.sh --quota` (table) · `--quota-dark` (names) |
+| which masters are dark right now | `_infra/scripts/dispatch.sh --quota` (table) · `--quota-dark` (names) · `--capacity` (dark + reason, then live masters by 7-day headroom; the sweeper's one call, #10774) |
 | would this dispatch be refused? | `--preflight-quota <master>` (0/9) · `--preflight-duplicate <master> <issue#>` (0/11) |
 | what is live for an issue | `_infra/scripts/dispatch.sh --live-units <master> <issue#>` |
 | every run on this box, now | `systemctl --user list-units --state=active 'task-*'` |
