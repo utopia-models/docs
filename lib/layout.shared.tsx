@@ -1,6 +1,9 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { appName, gitConfig } from './shared';
 
+/** The resume's one public URL (knowledge#10883); app/resume.pdf/route.ts 308s the old one here. */
+export const RESUME_URL = 'https://tyleryouk.com/resume.pdf';
+
 const ctaClass =
   'inline-flex items-center rounded-full bg-fd-primary px-3 py-1 text-sm font-medium text-fd-primary-foreground transition-opacity hover:opacity-90';
 
@@ -20,7 +23,7 @@ export function baseOptions(): BaseLayoutProps {
         // The wrapper's `ps-3` is the gap to the title: that block has no `gap`, and at 320px `ms-auto`
         // has no free space to push with, so without it the pill butted against "Wiki".
         <div className="ms-auto me-1 shrink-0 ps-3 lg:hidden">
-          <a href="/resume.pdf" data-nav-cta-mobile="" className={ctaClass}>
+          <a href={RESUME_URL} data-nav-cta-mobile="" className={ctaClass}>
             Resume
           </a>
         </div>
@@ -28,8 +31,9 @@ export function baseOptions(): BaseLayoutProps {
     },
     // `Resume` (knowledge#8024) is the way back from the evidence to the document it backs: this site
     // exists to substantiate the resume's fleet bullet. `external` makes it a real `<a>` —
-    // `/resume.pdf` is a route handler 308-ing to https://tyleryouk.com/resume.pdf (knowledge#10883), which a
-    // client-side Next navigation cannot follow. Relative on purpose: the hop through this host is what proxy.ts counts.
+    // The resume lives on tyleryouk.com (knowledge#10883), so the link is absolute: a relative `/resume.pdf`
+    // (still a 308 here, for URLs already handed out) was prefetched by the router and the cross-origin hop
+    // failed WebKit's access control checks on every page load.
     //
     // It renders as a filled pill (knowledge#8065), modelled on ocp.wiki's own nav CTA. The pill is
     // the `text`, not a `custom` item: Fumadocs still renders the `<a>` — same href, same slot in this
@@ -46,7 +50,7 @@ export function baseOptions(): BaseLayoutProps {
             Resume
           </span>
         ),
-        url: '/resume.pdf',
+        url: RESUME_URL,
         external: true,
       },
     ],
