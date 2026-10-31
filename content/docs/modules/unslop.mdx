@@ -162,3 +162,9 @@ and links yourself. The linter from step 4 only checks wording and does not comp
 The harness paths in prompt 1 were read from vendor docs on 2026-10-31. Codex, Gemini CLI and OpenCode
 do not document `disable-model-invocation`, so on those the skill may also run when the model decides
 it applies, not only when you ask. The always-on line is what makes it a dependable last pass there.
+
+We ran the four-line prompt in a fresh Claude Code 2.1.310 session with an empty home directory and a
+sample draft, with no other input. It installed the skill and the license, added the always-on line,
+and took the draft from 17 tells to 0 with every number, link and code span unchanged. It could not
+confirm that `/unslop` appears in the slash command list, because a session only lists skills that
+existed when it started. Open a new session to check.
