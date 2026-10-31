@@ -28,7 +28,8 @@ export function baseOptions(): BaseLayoutProps {
     },
     // `Resume` (knowledge#8024) is the way back from the evidence to the document it backs: this site
     // exists to substantiate the resume's fleet bullet. `external` makes it a real `<a>` —
-    // `/resume.pdf` is a route handler serving a PDF, which a client-side Next navigation cannot render.
+    // `/resume.pdf` is a route handler 308-ing to https://tyleryouk.com/resume.pdf (knowledge#10883), which a
+    // client-side Next navigation cannot follow. Relative on purpose: the hop through this host is what proxy.ts counts.
     //
     // It renders as a filled pill (knowledge#8065), modelled on ocp.wiki's own nav CTA. The pill is
     // the `text`, not a `custom` item: Fumadocs still renders the `<a>` — same href, same slot in this
