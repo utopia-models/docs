@@ -1,7 +1,7 @@
 ---
 title: "feature-closer — the trigger the fleet controls, in front of a cron GitHub half-honours"
 description: "Mirrored from the fleet knowledge base: wi/components/feature-closer.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/feature-closer.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -66,8 +66,8 @@ byte-identical to a scheduled one. A fallback delivery is a **success** — the 
 0, no board issue — and the degradation is named in the journal, in `dispatchVia` in the state file, and
 in the beacon's `delivery path` row, which is the surface a human actually reads.
 
-**A transport failure is a could-not-check, not a fault (#7543) — and so is an HTTP 5xx (#7754).** Over this unit's entire life on
-novaserver — 1353 starts, 2026-08-28T00:25:06Z → 2026-09-06T09:35:06Z — it went red **twice**, and both
+**A transport failure is a could-not-check, not a fault (#7543) — and so is an HTTP 5xx (#7754).** Over its first 1353 starts on
+novaserver (2026-08-28T00:25:06Z to 2026-09-06T09:35:06Z) it went red **twice**, and both
 times the box could not reach the network at all: one dropped dispatch in the single-attempt era, and a
 box-wide DNS outage on 2026-09-06 (`ssh: Could not resolve hostname github.com: Temporary failure in name
 resolution`) that outlasted all three attempts because they span 35 s. 2 of 1353 is 0.15%, **and neither

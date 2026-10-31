@@ -1,7 +1,7 @@
 ---
 title: "signoz — the fleet's telemetry sink, and the one thing that already knows what every harness did"
 description: "Mirrored from the fleet knowledge base: wi/components/signoz.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/signoz.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -81,7 +81,8 @@ docker exec signoz-telemetrystore-clickhouse-0-0 clickhouse-client -q \
   "SELECT count() FROM signoz_logs.distributed_logs_v2 WHERE timestamp > toUnixTimestamp64Nano(now64() - INTERVAL 7 DAY)"
 ```
 
-Measured 2026-08-31 on `cloud`: **0 traces, 405,819 logs, 14,150 metric samples in the last day.**
+Measured 2026-10-31 on novaserver: **0 traces and 241,766 log records over the last 7 days** (the per-sender
+query above sums to the same 241,766 across six `agent.name` values).
 Zero traces is correct and expected — the harness emits logs and metrics, not spans. A trace count of
 zero is therefore not evidence that nothing sends.
 
@@ -119,7 +120,7 @@ as that account. From any other master they fail with *"permission denied … /v
 which reads exactly like the stack being down.
 
 ```bash
-ssh nova@100.71.25.43 'docker exec signoz-telemetrystore-clickhouse-0-0 clickhouse-client -q "
+ssh nova@<host> 'docker exec signoz-telemetrystore-clickhouse-0-0 clickhouse-client -q "
   SELECT resources_string['"'"'agent.name'"'"'] AS agent, count() c
   FROM signoz_logs.distributed_logs_v2
   WHERE timestamp > toUnixTimestamp64Nano(now64() - INTERVAL 7 DAY)
@@ -140,12 +141,12 @@ The per-signal counts measured this way are in HOW IT WORKS TODAY.
   actually owning Grafana/Prometheus/node-exporter) and `clickhouse` (which describes one container
   of this component as if it were a peer).
 - 🔴 **PLAN-256's own DELETE rationale for this component is false on its central claim.** The
-  committed artifact `https://github.com/utopia-models/knowledge/blob/b9b4874b1c5a5821b9b31b36cb3a0d8c4a765dc8/wi/work/plans/artifacts/plan-256.html` reads: *"nothing in the
+  committed artifact (`wi/work/plans/artifacts/plan-256.html` at `b9b4874b1`, in the private repo) reads: *"nothing in the
   fleet references OTLP, port 4317/4318, or signoz anywhere — there is not one sender."* Measured
   2026-08-31 against the live store: **five senders, all writing within the same minute the query
   ran** — `1000xagent` 268,048 · `agent-cloud` 71,983 · `1000xwin` 31,519 · `1000xnova` 17,804 ·
   `agent-dmv` 16,727 log records over 7 days. The senders are configured in
-  `~/.claude/settings.json` on each box (`OTEL_EXPORTER_OTLP_ENDPOINT=http://100.71.25.43:4317`),
+  `~/.claude/settings.json` on each box (`OTEL_EXPORTER_OTLP_ENDPOINT=http://<host>:4317`),
   which is a *brain* repo — a grep of `utopia-models/knowledge` cannot see them, and that is exactly
   how the claim came to be made. **Deleting this stack today silently blinds five harnesses.**
 - ⚠ **The `agent.name` values in the store are the pre-rename identities.** `1000xagent`,

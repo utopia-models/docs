@@ -1,5 +1,5 @@
 ---
-title: "sweeper — the only thing in the fleet that starts work"
+title: "sweeper — the only thing that starts work unattended"
 description: "Mirrored from the fleet knowledge base: wi/components/sweeper.md"
 updated: 2026-10-31
 ---
@@ -18,11 +18,13 @@ owns:
   - reconcile-board.service
 ```
 
-# sweeper — the only thing in the fleet that starts work
+# sweeper — the only thing that starts work unattended
 
 ## WHAT IT IS
 
-The fleet's **scheduler**, and the only consumer of `Status=Todo` that exists. It reads the board,
+The fleet's **scheduler**, and the only automatic consumer of `Status=Todo`. A hand dispatch through
+`dispatch.sh` is the other way a run starts; the two are serialised by one `flock` (see `dispatch-runtime`).
+It reads the board,
 picks the oldest eligible issue, picks a master, and shells out to `dispatch.sh`. It never closes an
 issue and never closes a Feature — it only starts runs.
 

@@ -1,7 +1,7 @@
 ---
 title: "subprocess-catalogue — the extra required steps a KIND of work has"
 description: "Mirrored from the fleet knowledge base: wi/components/subprocess-catalogue.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/subprocess-catalogue.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -38,7 +38,8 @@ deliberately, and `talent` (added 2026-10-01) because it has none yet.
 
 ## HOW IT WORKS TODAY
 
-🔴 **THE DIRECTORY IS THE ROUTING, not `SUBPROCESSES.md`.** The generated index is for humans. The hook
+🔴 **THE DIRECTORY IS THE ROUTING, not the generated index** (`<portfolio>/subprocesses/README.md`,
+once `SUBPROCESSES.md`). The index is for humans. The hook
 reads the filesystem — until plugin 0.53.0 it ran a `sed` over that file's first column, which could
 not see the `## <mode>` headings the file is grouped by, and would have kept offering every id in the
 portfolio while looking exactly as correct as before. A first-column parser over a generated table
@@ -63,7 +64,7 @@ outside `dispatch`.
 flowchart TD
     D[("portfolio/subprocesses/MODE/id.md<br/>frontmatter: subprocess · portfolio · modes · monitor · status")]
     D --> IDX["subprocess-index.py<br/>--check reports drift"]
-    IDX --> MD["portfolio/SUBPROCESSES.md<br/>GENERATED — do not hand-edit"]
+    IDX --> MD["portfolio/subprocesses/README.md<br/>GENERATED — do not hand-edit"]
     D --> HOOK["userpromptsubmit-mode-inject.sh<br/>reads the DIRECTORY, not the index"]
     HOOK -- "planning turns only, step below FILE" --> Q3["Q3 of step zero:<br/>2 ranked · general · none / type it"]
     Q3 --> PLAN["Subprocess: id, general or none<br/>in the plan header"]
@@ -158,7 +159,7 @@ one-liner above is the answer; this doc states no count for the same reason.
   *"Line-number citation detected"* across `money-path` · `device` · `rip` · `doc-update`. Those are
   ADVISORY by design, but the exit code is the only thing CI reads, so the advisories accumulate with
   nothing that ever forces them down.
-- ⚠ **`SUBPROCESSES.md` exists for four portfolios and the other two are indistinguishable from
-  broken.** `govcon` has no catalogue deliberately (and `talent`, added 2026-10-01, has none yet), and the absence of a file is how that is
+- ⚠ **The generated index (`<portfolio>/subprocesses/README.md`) exists for three portfolios and the other
+  two are indistinguishable from broken.** `govcon` has no catalogue deliberately (and `talent`, added 2026-10-01, has none yet), and the absence of a file is how that is
   encoded — so "deliberately has none" and "the generator never ran for it" look identical on disk. The
   only disambiguator is the doctrine sentence saying so.

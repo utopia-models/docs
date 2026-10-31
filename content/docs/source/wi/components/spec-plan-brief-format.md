@@ -1,7 +1,7 @@
 ---
 title: "spec-plan-brief-format — the brief that lives beside the work"
 description: "Mirrored from the fleet knowledge base: wi/components/spec-plan-brief-format.md"
-updated: 2026-08-31
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/spec-plan-brief-format.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -23,9 +23,7 @@ owns:
 
 The committed shape a dispatched master is handed: `spec.md` (objective · acceptance · scope ·
 grounding), `plan.md` (phases → checkbox items, which **are** the live work state), and optionally
-`decisions/` beside them. Post-rebuild dispatch runs 7/7 against a ~20% baseline, and the delta is
-**brief quality, not model quality** — which is the whole reason this is a component and not a
-convention.
+`decisions/` beside them.
 
 Stop it and a master receives an issue title, a body, and no contract: it re-derives the target from the
 repo, which is exactly the ~20% baseline.
@@ -130,16 +128,16 @@ m.value("8", "_process/spec-contract.md", r"the (\d+)-point contract")
 
 ## KNOWN BROKEN
 
-- 🔴 **Fewer than half the spec directories hold both halves of the brief.** Measured this session:
+- 🔴 **About a third of the spec directories lack one half of the brief.** Measured 2026-10-31:
 
   ```
-  ls -d */specs/*/ | wc -l                                    → 186
-  ls */specs/*/spec.md | wc -l                                → 106
-  ls */specs/*/plan.md | wc -l                                → 109
-  (dirs holding BOTH)                                         → 100
+  ls -d */work/specs/*/ | wc -l                               → 339
+  ls */work/specs/*/spec.md | wc -l                           → 239
+  ls */work/specs/*/plan.md | wc -l                           → 245
+  (dirs holding BOTH)                                         → 223
   ```
 
-  So 86 of 186 spec directories are missing `spec.md`, `plan.md`, or both, while doctrine states the
+  So 116 of 339 spec directories (34%) are missing `spec.md`, `plan.md`, or both, while doctrine states the
   brief is the pair. Nothing lints the shape — `kb-lint.py` grades `wi/components/`, not `*/specs/` —
   so a half-brief is indistinguishable from a complete one until a master opens it.
 - 🔴 **Nothing checks that an issue body names its spec, and the failure is silent by construction.**
@@ -149,7 +147,7 @@ m.value("8", "_process/spec-contract.md", r"the (\d+)-point contract")
   attach without parsing prose. The Feature this doc was written under hit exactly that: #7313-#7318
   named only a `claude.ai` artifact URL no dispatched master can open, and a master had to extract a
   committed brief from a 235 KB HTML rendering before any phase could run.
-- ⚠ **`decisions/` is present in 16 of 186 spec directories.** That is consistent with the two-test
+- ⚠ **`decisions/` is present in 46 of 339 spec directories** (2026-10-31). That is consistent with the two-test
   guard (a record only where the choice is expensive to reverse), and it is equally consistent with
   records simply not being written. The two are indistinguishable from outside the session that made
   the choice, which is the known cost of a discipline with no linter.

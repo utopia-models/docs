@@ -1,7 +1,7 @@
 ---
 title: "Research work in step 2 LOOP defaults to a dispatched background subagent, never my own tool calls"
 description: "Mirrored from the fleet knowledge base: _rules/run-research-means-dispatch-not-do-it-yourself.md"
-updated: 2026-10-19
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_rules/run-research-means-dispatch-not-do-it-yourself.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -37,7 +37,7 @@ researching anything is the trigger on its own.
 
 The next tool call is `Agent` (background), not an exploratory `Bash`/`WebFetch`/`Playwright`/`Grep`
 call of my own. Do not do a "quick check first" — that quick check is the exact foreground research
-Tyler has corrected four times now. Multi-axis research means 4-8 parallel subagents per question by
+Tyler has corrected six times now. Multi-axis research means 4-8 parallel subagents per question by
 default, not one sequential foreground attempt. **When Tyler names `/anthropic-skills:deep-research`
 specifically, that IS the required mechanism** — load the skill and run its real coordinator process
 (title, decomposition, parallel subagents, single report-writer), not a bare single-`Agent` shortcut
@@ -48,13 +48,13 @@ retrying variations.
 
 ## Cost when it fired
 
-**Four distinct recurrences across three sessions** (2026-09-22 ×2 within one session, 2026-09-28 ×2 —
-first on a different plan in a different session that same day, then AGAIN in a THIRD session that same
-day via `WebFetch` specifically, despite the rule already being loaded and dated that same day): each
+**Six recurrences across the four case files** (2026-09-22 ×2 within one session; 2026-09-28 ×3, two
+on different plans and then AGAIN via `WebFetch` specifically, despite the rule already being loaded and
+dated that same day; 2026-09-30 ×1, four foreground greps during a live call): each
 time Tyler had to stop the work and say it explicitly, in stronger language each time — from "run
 research yourself" (09-22) to "I really hate how you are doing everything in the foreground" (09-28,
 first instance) to "you keep fucking doing this" (09-28, second instance) to "that research you just
-ran was so fucking shit" (09-28, third instance, a NEW session, rule already on disk and dated that
+ran was so fucking shit" (09-28, third instance, rule already on disk and dated that
 same day). The rule surviving being loaded, dated, and still failing on the very next real research
 moment is the clearest evidence yet that the trigger needed to name the specific tool (`WebFetch`) and
 the specific required mechanism (`deep-research`) explicitly, rather than trusting the structural

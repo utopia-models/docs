@@ -39,9 +39,9 @@ registry that used to carry step-1/2 events was retired (ADR-10109).
 
 | # | step | derived from |
 |---|---|---|
-| 1 | **BRIEF** — Tyler's rough note, restated. No research yet | `brief:<iso>` on the entry |
-| 2 | **LOOP** ⟳ — research ⇄ questions, repeating | `agent:N` ≥ 1 |
-| 3 | **FILE** — ≥1 issue exists for this plan | a `gh:` reference on the entry |
+| 1 | **BRIEF** — Tyler's rough note, restated. No research yet | Plan issue open (label `planning`), no Feature linked, no `▶` comment |
+| 2 | **LOOP** ⟳ — research ⇄ questions, repeating | the same; 1 and 2 are not told apart since the registry's `brief:`/`agent:` events were dropped |
+| 3 | **FILE** — ≥1 issue exists for this plan | ≥1 Feature linked to the Plan issue (a sub-issue, or a `Features:` body line) |
 | 4 | **DISPATCHED** — a master is executing | ≥1 referenced issue OPEN |
 | 5 | **DONE** | every referenced issue CLOSED |
 
@@ -54,7 +54,7 @@ flowchart TD
     B --> L["2 LOOP ⟳ — research ⇄ AskUserQuestion"]
     L -->|"'research more'"| L
     L -->|"click 'file it' · or the typed sentence"| F["file-issue.sh --chain or --wave<br/>--plan PLAN-N"]
-    F --> G["3 FILE — a gh: ref lands on the entry"]
+    F --> G["3 FILE — a Feature lands under the Plan issue"]
     G --> D["4 DISPATCHED — sweeper starts a master"]
     D --> M{"planning mode (Q1)"}
     M -- "dispatch" --> S{"bound subprocess<br/>monitor: field"}
@@ -146,14 +146,6 @@ here; the probes above read them where they actually are.
 
 ## KNOWN BROKEN
 
-- 🔴 **The doctrine file states a subprocess count that disk has already outgrown.**
-  `_process/steps/` heads its table *"The 17 subprocesses, by mode then
-  portfolio"*. Measured this session:
-  `for d in */subprocesses/*/; do ls $d*.md; done | wc -l` → **18** — WI's `interactive/` has gained
-  `wi-plan.md`, which appears in no cell of that table. The same section carries a 🔴 note saying the
-  table *"SAID 12 AND DISK HELD 17"* and instructs the reader to re-derive rather than edit a cell; it
-  has drifted again since. The count belongs to `subprocess-catalogue`, and this doc deliberately does
-  not restate it.
 - ⚠ **Nothing binds the two doctrine files to each other.** `planning-vocab.md` is the master-facing
   compaction of `planning-loop.md`, and a rule changed in one is not checked against the other — the
   `~/.claude/rules/planning-loop.md` symlink resolves to a *different file* per class, by design

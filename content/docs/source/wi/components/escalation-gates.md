@@ -1,7 +1,7 @@
 ---
 title: "escalation-gates — a claim that blocks work must be re-derivable, or it is not a gate"
 description: "Mirrored from the fleet knowledge base: wi/components/escalation-gates.md"
-updated: 2026-09-08
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/escalation-gates.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -25,7 +25,8 @@ owns:
 ## WHAT IT IS
 
 The fleet's rule that **no claim which stops work may be prose**, and the four instruments that enforce it
-at four different moments. One sentence explains all of them: *nothing in this fleet reads English.*
+at four different moments. One rule explains all of them: *a claim that blocks work counts only if a command can
+re-check it; prose alone never blocks.*
 
 | moment | instrument | what it refuses |
 |---|---|---|

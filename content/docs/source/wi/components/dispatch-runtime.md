@@ -68,13 +68,13 @@ would permanently unqueue an issue whose only problem is transient.
 | guard | refuses when | exit | escape hatch |
 |---|---|---|---|
 | quota (#3906) | the master's own `~/.claude/state/quota-status.json` says `exhausted: true` with a `resetsAt` still ahead | `9` | `DISPATCH_IGNORE_QUOTA=1` |
-| duplicate, same master (#4484) | a `task-<issue>-*.service` is already `--state=active` on that box | `11` | `DISPATCH_ALLOW_DUPLICATE=1` |
+| duplicate, same master (#4484) | a `task-<issue>.service` (or a `DISPATCH_ALLOW_DUPLICATE` `task-<issue>-dup-*` copy) is already `--state=active` on that box | `11` | `DISPATCH_ALLOW_DUPLICATE=1` |
 | fleet claim (#7167) | the flock-held probe finds a live run for this issue on **any** master | `14` | — |
 
 **Only the third has no window.** A read-then-act check has 26-27 s between the read and the launch
 (#6960's timings), and two dispatchers reading the board in the same second both pass it. The zero-entropy
-unit name `task-<issue>` closes that for one master — systemd refuses a duplicate name in the kernel — but
-a user manager is per-USER, so `task-7124.service` under `cloud` and under `nova` are two different names.
+unit name `task-<issue>` closes that for one master, because that master's systemd user manager refuses
+to start a second unit with the same name, but a user manager is per-USER, so `task-7124.service` under `cloud` and under `nova` are two different names.
 The `flock` on novaserver is what covers the cross-master case, because both dispatch paths (the sweeper
 running locally as `nova`, and a hand dispatch arriving over ssh) execute the claim as the same unix user
 on the same box. Proven against real systemd, with a mutation control, by
@@ -153,7 +153,7 @@ sudo -n -u svc-ops XDG_RUNTIME_DIR=/run/user/$(id -u svc-ops) systemctl --user c
 ```
 
 A run leaves nothing resident between invocations, so there is no daemon to check: the transient
-`task-<issue>-<epoch>` unit while it lives, and the ▶/✔/✘ comment on the issue afterwards, are the
+`task-<issue>` unit while it lives, and the ▶/✔/✘ comment on the issue afterwards, are the
 only liveness the runtime has.
 
 

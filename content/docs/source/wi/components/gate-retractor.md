@@ -1,7 +1,7 @@
 ---
 title: "gate-retractor — the thing that stops a resolved gate from still asking for Tyler"
 description: "Mirrored from the fleet knowledge base: wi/components/gate-retractor.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/gate-retractor.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -56,7 +56,7 @@ flowchart TD
     N --> F
 ```
 
-Three properties that are easy to get wrong and are each defended in the script rather than assumed:
+Four properties that are easy to get wrong, each defended in the script rather than assumed:
 
 - **It never closes an issue.** Whether the WORK is done is a different question from whether a HUMAN
   is still needed, and conflating them is how #5297 was closed 21 seconds before its own run said the
@@ -71,8 +71,12 @@ Three properties that are easy to get wrong and are each defended in the script 
   carries an `untested` count.
 - **It runs text written on the board, by construction.** The bounds are authorship (org
   OWNER/MEMBER/COLLABORATOR or the App bot) and a per-block `timeout`. There is deliberately no
-  sandbox beyond that: anyone who can write an org-member comment here can already push code to the
-  repo the retractor would be defending.
+  sandbox beyond that. `author_association` is not a permission check: MEMBER or COLLABORATOR would also
+  admit a read- or triage-only account. Measured 2026-10-31, none exists: the org's
+  `default_repository_permission` is `write` and all 8 collaborators on this repo hold `write` or `admin`
+  (`gh api repos/utopia-models/knowledge/collaborators --jq '.[].role_name'`), so every admitted author
+  can already push code to the repo the retractor would be defending. Granting anyone read or triage
+  only would break that, and the script would not notice.
 
 **The clone is the subtle part.** `ExecStart` points at `%h/.claude/state/gate-retractor/knowledge`,
 a `--filter=blob:none` partial clone this component owns — never `~/dev/utopia-models/knowledge`,

@@ -1,7 +1,7 @@
 ---
 title: "fleet-refresh-tailnet — the discovered tailnet roster"
 description: "Mirrored from the fleet knowledge base: wi/components/fleet-refresh-tailnet.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/fleet-refresh-tailnet.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -34,58 +34,56 @@ session kept reading it as current.
 
 ## HOW IT WORKS TODAY
 
-🔴 **The unit now runs the REPO copy** (`%h/dev/utopia-models/knowledge/_infra/scripts/fleet-refresh-tailnet.sh`
-on svc-ops' account — read it with `sudo -n -u svc-ops XDG_RUNTIME_DIR=/run/user/$(id -u svc-ops) systemctl --user cat fleet-refresh-tailnet.service`). The diagram
-and the next three paragraphs describe the `brain-nova` copy that used to run under `nova`: the repo copy
-has **no** `reset --hard` sync, a node writer, and a comparison that still includes `online` (see KNOWN BROKEN).
+🔴 **The unit runs the REPO copy** (`%h/dev/utopia-models/knowledge/_infra/scripts/fleet-refresh-tailnet.sh`
+on svc-ops' account, every 30 minutes by `OnCalendar=*:0/30`; read it with
+`sudo -n -u svc-ops XDG_RUNTIME_DIR=/run/user/$(id -u svc-ops) systemctl --user cat fleet-refresh-tailnet.service`).
+Everything in this section describes that copy, read from the repo on 2026-10-31.
 
 ```mermaid
 flowchart TD
-    T["fleet-refresh-tailnet.timer (svc-ops)"] --> S["fleet-refresh-tailnet.service"]
-    S --> SY["git fetch + reset --hard origin/main<br/>on nova's knowledge clone"]
-    SY --> DISC["DISCOVER the registry:<br/>git ls-files '*registry/tailnet.json'"]
-    DISC -->|"tracked nowhere"| F
-    DISC --> TS["tailscale status --json"]
-    TS -->|"empty or unparseable"| F["fail() — reason to the log AND<br/>a non-zero exit, so OnFailure=<br/>files a board issue (#3732)"]
-    TS --> W["write tailnet.json:<br/>host · ip · os · online · self"]
-    W --> SIG{"topology signature<br/>(host/ip/os/self, `online` and<br/>generatedAt NORMALIZED AWAY)"}
-    SIG -- "unchanged" --> D["git checkout -- the file:<br/>liveness churn commits nothing"]
-    SIG -- "changed" --> P["commit + push STRAIGHT to main<br/>(fallback: push-artifact-via-pr.sh)"]
+    T["fleet-refresh-tailnet.timer (svc-ops, every 30 min)"] --> S["fleet-refresh-tailnet.service"]
+    S --> DISC["DISCOVER the registry in svc-ops' clone:<br/>git ls-files '*registry/tailnet.json'"]
+    DISC -->|"tracked nowhere"| F["exit 1 -> OnFailure=<br/>fleet-notify files a board issue"]
+    DISC --> TS["tailscale status --json | node writer<br/>host · ip · os · online · self,<br/>minus TAILNET_EXCLUDE_IPS"]
+    TS -->|"empty output"| F
+    TS --> CMP{"compare with the committed file,<br/>every line but generatedAt<br/>(online INCLUDED)"}
+    CMP -- "unchanged" --> D["discard tailnet.json.new"]
+    CMP -- "changed" --> P["commit as fleet-refresh,<br/>pull --rebase -X ours, push to main<br/>(no PR fallback; a failed push prints<br/>'commit/push skipped' and exits 0)"]
     P --> R["SessionStart injects it as LIVE TAILNET<br/>on every box, every session"]
-    style SIG fill:#9cf,stroke:#09c,stroke-width:3px
+    style CMP fill:#9cf,stroke:#09c,stroke-width:3px
     style DISC fill:#9cf,stroke:#09c,stroke-width:3px
     style F fill:#f66,stroke:#900
 ```
 
-**The signature is the whole design.** A 6-device tailnet flaps `online`/`offline` between runs, and a
-change signature that included `online` produced ~26 of 400 corpus commits (6.5%) of pure liveness
-churn. So the comparison strips `online`, re-sorts by host, and ignores `generatedAt` — a flap
-deterministically commits nothing, a device joining or leaving always does (#1609).
+**The comparison includes `online`, so a device flapping online/offline commits a snapshot.** That is the
+churn #1609 removed from the brain copy (see Previous design and KNOWN BROKEN).
 
-**Every non-success path exits non-zero on purpose.** Before #3732 the only failure signal was a line in
-a local log nobody reads, and the registry directory had been renamed out from under the script by the
-portfolio reorg — so `json.dump` raised `FileNotFoundError` on **every run for 17 days** while the
-snapshot silently stayed frozen. The script fails loudly on every such path and reports python's
-*actual* stderr rather than a guessed message.
-
-**🔴 The registry path is DISCOVERED FROM GIT, never written down — because a candidate list broke it
+**The registry path is DISCOVERED FROM GIT, never written down, because a candidate list broke it
 TWICE.** #3732's fix was *"keep the historical candidates as fallbacks"*, which is a list of the renames
 that had **already** happened; on 2026-08-31 `cdfea10e8` (#7316) moved
 `world-infrastructure/fleet/registry` to `wi/registry` and **all three candidates died in one commit**
-(#7359). The script now resolves `git ls-files --full-name -- '*registry/tailnet.json'` (falling back to
-`*tailnet.json`, then `git ls-tree -r origin/main`) and fails loudly if the file is tracked nowhere, so
-the next rename costs nothing. The resolution runs **after** the `origin/main` sync — resolving a path
-out of a stale index resolves a stale path — and the resolved path is echoed into the log line, so a
-reorg is visible in `tail -1` rather than only in a failure.
+(#7359). The script resolves `git ls-files --full-name -- '*registry/tailnet.json'` (falling back to
+`*tailnet.json`, then `git ls-tree -r origin/main`) and exits 1 if the file is tracked nowhere, so the
+next rename costs nothing.
 
-**It pushes straight to `main`, deliberately.** The old path opened a `claude/*` PR for a
-`fleet-auto-merge.yml` that no longer exists, on the premise of branch protection that 403s on this
-plan tier — a PR opened there would sit open forever. `push-artifact-via-pr.sh` remains the fallback
-for the day protection comes back.
+**It pushes straight to `main`.** It commits into svc-ops' own clone, then `pull --rebase -X ours` before
+pushing. There is no `reset --hard` and no PR fallback. Work in a worktree, never in a clone a timer
+writes to.
 
-**The brain copy `git reset --hard origin/main` on nova's shared knowledge clone at the top of every run;**
-the repo copy that runs today does not — it commits into svc-ops' own clone and `pull --rebase -X ours`
-before pushing. Either way, work in a worktree, never in a clone a timer writes to.
+### Previous design: the `brain-nova` copy
+
+Until knowledge#9201 the unit ran `/home/nova/.claude/scripts/fleet-refresh-tailnet.sh` as `nova`. That
+copy (still on disk, not run) differs in four ways:
+
+- it ran `git fetch` + `reset --hard origin/main` on nova's shared knowledge clone before regenerating,
+  and resolved the registry path after that sync;
+- it used a python writer and a **topology signature** that strips `online`, re-sorts by host and ignores
+  `generatedAt`, so a flap committed nothing and a device joining or leaving always did (#1609). With
+  `online` in the comparison, ~26 of 400 corpus commits (6.5%) had been pure liveness churn;
+- every non-success path exited non-zero and reported python's actual stderr (#3732). Before that, the
+  registry directory had been renamed out from under the script, `json.dump` raised `FileNotFoundError`
+  on **every run for 17 days**, and the snapshot silently stayed frozen;
+- when a push to `main` was rejected it fell back to `push-artifact-via-pr.sh` (see FIXED, #9409).
 
 ## BOUND VALUES
 

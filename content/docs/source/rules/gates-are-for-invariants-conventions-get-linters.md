@@ -1,7 +1,7 @@
 ---
 title: "A fail-closed gate is for a stable invariant only. Every other check is advisory, or it degrades the fleet."
 description: "Mirrored from the fleet knowledge base: _rules/gates-are-for-invariants-conventions-get-linters.md"
-updated: 2026-10-23
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_rules/gates-are-for-invariants-conventions-get-linters.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -21,7 +21,7 @@ last-recurrence: 2026-08-28
 About to add a gate, required review, branch protection, or blocking CI check — or to enforce a convention mechanically because a correction did not stick.
 
 🔴 **An ADVISORY as the whole fix** tells the ARCHITECT; only **doctrine** changes what a run does. Ask *"where would a master READ this?"* (a correct advisory merged 2026-08-16; ten more violations landed in four hours).
-🔴 **A banned-word check is the brute-force shape — never ship one** (Tyler: *"LEGACY WRITING ALWAYS REMAINS!!! BECAUSE YOU JUST DO BRUTE FORCE FIXES!!!"*): it runs after the wrong text exists and knows only today's words. A recurring wrong term is a NAMING GAP — `pick_master()` returns a reason from a **closed enum** (`quota-exhausted` · `rate-limited` · `entitlement-dark`) so "busy" cannot be written.
+🔴 **A banned-word check is the brute-force shape — never ship one** (Tyler: *"LEGACY WRITING ALWAYS REMAINS!!! BECAUSE YOU JUST DO BRUTE FORCE FIXES!!!"*): it runs after the wrong text exists and knows only today's words. A recurring wrong term is a NAMING GAP — `pick_master()` returns a reason from a **closed enum** (`quota-exhausted` · `rate-limited` · `entitlement-dark` · `login-expired`) so "busy" cannot be written.
 🔴 **A doc's stated value is a claim about code** — bind it with `cog_machinery.py`'s `value()` or do not state it.
 
 ## Trigger detail (full text — kept out of the always-loaded bundle)

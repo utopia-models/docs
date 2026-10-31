@@ -1,7 +1,7 @@
 ---
 title: "occ — the Org Command Center, and the org's only read surface"
 description: "Mirrored from the fleet knowledge base: wi/components/occ.md"
-updated: 2026-10-25
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/occ.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -64,9 +64,8 @@ Merge, wait out the cache, curl.
 
 **Two layers of defence against a corpus reorg**, added because the registry directory has moved four
 times and each move 502'd every `/v1` route: a known-prefix list tried current-first, then a git
-tree-API self-heal that finds a registry file under **any** `fleet/registry` directory at any depth.
-Read them at `apps/web/lib/occ-registry.ts` — `REG_PREFIXES` and `REG_DIR_SUFFIX`. 🔴 See KNOWN
-BROKEN: this plan's own target tree defeats both.
+tree-API self-heal that finds a registry file under **any** `wi/registry` or `fleet/registry` directory
+at any depth. Read them at `apps/web/lib/occ-registry.ts` — `REG_PREFIXES` and `REG_DIR_SUFFIXES`.
 
 **Determine current state — the surface is CLIENT-RENDERED, so a curl proves less than it looks:**
 
@@ -134,16 +133,6 @@ curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" \
 
 ## KNOWN BROKEN
 
-- 🔴 **This plan's own target tree breaks the OCC's registry reads, and nothing would go red.**
-  `apps/web/lib/occ-registry.ts` recovers from a corpus move two ways, and both key on the literal
-  string `fleet/registry`: `REG_PREFIXES` lists four historical prefixes (`world-infrastructure/…`,
-  `_org/…`, `fleet/registry`, `FLEET/registry`) and the tree-API self-heal matches
-  `REG_DIR_SUFFIX = "fleet/registry"`. PLAN-256's target puts the registry at **`wi/registry/`**,
-  which ends in neither. Measured 2026-08-31 in the utopia clone:
-  `grep -n 'REG_DIR_SUFFIX' apps/web/lib/occ-registry.ts` → `REG_DIR_SUFFIX = "fleet/registry"`.
-  **P3 (#7316) must land a matching edit in `utopia-models/utopia`, in the same wave**, or the OCC's
-  `/v1/org` and the World Infrastructure section go blank the moment the move merges. The `cog` block
-  above turns red on the move — that is the alarm, and it is in this repo, not that one.
 - 🔴 **The `deploy` check on utopia PRs never fires** — that workflow startup-fails. A green PR is not
   a deployed OCC. Confirm prod by grepping the SERVED bundle for a marker string.
 - ⚠ **Vercel's git-author check goes red on fleet PRs** (a master's commit email resolves to its

@@ -1,7 +1,7 @@
 ---
 title: "novaserver-route-watchdog — the on-box half, the one that can actually fix it"
 description: "Mirrored from the fleet knowledge base: wi/components/novaserver-route-watchdog.md"
-updated: 2026-10-29
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/novaserver-route-watchdog.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -149,11 +149,12 @@ head -c99 /var/lib/novaserver-route-watchdog/{ladders,rung,fail-count,exhausted-
 ls /var/lib/novaserver-route-watchdog/spool/
 ```
 
-Installed-vs-repo drift, which nothing else reports:
+Installed-vs-repo drift, which nothing else reports, and whether the unit's `ExecStart` target exists:
 
 ```
 sudo diff /usr/local/sbin/novaserver-route-watchdog          _infra/scripts/novaserver-route-watchdog.sh
 sudo diff /usr/local/sbin/novaserver-route-watchdog-announce _infra/scripts/novaserver-route-watchdog-announce.sh
+python3 _infra/scripts/verify-unit-execstart.py system:novaserver-route-watchdog.service
 ```
 
 🔴 Any `journalctl` question about this unit needs `sudo`: without the `adm` group it exits 0
@@ -174,11 +175,11 @@ printing `-- No entries --`, so a count of triggers comes back `0` whether or no
   the **only** row in the file with this residue, so it reads as deliberate rather than as a leftover.
   The commands themselves are good; they belong in this doc's DETERMINE CURRENT STATE, where they
   now are, and not in a description field nothing runs.
-- ⚠ **`ladders` is spent and nothing resets it but a reboot.** Measured this session:
+- ⚠ **`ladders` is spent and nothing resets it but a reboot.** Measured 2026-10-31:
   `head -c99 /var/lib/novaserver-route-watchdog/{ladders,rung,fail-count}` → `1`, `0`, `0`;
   `cat /proc/sys/kernel/random/boot_id` matches the unit's own `boot-id` file; `uptime -s` →
-  `2026-08-09 18:52:00`. So one of the per-boot ladders is spent from a real save on this boot, and
-  with a 21-day uptime that counter only falls on a reboot the box deliberately never performs on its
+  `2026-10-28 19:13:03`. So one of the per-boot ladders was spent on this boot (`last-ladder` written
+  2026-10-29T21:22Z), and that counter only falls on a reboot the box deliberately never performs on its
   own. Two ladders remain — healthy, but it is a budget that only ever decreases.
 - ⚠ **Nothing on the box watches this watchdog.** It is a `oneshot`, so a crash mid-ladder retries at
   the next tick with all state on disk — but a masked timer or a clock jump goes unnoticed here. The

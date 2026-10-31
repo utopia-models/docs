@@ -71,7 +71,7 @@ lane placeholder set; two of its guards carry their own regression tests, in `ow
 **`chain-collision-check.sh` is why a wave is safe to fan out.** Worktrees prevent *tree* collisions,
 never *merge* collisions: two phases editing one file in parallel means last PR wins. The check runs
 at FILING time and writes its findings into each issue body, so the master who draws that phase reads
-the collision instead of discovering it. This very issue carries such a block.
+the collision instead of discovering it.
 
 **It is not reachable by the sweeper, and that is structural, not a gap.** The sweeper's `MASTERS`
 list is a hardcoded string on novaserver; the Architect (unix user `architect` on novaserver since knowledge#10285) is never dispatched, and the
@@ -123,13 +123,6 @@ tailscale status | grep -E '\seth-1\s'                          # peer: is the l
 
 ## KNOWN BROKEN
 
-- 🔴 **Its own reference doc still says its class is wrong.**
-  `wi/work/reference/win/master-agent.md` reads *"**Class:** `master-agent` today, and
-  that is known to be wrong … the `architect-agent` class exists for it (#6944) and it is flipped onto
-  it in W3 (#6946)"*. The flip **has happened**: measured this session,
-  `grep -n 'class: architect-agent' wi/registry/organization.yaml` → `496`.
-  The doc describes a pending change that is already done, which reads as a live defect to anyone
-  grounding on it.
 - 🔴 **The registry id for this component is `master-agent`.**
   `wi/registry/components.yaml` still carries `- id: master-agent` with
   `doc: wi/work/reference/win/master-agent.md` — an id that names the class this agent

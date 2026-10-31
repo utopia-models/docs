@@ -1,7 +1,7 @@
 ---
 title: "Step 4 — DISPATCHED"
 description: "Mirrored from the fleet knowledge base: _process/steps/4-dispatch.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_process/steps/4-dispatch.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -17,8 +17,8 @@ reader: the /execution-start, /execution-continue and /execution-status skills
 
 **A master is executing.** Derived from ≥1 referenced issue being OPEN — never reported.
 
-**Step 4 is called DISPATCHED because dispatch is the THESIS, not a label.** Filing a chain hands work to four boxes
-already paid for, running in parallel, with no Architect in the loop. That is why filing the whole chain matters and
+**Step 4 is called DISPATCHED because dispatch is the THESIS, not a label.** Filing a chain hands work to four masters
+(four unix users on one host) already paid for, running in parallel, with no Architect in the loop. That is why filing the whole chain matters and
 filing only the head does not.
 
 ## The step-4 MODE — two values, and neither is "blocked"
@@ -62,7 +62,7 @@ step files, never in the door.
 it, so picking work back up meant re-reading a one-time filing step that had already run. **Both doors are on the
 Architect's box; a master never types either.**
 
-## 🔴 One account, four boxes — do not plan around per-master quota headroom
+## 🔴 One account, four masters — do not plan around per-master quota headroom
 
 The claim *"each master runs on its own Claude subscription, so work runs in parallel across separate quotas"* was
 **measured false** on 2026-08-27. The login is DERIVED, never declared:
@@ -71,7 +71,7 @@ The claim *"each master runs on its own Claude subscription, so work runs in par
 for f in _infra/occ-feeds/usage/*.json; do jq -r '.account' $f; done
 ```
 
-returns the same account for win, nova, cloud AND dust. **One account, four boxes.** The parallelism is real for
+returns the same account for win, nova, cloud AND dust. **One account, four masters.** The parallelism is real for
 wall-clock and worktrees; **the quota isolation is not.** A hard session limit **darkens every master at once** — P7
 of #6923 failed `exit=1` with *"You've hit your session limit · resets 12am (UTC)"*, and a close-out reading *"the
 master is dark"* undersells it by a factor of four. 🔴 **Do not re-dispatch on a quota failure, and do not re-dispatch

@@ -24,7 +24,8 @@ The fleet's public wiki: `docs.utopiamodels.ai`, a Fumadocs site (repo `utopia-m
 describing the fleet for outsiders — AI research models researching Tyler are a confirmed real
 reader (Perplexity reads it directly for job-application research; PLAN-286).
 
-🔴 **It was retired to a 301 on 2026-08-30, then UN-RETIRED on 2026-09-04** (PR #34, docs-wiki). Two
+🔴 **It was retired to a 301 on 2026-08-30, then UN-RETIRED on 2026-09-04** (both in the
+since-deleted `docs-wiki` repo). Two
 real, opposite states inside two weeks — read the live state, never a snapshot. See KNOWN BROKEN for
 what that cost.
 
@@ -99,8 +100,7 @@ regression. That is also the pressure ADR-7289 refused to put on this repo when 
 a repo of its own.
 
 **There is no exception.** A per-page `private: true` login gate (knowledge#8023/#8034) existed for
-one day to hide the AI Vampire module; both were removed in knowledge#8043 (docs-wiki#59) — the
-module's content was deleted with its portfolio and lives in git history. Probe that nothing gated came back:
+one day to hide one module; both the gate and the module were removed (knowledge#8043). Probe that nothing gated came back:
 
 ```
 $ curl -s -o /dev/null -w '%{http_code}\n' https://docs.utopiamodels.ai/login   # 404
@@ -155,7 +155,8 @@ To see the live page list: `gh api repos/utopia-models/docs/git/trees/main?recur
 ## KNOWN BROKEN
 
 - 🔴 **This doc itself stated the RETIRED state as current for at least 8 days after it was reverted**
-  (retired `c700ffe2` 2026-08-30, un-retired PR #34 2026-09-04, doc corrected 2026-09-12/PLAN-299).
+  (retired 2026-08-30 and un-retired 2026-09-04, both in the since-deleted `docs-wiki` repo; doc corrected
+  2026-09-12/PLAN-299).
   Whoever reads a component doc for current state has no way to know it is stale without re-running its
   own probe — which is what happened here: PLAN-286 (2026-09-05) ran the live curl itself rather than
   trusting this doc, and found the site alive; this doc was not fixed until PLAN-299 found the

@@ -1,7 +1,7 @@
 ---
 title: "backup-mechanism — the org's durability layer"
 description: "Mirrored from the fleet knowledge base: wi/components/backup-mechanism.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/backup-mechanism.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -251,11 +251,11 @@ m.value("infisical:infisical homes:restic-homes", "_infra/svc-ops/ops/backup-fre
 The database backups — timers, the last run, and the monitor's verdict on R2:
 
 ```
-ssh nova@100.71.25.43 "sudo -n -u svc-ops bash -c 'export XDG_RUNTIME_DIR=/run/user/\$(id -u); \
+ssh nova@<host> "sudo -n -u svc-ops bash -c 'export XDG_RUNTIME_DIR=/run/user/\$(id -u); \
   systemctl --user list-timers db-backup-local.timer backup-freshness-monitor.timer --all --no-legend; \
   tail -6 ~/.claude/logs/db-backup-local.log; head -2 ~/.claude/state/db-backup/*.verify.txt; \
   bash ~/.claude/ops/backup-freshness-monitor.sh'"
-ssh nova@100.71.25.43 "systemctl --user list-timers infisical-backup.timer infisical-restore-drill.timer --all --no-legend"
+ssh nova@<host> "systemctl --user list-timers infisical-backup.timer infisical-restore-drill.timer --all --no-legend"
 ```
 
 The timed restore drill — the vault and one whole home into scratch, RPO and RTO printed (about two minutes):
@@ -274,22 +274,22 @@ ansible-playbook -i _infra/ansible/inventory.yml _infra/ansible/site.yml --tags 
 The off-box half — nova's timers with their last result, the last verdict of each, and the restic snapshots:
 
 ```
-ssh nova@100.71.25.43 'systemctl --user list-timers infisical-backup.timer infisical-export.timer \
+ssh nova@<host> 'systemctl --user list-timers infisical-backup.timer infisical-export.timer \
   infisical-restore-drill.timer infisical-offbox.timer restic-homes.timer --all --no-legend; \
   systemctl --user show -p Id,Result,ExecMainExitTimestamp infisical-offbox.service restic-homes.service; \
   tail -3 ~/.claude/logs/infisical-offbox.log ~/.claude/logs/restic-homes.log'
-ssh nova@100.71.25.43 'bash ~/.cache/ansible-pull/knowledge/_infra/backup/restic-homes.sh --snapshots'
+ssh nova@<host> 'bash ~/.cache/ansible-pull/knowledge/_infra/backup/restic-homes.sh --snapshots'
 # a restore into scratch, on demand: N files from each sampled home, sha256 against the live file
-ssh nova@100.71.25.43 'bash ~/.cache/ansible-pull/knowledge/_infra/backup/restic-homes.sh --restore-sample 10'
+ssh nova@<host> 'bash ~/.cache/ansible-pull/knowledge/_infra/backup/restic-homes.sh --restore-sample 10'
 ```
 
 The application store's copy — the timer, the copies Drive holds, and whether the newest one restores:
 
 ```
-ssh nova@100.71.25.43 "sudo -n -u scout XDG_RUNTIME_DIR=/run/user/1005 systemctl --user list-timers \
+ssh nova@<host> "sudo -n -u scout XDG_RUNTIME_DIR=/run/user/\$(id -u scout) systemctl --user list-timers \
   apply-store-backup.timer --all --no-legend"
-ssh nova@100.71.25.43 "sudo -n -u scout bash /home/scout/dev/utopia-models/knowledge/net/work/_tools/apply-store-backup.sh --list"
-ssh nova@100.71.25.43 "sudo -n -u scout bash /home/scout/dev/utopia-models/knowledge/net/work/_tools/apply-store-backup.sh --restore-check"
+ssh nova@<host> "sudo -n -u scout bash ~scout/dev/utopia-models/knowledge/net/work/_tools/apply-store-backup.sh --list"
+ssh nova@<host> "sudo -n -u scout bash ~scout/dev/utopia-models/knowledge/net/work/_tools/apply-store-backup.sh --restore-check"
 ```
 
 ## KNOWN BROKEN

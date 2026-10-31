@@ -1,7 +1,7 @@
 ---
 title: "novaserver — the always-on box"
 description: "Mirrored from the fleet knowledge base: wi/components/novaserver.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/novaserver.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -21,8 +21,8 @@ owns:
 
 ## WHAT IT IS
 
-The one machine that is always on. Six unix accounts live here — four interchangeable masters plus
-the personal and always-on agents — alongside the only secret store, the observability stack, all
+The one machine that is always on. Several unix accounts live here (four interchangeable masters, the
+Architect, the personal and always-on agents, and the `svc-ops` service account) alongside the only secret store, the observability stack, all
 three self-hosted Actions runners, and every fleet service that is not on Vercel.
 
 **If this box is down, the fleet is down.** There is no second box: dispatch has nowhere else to
@@ -128,14 +128,14 @@ Disk first, always: a full root volume presents as a hundred unrelated bugs. `df
 
 ## KNOWN BROKEN
 
-- 🔴 **The volume is one point below the reclaim threshold and the doc that describes it is a year of
-  old readings.** Measured this session: `df -h /` → `295G 251G 32G 89% /`, against
+- 🔴 **The doc that describes the volume is a series of old readings.** Measured 2026-10-31:
+  `df -h /` → `374G 223G 135G 63% /` (the volume has since grown from 295G), against
   `HIGH="${DISK_GUARD_HIGH:-90}"` in `~/.claude/ops/disk-guard.sh`. The superseded
   `reference/win/novaserver.md` states *"221G of 295G used, 79%, 62G free"* as its headline disk
   figure and *"75% — 72G free"* as the post-fix state. Both were true when written and neither is
   true now. This is why the section above states no disk number: a doc cannot hold a value that
-  changes hourly, and the sequence 78% → 75% → 89% across three dated claims in one file is what
-  that looks like when it is tried anyway.
+  changes hourly, and the sequence 79% → 78% → 75% across three dated claims in one file, with
+  89% and then 63% measured live since, is what that looks like when it is tried anyway.
 - 🔴 **The registry's `where:` for this row names a kernel the box is not running.**
   `wi/registry/components.yaml` reads `Linux 6.8.0-136-generic`; `uname -r`
   on the box → `6.8.0-137-generic`. A kernel version in a registry field is a claim that unattended

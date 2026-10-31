@@ -1,7 +1,7 @@
 ---
 title: "doc-integrity — the machinery that stops a document outliving what it describes"
 description: "Mirrored from the fleet knowledge base: wi/components/doc-integrity.md"
-updated: 2026-09-08
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/doc-integrity.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -27,7 +27,7 @@ owns:
 
 The checks that make a doc's factual claims fail CI when they stop being true: `cog` assertions inside
 each doc, the generated component indexes, and the generated prose regions. `knowledge-base` grades a
-doc's SHAPE; this grades its TRUTH. Turn it off and nothing breaks — which is the point: the failure it
+doc's SHAPE; this grades the facts a doc chooses to bind (paths, callers, units and stated numbers). Turn it off and nothing breaks — which is the point: the failure it
 prevents is silent by construction, and its motivating incident ran for 24 days without anyone noticing.
 
 ## HOW IT WORKS TODAY
@@ -78,8 +78,8 @@ win-docs-index.py and commit"* — a deadlock with a false claim inside it.
 when was it verified"*; the root `CLAUDE.md` block answers *"which doc do I read for this id"* and is
 capped to one line per row because it is the auto-loaded prefix of every session on every box.
 
-**Where each check runs:** `docs-cog.sh --check` and its negative control are steps of `guard.yml`'s
-`probes` job, on every push and every PR. `win-docs-index.py --check` and `kb-region-index.py` are in
+**Where each check runs:** `docs-cog.sh --check` and its negative control are steps of `probes.yml`'s
+`probes` job, on every PR and on pushes to `main`. `win-docs-index.py --check` and `kb-region-index.py` are in
 `lint.yml`, daily, advisory, and their findings reach the single upserted KB-drift issue.
 
 ## BOUND VALUES

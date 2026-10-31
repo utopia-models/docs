@@ -1,7 +1,7 @@
 ---
 title: "Verified work goes to main. I never ask Tyler to merge, approve, or deploy."
 description: "Mirrored from the fleet knowledge base: _rules/verified-work-goes-to-main-and-i-never-ask.md"
-updated: 2026-10-05
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_rules/verified-work-goes-to-main-and-i-never-ask.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -22,7 +22,8 @@ A PR is open, a deploy is ready, or a branch holds verified work — and a sente
 to proceed, or a check is red and looks like permission to stop.
 
 ## The rule
-Merge it (`--squash --admin` when a check is red or absent), push it, deploy it. A merge is
+Merge it (`--squash --admin` when the red or absent check is advisory; a failing build or a gitleaks
+finding is fixed first, never overridden), push it, deploy it. A merge is
 git-reversible; an open PR is what costs. Asking *"want me to deploy?"* hallucinates a gate that does
 not exist — deploys are the owning master's own authority, and auto-commit plus auto-push is the
 default in low-blast-radius repos.

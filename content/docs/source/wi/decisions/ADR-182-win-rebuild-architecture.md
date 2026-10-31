@@ -1,7 +1,7 @@
 ---
 title: "DR 2026-07-23 — The WIN Rebuild Architecture (ACCEPTED)"
 description: "Mirrored from the fleet knowledge base: wi/decisions/ADR-182-win-rebuild-architecture.md"
-updated: 2026-09-23
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/decisions/ADR-182-win-rebuild-architecture.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -36,7 +36,9 @@ decision).
 **C7 Superseded-by:** `world-infrastructure/specs/3511-one-brain-shape/decisions/001-guards-are-advisory-not-required.md`
 (2026-07-31, #3514) — C7's `(guard.yml, **required**)` is not achievable on this plan tier: both
 `/branches/main/protection` and `/rulesets` return 403. Guards are ADVISORY. **C1-C6 and C8 stand unchanged.**
-**Full working plan (options, inventory, migration):** `~/.claude/plans/playful-purring-sunrise.md` (1000xagent's box).
+**Full working plan (options, inventory, migration):** a private working document (`playful-purring-sunrise.md`),
+no longer in the tree since the plan documents were deleted with the plan registry (ADR-10109). This record keeps
+the decisions; the rejected alternatives are not reproduced here.
 
 ## Context
 
@@ -50,7 +52,7 @@ see its own drift. Tyler's #1 time-sink was repairing the machinery, which falsi
 **Non-goals (the scope fence):** walk-away autonomy · new revenue features inside the rebuild · multi-human
 scaling. Cost is a soft consideration, not a driver.
 
-## The Decisions (per component; alternatives + rejection reasons recorded in the plan file)
+## The Decisions (per component; alternatives + rejection reasons were recorded in the private plan file)
 
 - **Principle:** no stored copies of state · no resident processes · docs are the config (read at runtime).
   Drift classes are removed, not monitored. *(1-way door in spirit — reversing this recreates the disease.)*

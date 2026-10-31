@@ -1,7 +1,7 @@
 ---
-title: "skills-layer — the per-box command surface, and the one thing the plugin does NOT distribute"
+title: "skills-layer — the per-box command surface; only the plugin's own `skills/` reach every box"
 description: "Mirrored from the fleet knowledge base: wi/components/skills-layer.md"
-updated: 2026-10-27
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/skills-layer.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -17,7 +17,7 @@ owns:
   - net/.claude/skills
 ```
 
-# skills-layer — the per-box command surface, and the one thing the plugin does NOT distribute
+# skills-layer — the per-box command surface; only the plugin's own `skills/` reach every box
 
 ## WHAT IT IS
 
@@ -29,10 +29,11 @@ start or continue a plan.
 
 🔴 **Its defining property is negative: a skill reaches EXACTLY ONE BOX.** *"One push, every master
 pulls"* is true of the plugin's hooks and scripts — and, since fleet-doctrine 0.93.0 (knowledge#9837,
-PLAN-405 P2), of ONE skill: `/plan-start` ships IN the plugin (`skills/plan-start/`,
-`disable-model-invocation: true`) and the brain-agent copy is deleted, because a same-named
-`~/.claude/skills/` skill shadows a plugin skill on the bare `/name` (measured 2026-10-23). Every other
-skill is still per-box.
+PLAN-405 P2), of the skills under the plugin's own `skills/` directory. `/plan-start` was the first to ship IN the
+plugin (`skills/plan-start/`, `disable-model-invocation: true`), and its brain-agent copy is deleted,
+because a same-named `~/.claude/skills/` skill shadows a plugin skill on the bare `/name` (measured
+2026-10-23). On 2026-10-31 the plugin's `skills/` holds seven: `net-status`, `plan-close`,
+`plan-continue`, `plan-park`, `plan-start`, `unslop`, `upwork`. Every other skill is still per-box.
 
 🔴 **A PROJECT's skills never live in `~/.claude/skills/` — they live in `<project>/.claude/skills/` in this
 repo** (knowledge#9928). A user-level skill is listed, name and description, in EVERY session on its box,
@@ -58,9 +59,9 @@ are not affected by `skillOverrides`.
 ```mermaid
 flowchart TD
     subgraph PLUGIN["fleet-doctrine plugin — utopia-models/fleet-plugins"]
-      HK["hooks/hooks.json + scripts/"] -->|"one push, every box pulls,<br/>SHA-pinned + version-gated"| ALL["all six boxes"]
+      HK["hooks/hooks.json + scripts/<br/>+ skills/ (plan-start and the other plugin skills)"] -->|"one push, every box pulls,<br/>SHA-pinned + version-gated"| ALL["all six boxes"]
     end
-    subgraph SKILLS["skills — NOT in the plugin"]
+    subgraph SKILLS["every other skill — NOT in the plugin"]
       BR[("that box's OWN brain repo<br/>e.g. utopia-models/brain-agent")] -->|"brain-pull, git merge --ff-only"| ONE["exactly ONE box"]
       ONE --> SD["~/.claude/skills/&lt;name&gt;/SKILL.md"]
     end
@@ -146,7 +147,7 @@ stated as an answer.
 | what does a given box's brain repo carry | `gh api repos/utopia-models/<brain-repo>/contents/skills --jq '.[]\|select(.type=="dir").name'` |
 | which brain repos carry any skills at all | run the above for `brain-agent` · `brain-agent-dust` · `brain-agent-sf` · `brain-win` · `brain-nova` · `brain-cloud` · `brain-poppi` — a 404 means the repo has no `skills/` |
 | what one skill actually does | `gh api repos/utopia-models/<brain-repo>/contents/skills/<name>/SKILL.md --jq .content \| base64 -d` |
-| does the plugin carry skills (it does not) | `gh api repos/utopia-models/fleet-plugins/contents/plugins/fleet-doctrine --jq '.[].name'` |
+| which skills does the plugin carry | `gh api repos/utopia-models/fleet-plugins/contents/plugins/fleet-doctrine/skills --jq '.[].name'` |
 | which frames a door can open | `gh api repos/utopia-models/brain-agent/contents/meta/workflow --jq '.[].name'` |
 | is a box on `main`'s plugin payload | `bash _infra/scripts/plugin-deploy-check.sh` |
 
@@ -156,15 +157,15 @@ one box and called the layer sound has already shipped once.
 
 ## KNOWN BROKEN
 
-- 🔴 **Only two brain repos in the fleet hold a `skills/` directory at all.** Measured this session:
+- 🔴 **Only two brain repos in the fleet hold a `skills/` directory at all.** Measured 2026-10-31:
 
   ```
   for r in brain-agent brain-agent-dust brain-win brain-nova brain-cloud brain-agent-sf brain-poppi; do
     printf '%s: ' "$r"
     gh api "repos/utopia-models/$r/contents/skills" --jq 'length' 2>/dev/null | grep -E '^[0-9]+$' || echo 'no skills/ (404)'
   done
-  brain-agent: 27
-  brain-agent-dust: 51
+  brain-agent: 11
+  brain-agent-dust: 39
   brain-win: no skills/ (404)
   brain-nova: no skills/ (404)
   brain-cloud: no skills/ (404)
@@ -175,15 +176,11 @@ one box and called the layer sound has already shipped once.
   (`grep -E '^[0-9]+$'` is not decoration: `gh api` writes its 404 body to **stdout**, so a bare
   `|| echo` prints the JSON error and the fallback on one line.)
 
-  (`brain-agent` counts 24 directories plus `README.md`, `README.md.backup-6491` and
-  `SKILL-TEMPLATE.md`.) And on this box, `ls -la ~/.claude/skills` → *"No such file or directory"*. So
-  the layer's real population is **two boxes**, and the 51 on dust's are reachable by nobody else. Any
-  plan that says "ship a skill to the fleet" is describing a mechanism that does not exist.
-- 🔴 **`brain-agent` carries a backup file inside the skills directory.**
-  `README.md.backup-6491` sits beside the skills, in the same directory the loader walks. It is not a
-  skill and nothing prunes it; doctrine's own rule is *delete, don't archive — git history is the
-  archive*.
-- ⚠ **The two boxes' skill sets have diverged with nothing measuring the gap.** 24 against 51 named
+  (`brain-agent` counts 10 directories plus `SKILL-TEMPLATE.md`; `brain-agent-dust`'s 39 are all
+  directories.) And on nova, `ls -la ~/.claude/skills` → *"No such file or directory"*. So the brain-repo
+  layer's real population is **two boxes**, and the 39 on dust's are reachable by nobody else. Apart from
+  the plugin's own `skills/`, nothing ships a skill to the fleet.
+- ⚠ **The two boxes' skill sets have diverged with nothing measuring the gap.** 10 against 39 named
   skills, no shared manifest, no linter, no index. There is no command that answers *"which skills
   exist in the fleet"* — the probe table above is seven separate reads because that single command has
   never existed.

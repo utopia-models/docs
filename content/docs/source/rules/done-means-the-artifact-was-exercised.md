@@ -1,7 +1,7 @@
 ---
 title: "A green build is evidence about the SOURCE. \"Done\" is a claim about the ARTIFACT."
 description: "Mirrored from the fleet knowledge base: _rules/done-means-the-artifact-was-exercised.md"
-updated: 2026-10-19
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_rules/done-means-the-artifact-was-exercised.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -152,7 +152,7 @@ sub-issues unstarted. **2026-08-03:** wrote rawphones.com into a **VC applicatio
 clean"; it shipped six identical `raw phone` cards, never rendered. **2026-08-09**, Tyler: *"you keep
 reporting a task as done when only the build is green. Done means you exercised the live artifact.
 Stop doing that."*
-**2026-08-13, the sixth and worst:** reported a 2-line label change shipped by reading the symbol on
+**2026-08-13, the worst:** reported a 2-line label change shipped by reading the symbol on
 `origin/main`. The PR carried **1,188 deletions** that removed six exports its own components still
 import, so `main` was unbuildable and the prod deploy had been red for **34 hours** — undetected until
 Tyler read a stale word on the OCC. One `git show --stat` would have shown six changed files.
