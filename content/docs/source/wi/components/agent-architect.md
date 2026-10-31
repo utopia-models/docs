@@ -43,7 +43,7 @@ Tyler can still talk to the Architect when novaserver is down. With novaserver d
 file issues and push; it cannot read Infisical or dispatch, because both live on novaserver (decision 7:
 no laptop secrets cache). Neither host is a dispatch target: lane `agent` is undispatchable.
 
-**A third host is one command** (knowledge#10563). `git clone https://github.com/utopia-models/brain-agent.git ~/.claude && bash ~/.claude/bootstrap.sh` rebuilds the Architect on any Linux user from GitHub alone; the runbook is brain-agent's `BOOTSTRAP.md`. The GitHub token is never stored: `hooks/sessionstart-gh-token.sh` reads `GITHUB_TOKEN_1000XAGENT` from the vault at every session start and exports it as `GH_TOKEN`, so a rotation reaches every host on its next session. With the vault gone, gh's own login (`gh auth login`) is the fallback.
+**A third host is one command** (knowledge#10563). `git clone https://github.com/utopia-models/brain-agent.git ~/.claude && bash ~/.claude/bootstrap.sh` rebuilds the Architect on any Linux user from GitHub alone; the runbook is brain-agent's `BOOTSTRAP.md`. The GitHub token is never stored: `hooks/sessionstart-gh-token.sh` reads `GITHUB_TOKEN_1000XAGENT` from the vault at every session start, writes it to `~/.config/gh/fleet-token` (0600) and exports `GH_TOKEN="$(cat <that file>)"` — never the value itself, because Claude Code pastes the env file into every Bash command's argv, where any unix user on the box can read it (knowledge#10764) — so a rotation reaches every host on its next session. With the vault gone, gh's own login (`gh auth login`) is the fallback.
 
 ## HOW IT WORKS TODAY
 
