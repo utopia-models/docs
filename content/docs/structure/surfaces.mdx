@@ -193,7 +193,7 @@ while it was retired, and today it returns a plain `200` (see its row below).
 | --- | --- | --- | --- |
 | `utopiamodels.ai` | LIVE | The Org Command Center. This is the fleet's main dashboard, and the surface the founder actually watches | `200`. It is the only host in the fleet that has Cloudflare in front and a Vercel origin behind, so the response carries both `cf-ray` and `x-vercel-id` |
 | `www.utopiamodels.ai` | LIVE | Alias for the apex | `200` |
-| `docs.utopiamodels.ai` | LIVE | This wiki | `200` at `/`, with no redirect in the chain (re-measured 2026-09-04). It has not always looked like that, and the history is why the row is here. When this page was written on 2026-08-16, `/` returned `307` and `/docs` returned `200`. From 2026-08-30 the host was retired by decision and returned `301` to `school.utopiamodels.ai` on every path. On 2026-09-04 we brought it back and rewrote the root instead of redirecting it, so `/` now serves the docs index itself. A check that reads only the first code would have called this surface healthy, then broken, then healthy again, while its class never changed |
+| `docs.utopiamodels.ai` | LIVE | This wiki | `200` at `/`, with no redirect in the chain (re-measured 2026-09-04). It has not always looked like that, and the history is why the row is here. When this page was written on 2026-08-16, `/` returned `307` and `/docs` returned `200`. From 2026-08-30 the host was retired by decision and returned `301` to `school.utopiamodels.ai` on every path. On 2026-09-04 we brought it back and rewrote the root instead of redirecting it, so `/` now serves the docs index itself. A check that read only the first code would have reported 307, 301 and 200 in turn, and could not have told which change was a decision and which an accident |
 | `dmvresearch.shop` | LIVE | The DMV Research storefront, with a real catalog, real prices and real revenue | `200` |
 | `www.dmvresearch.shop` | LIVE | Alias for the storefront | `301` to the apex |
 | `dev.dmvresearch.shop` | LIVE | The storefront's preview host | `200` |
@@ -217,7 +217,7 @@ while it was retired, and today it returns a plain `200` (see its row below).
 
 | Hostname | Class | Basis |
 | --- | --- | --- |
-| `creatives.utopiamodels.ai` | RETIRED-BY-DECISION | The 5am agency's gallery of creative work (plural; the singular name is a different, dead host). No DNS record, re-measured 2026-10-30; the agency domain it used to `301` to resolves to nothing either. The founder parked 5am (the NET-is-the-bet decision in the private knowledge repo). |
+| `creatives.utopiamodels.ai` | RETIRED-BY-DECISION | The 5am agency's gallery of creative work (plural; the singular name is a different, dead host). No DNS record, re-measured 2026-10-30; the agency domain it used to `301` to resolves to nothing either. The agency is parked by a recorded decision, so the host is off on purpose. |
 | `raw.utopiamodels.ai` | RETIRED-BY-DECISION | `404 DEPLOYMENT_NOT_FOUND`, measured 2026-08-16. The founder retired it on 2026-08-06. This row is the reason the class exists. A doctrine file that loads automatically kept describing the host as live. A master read that file and was dispatched to restore the host, and we caused the resulting P0 ourselves. **Do not fix this. It is off on purpose.** |
 
 ## BROKEN

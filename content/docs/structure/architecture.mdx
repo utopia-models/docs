@@ -284,7 +284,7 @@ that job is.
 
 ## The dispatch runtime
 
-The whole agent runtime is two scripts and systemd. There is no scheduler daemon, no queue and no
+The whole agent runtime is three shell scripts and systemd. There is no scheduler daemon, no queue and no
 watchdog. This section is the overview. The guards, their exit codes and the race that only a file lock
 can close are on [The dispatch runtime](/docs/operating/dispatch-runtime).
 
@@ -307,7 +307,7 @@ One dispatch does these steps, in order.
    in only one of them cannot see the other path.
 5. **Pre-flight syncs the master's clones.** For every repo in the run's repo list it fetches, stashes
    anything uncommitted, checks out main and hard-resets to `origin/main`.
-6. It launches a **detached transient unit** with `systemd-run --user --unit=task-<issue>-<n> --collect`,
+6. It launches a **detached transient unit** with `systemd-run --user --unit=task-<issue> --collect`,
    so the run keeps going if the SSH connection drops or the laptop goes to sleep.
 7. `task-runner.sh` updates itself once and checks again that the issue is *still work*. It posts
    **▶ started** before anything that can fail, then runs `claude -p` under a turn cap. On exit, its trap

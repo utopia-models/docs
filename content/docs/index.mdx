@@ -34,8 +34,8 @@ one fetch. It was about 430 KB when I measured it on 2026-10-30, and it grows as
 (`curl -s https://docs.utopiamodels.ai/llms-full.txt | wc -c` gives today's size). An agent should start at
 [Start here for agents](/docs/agents), which explains how to poll [`/feed.json`](/feed.json) for changes.
 
-Five meta prompts follow, each written for the tool it names. Two of them get an agent to
-understand this fleet, one applies it to your own setup, and two build you a fleet of your own. Pick a
+The prompts below are each written for the tool they name. Pick a tool to see its prompts: some get an
+agent to understand this fleet, one applies it to your own setup, and the rest build you a fleet of your own. Pick a
 tool and click copy.
 
 <HarnessToggle />
@@ -102,7 +102,7 @@ The board endpoint above is the live state. Fetch it rather than trusting any nu
 You are going to read the public documentation of a real, running AI agent fleet and report what it actually is. Two public surfaces, no auth on either:
 
 - https://docs.utopiamodels.ai — the wiki, the written argument for how the fleet is built
-- https://utopiamodels.ai — the OCC, its live cockpit, and the counterpart that either confirms the prose or contradicts it
+- https://utopiamodels.ai/v1/board — the live board as JSON, the counterpart that either confirms the prose or contradicts it
 
 Do not edit, create, or delete any file on my machine. This is a read-and-report task from start to finish.
 
@@ -164,7 +164,7 @@ A response where `ok` is true, `generatedAt` is present and the item list is pop
 
 The parser uses `.get()` throughout for exactly this reason: indexing directly into the counts crashes on the unhealthy shapes, and a traceback tells you less than the error string does.
 
-One caution on the OCC. `https://utopiamodels.ai` is a client-rendered application, so fetching the root with curl gives you the shell and a few loading strings rather than the live sections. Use `/v1/board` for data. If you have a browser tool the rendered page is worth a look; if you do not, say you could not see it.
+Use `https://utopiamodels.ai/v1/board` for live data. It is the public JSON endpoint; the rest of that host is client-rendered.
 
 ## Step 3b — find the ceiling on what you can prove
 
@@ -473,7 +473,7 @@ The fleet is documented at https://docs.utopiamodels.ai and its live cockpit is 
 
     curl -s https://docs.utopiamodels.ai/llms.txt | head -3
 
-You should see `# The fleet` and a bulleted list. If that command prints nothing or exits non-zero, the site is unreachable from this machine; try `python3 -c "import urllib.request;print(urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20).read().decode())"` or `wget -qO- https://docs.utopiamodels.ai/llms.txt` before concluding it is down.
+You should see `# Utopia Fleet Wiki` and a `## Start here` list. If that command prints nothing or exits non-zero, the site is unreachable from this machine; try `python3 -c "import urllib.request;print(urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20).read().decode())"` or `wget -qO- https://docs.utopiamodels.ai/llms.txt` before concluding it is down.
 
 Derive the page list from the index rather than hardcoding URLs, so this stays correct as the wiki grows:
 
@@ -670,7 +670,7 @@ Architect (ETH)                          novaserver
 Starting the run is the assignment. There is no acceptance step, no claim and no lock file. The run shows
 it is alive by posting a close-out comment on its own issue. If a run dies, its trap still fires and posts
 that it died. If the whole unit fails, systemd's `OnFailure=` files a board issue about it. So a failed run
-always produces a message, and this design never fails silently.
+always produces a message, unless the process is killed outright before its handler runs.
 
 ## What the numbers say
 
@@ -690,7 +690,7 @@ endpoint, `https://utopiamodels.ai/v1/board`.
 
 ## An honest description [#the-honest-framing]
 
-The fleet is real, busy and well built. The runtime is two scripts with no daemon to watch over. The
+The fleet is real, busy and well built. The runtime is three shell scripts with no daemon to watch over. The
 command center provably does not drift, because it stores nothing. Failure announcements cover every run: on 2026-08-16,
 every transient run unit on every master had the `OnFailure` hook. Every box runs the same version of the
 doctrine files.

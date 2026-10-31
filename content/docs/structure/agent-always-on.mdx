@@ -138,7 +138,7 @@ For each resident process:
 4 — SILENT DEATH
 
 For each resident process, from its actual config, quote:
-  - its restart policy — `Restart=always` with no `StartLimitIntervalSec`/`StartLimitBurst` crash-loops forever and never enters failed
+  - its restart policy — `Restart=always` whose `RestartSec` outruns the start-limit window (default 5 starts in 10 s) crash-loops forever and never enters failed
   - its failure path — an `OnFailure=` unit or any alert; if none, its death is silent
   - where it announces liveness somewhere a person actually looks
 

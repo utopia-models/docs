@@ -215,7 +215,7 @@ The reference uses an issue tracker with a status field, because the queue shoul
 
 The four properties needed are: detached, supervised, named, tree-cleaning. Name what gives me all four on this machine. If systemd is not running here, say what the alternative costs — and be concrete about it, because "use tmux" and "use systemd" differ in ways that only show up when something crashes at 3am.
 
-🔴 The unit name carries the mutual-exclusion guarantee. Name my runs after the WORK, never the attempt. This is the single highest-value detail in the whole design and it costs nothing.
+🔴 Name my runs after the WORK, never the attempt. Within one user's supervisor, a duplicate name is refused, and that refusal is the mutual exclusion. If runs launch under more than one unix user, each user has its own supervisor and the name proves nothing across them: add one lock on the shared host, held from the check of every user's runs through the launch.
 
 3 — HOW MANY WORKERS, AND WHERE?
 
@@ -395,9 +395,10 @@ What the agent is told at the start of every run. It is a versioned artifact, no
 
 VERIFY — PASTE REAL OUTPUT, NEVER A CLAIM
 
-  # the supervisor refuses a duplicate name
+  # the supervisor refuses a duplicate name, and so does the lock across users
   <launch a unit named for work X>
   <launch it again — must be refused>
+  <if runs launch under two unix users: launch X as the other user — must be refused by the lock>
 
   # a run survives disconnect
   <launch, close the shell, reconnect, confirm it is still going>
