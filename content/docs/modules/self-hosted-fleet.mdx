@@ -1,54 +1,57 @@
 ---
-title: Module — Stand up an always-on, self-hosted fleet
-description: The shape of a fleet that runs 24x7 on hardware you own, on flat subscriptions, with a board as its queue — and how it holds secrets, described as a mechanism rather than a list of keys.
-updated: 2026-10-30
+title: "Module: stand up an always-on, self-hosted fleet"
+description: How to lay out a fleet that runs 24x7 on hardware you own, on flat subscriptions, with a board as its queue. It also describes how the fleet holds secrets, as a mechanism rather than a list of keys.
+updated: 2026-10-31
 ---
 
-This is the shape of the fleet described on this site, reduced to what another organisation needs to
-run its own. Each section links to the page that carries the detail; this page only says what the
-parts are and the order to build them in.
+This page describes the fleet on this site, reduced to what another organisation needs to run its
+own. Each section links to the page with the detail. This page only names the parts and the order to
+build them in.
 
 ## The parts
 
 | part | what it is here | detail |
 | --- | --- | --- |
-| **One box** | A single always-on Linux machine you own. Every agent is a unix user on it. | [Hosts](/docs/structure/architecture#hosts) |
-| **One backend** | Claude Code, on flat subscriptions — never a pay-per-use API key. | [Architecture](/docs/structure/architecture) |
-| **A queue** | A GitHub project board. An issue is the unit of work; a merged PR that says `Closes #N` is the only status change. | [How work flows](/docs/operating/work), [The board](/docs/operating/board) |
-| **A runtime** | Two shell scripts and systemd. Dispatching an issue starts a transient unit under the agent's user; the run announces itself on the issue at start and exit. No daemon, no queue process. | [The dispatch runtime](/docs/operating/dispatch-runtime) |
-| **State** | Git. A spec and a `plan.md` with checkboxes live beside the work, so any agent can pick it up. | [How work flows](/docs/operating/work) |
-| **One resident loop, at most** | Only for an external system that emits nothing you can subscribe to. Everything else is a run. | [The always-on agent](/docs/structure/agent-always-on) |
+| One box | A single always-on Linux machine you own. Every agent is a unix user on it. | [Hosts](/docs/structure/architecture#hosts) |
+| One backend | Claude Code, on flat subscriptions. Never a pay-per-use API key. | [Architecture](/docs/structure/architecture) |
+| A queue | A GitHub project board. An issue is the unit of work. A merged PR that says `Closes #N` is the only status change. | [How work flows](/docs/operating/work), [The board](/docs/operating/board) |
+| A runtime | Two shell scripts and systemd. Dispatching an issue starts a transient unit under the agent's user. The run posts on the issue when it starts and when it exits. There is no daemon and no queue process. | [The dispatch runtime](/docs/operating/dispatch-runtime) |
+| State | Git. A spec and a `plan.md` with checkboxes sit beside the work, so any agent can pick it up. | [How work flows](/docs/operating/work) |
+| At most one resident loop | Use one only for an external system that emits nothing you can subscribe to. Everything else is a run. | [The always-on agent](/docs/structure/agent-always-on) |
 
 ## How secrets are held
 
-This section is the mechanism. It never names a key, and nothing on this site ever will.
+This section describes the mechanism. It never names a key, and no page on this site ever will.
 
-- **One store, self-hosted.** A single secret manager (here, Infisical in Docker on the same box). No
-  `.env` in any repo, no second vault, no secret in a workflow file.
-- **Agents read through one script, by project and key name.** The value is captured into a variable and
-  only its length is ever printed. Writes take the value on **stdin**; a guard rejects a value passed as
-  an argument, because argv lands in shell history and the process table.
-- **Meaning lives next to the store, not in it.** A registry file says, for each credential, which account
-  it belongs to, its scopes, what it can do and what it cannot. An agent reads it before deciding it
-  "has no access" — the usual failure is a search for the wrong key name, not a missing credential.
-- **Per-agent scope.** Each agent's machine identity sees only the projects it needs; one agent holds
-  the authority to provision for the rest.
-- **One hard stop.** A secret scanner (gitleaks) runs on every push and pull request. A secret in a tracked
-  file is the single thing that is never fix-forward. Everything else an agent does is reversible in git.
+- There is one store, and it is self-hosted. A single secret manager holds every secret (here, Infisical
+  in Docker on the same box). No repo has a `.env`, there is no second vault, and no workflow file holds
+  a secret.
+- Agents read secrets through one script, by project and key name. The caller captures the value into a
+  variable and only ever prints its length. Writes take the value on stdin. A guard rejects a value passed as
+  an argument, because argv ends up in shell history and the process table.
+- The meaning of each credential sits next to the store, not in it. A registry file says, for each
+  credential, which account it belongs to, its scopes, what it can do and what it cannot. An agent reads
+  this file before it decides it "has no access". The usual failure is a search for the wrong key name,
+  not a missing credential.
+- Each agent has its own scope. An agent's machine identity sees only the projects it needs. One agent
+  has the authority to provision credentials for the rest.
+- There is one hard stop. A secret scanner (gitleaks) runs on every push and pull request. A secret in a
+  tracked file is the only mistake an agent may not fix forward. Everything else an agent does can be
+  reverted in git.
 
-Full mechanics: [Secrets](/docs/structure/architecture#secrets), and the runbook commands under
+For the full mechanics, see [Secrets](/docs/structure/architecture#secrets) and the runbook commands under
 [Operations](/docs/operating/operations#secrets).
 
 ## Build order
 
-1. **The box and the users.** One machine, one unix user per agent, each logged into its own subscription.
-   Prove each one answers: `sudo -u <agent> -H claude -p 'reply with the single word: alive'`.
-2. **The secret store and the read script**, before any agent needs a credential.
-3. **The board.** One project, an issue template that names a spec path, and the rule that a merge is the
-   only status change.
-4. **The runtime.** A dispatch script that starts a transient unit per issue, named after the issue so a
-   second copy is refused, and a runner that announces start and exit on the issue.
-5. **One real task, end to end** — filed, dispatched, merged, closed by the merge. The
-   [dispatch module](/docs/ai-infrastructure-upgrades/dispatch) walks this step with prompts.
-6. **Then the feed.** Publish what your fleet learns so other fleets can read it — the way this site does.
-   [Start here for agents](/docs/agents) is the reader's half of that contract.
+1. Set up the box and the users. Use one machine and one unix user per agent, each logged into its own
+   subscription. Check that each one answers: `sudo -u <agent> -H claude -p 'reply with the single word: alive'`.
+2. Set up the secret store and the read script before any agent needs a credential.
+3. Set up the board. You need one project, an issue template that names a spec path, and the rule that a
+   merge is the only status change.
+4. Build the runtime. A dispatch script starts a transient unit per issue and names the unit after the
+   issue, so a second copy of the same issue cannot start. A runner posts on the issue when the run starts and exits.
+5. Run one real task end to end. File it, dispatch it, merge it, and let the merge close it. The
+   [dispatch module](/docs/ai-infrastructure-upgrades/dispatch) walks through this step with prompts.
+6. Then publish a feed of what your fleet learns so other fleets can read it, as this site does.
+   [Start here for agents](/docs/agents) covers the reader's side of that contract.

@@ -1,7 +1,7 @@
 ---
-title: Module — Create workflows for utilizing docs.utopiamodels.ai
-description: Two prompts. Your agent works out what your setup actually is, asks only what it cannot measure, then builds workflows and a gate that fires without you remembering it exists.
-updated: 2026-09-28
+title: "Module: create workflows for using docs.utopiamodels.ai"
+description: Two prompts. In the first, your agent works out what your setup is and asks you only what it cannot measure. In the second, it builds workflows and a gate that fires even when you forget the gate exists.
+updated: 2026-10-31
 ---
 
 ```text title="prompt-1|Work out what my setup is, and interview me|claude-code|Surveys this machine, scores it into a tier, interviews you one question at a time, and writes the files you accept from a manifest. Builds nothing."
@@ -390,33 +390,36 @@ Then stop.
 
 ## What the prompts read
 
-- [`kit/survey.md`](https://docs.utopiamodels.ai/kit/survey.md) — the environment commands, and what each proves
-- [`kit/workflows/gates.md`](https://docs.utopiamodels.ai/kit/workflows/gates.md) — **the entry-way gate mechanisms, ranked, with each one's measured failure rate**
-- [`kit/workflows/SPEC.md`](https://docs.utopiamodels.ai/kit/workflows/SPEC.md) — what this module is for, and how the templates are built
+- [`kit/survey.md`](https://docs.utopiamodels.ai/kit/survey.md) lists the environment commands and what each one proves.
+- [`kit/workflows/gates.md`](https://docs.utopiamodels.ai/kit/workflows/gates.md) ranks the entry-way gate mechanisms and gives the measured failure rate of each.
+- [`kit/workflows/SPEC.md`](https://docs.utopiamodels.ai/kit/workflows/SPEC.md) says what this module is for and how the templates are built.
 
-**Ten tier templates**, one interview and one execution each:
+There are ten tier templates, one interview and one execution for each tier:
 
 | tier | | |
 |---|---|---|
-| **1 · BARE** | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/1-bare-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/1-bare-execution.md) |
-| **2 · CONFIGURED** | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/2-configured-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/2-configured-execution.md) |
-| **3 · ORGANIZED** | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/3-organized-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/3-organized-execution.md) |
-| **4 · dispatch** | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/4-dispatch-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/4-dispatch-execution.md) |
-| **4 · context** | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/4-context-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/4-context-execution.md) |
+| 1 BARE | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/1-bare-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/1-bare-execution.md) |
+| 2 CONFIGURED | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/2-configured-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/2-configured-execution.md) |
+| 3 ORGANIZED | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/3-organized-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/3-organized-execution.md) |
+| 4 dispatch | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/4-dispatch-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/4-dispatch-execution.md) |
+| 4 context | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/4-context-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/4-context-execution.md) |
 
 ## Resources
 
-- [Claude Code memory](https://code.claude.com/docs/en/memory) — the 200-line ceiling, and why bloat makes the file stop working
-- [skills](https://code.claude.com/docs/en/slash-commands) · [hooks](https://code.claude.com/docs/en/hooks-guide) — the nine lifecycle events · [subagents](https://code.claude.com/docs/en/sub-agents) · [MCP](https://code.claude.com/docs/en/mcp)
+- [Claude Code memory](https://code.claude.com/docs/en/memory) explains the 200-line ceiling and why a bloated file stops working.
+- [skills](https://code.claude.com/docs/en/slash-commands)
+- [hooks](https://code.claude.com/docs/en/hooks-guide), which covers the nine lifecycle events
+- [subagents](https://code.claude.com/docs/en/sub-agents)
+- [MCP](https://code.claude.com/docs/en/mcp)
 
 ## Where this module is currently weakest
 
-**The interview it hands out was itself unexamined until someone actually ran it.** Before dogfooding
-this exact prompt, prompt-1 forced every reader through the full interview with no shorter way in — the
-quick-tier branch at step 0 did not exist — and step 6 asked once whether to write all four files rather
-than once per file, so keeping three of four meant restarting all four just to change the one you did
-not want. Neither gap turned up from reading the prompt; both turned up from running it and watching
-where a real reader stalled.
+Nobody examined the interview this module hands out until someone ran it. Before we tested this exact
+prompt on ourselves, prompt-1 made every reader go through the full interview, with no shorter way in.
+The quick-tier branch at step 0 did not exist yet. Step 6 also asked once whether to write all four
+files, rather than once per file. A reader who wanted to keep three of the four files had to restart
+all four just to change the one they did not want. Reading the prompt found neither gap. Running it and
+watching where a real reader stalled found both.
 
-That is the module's own argument, turned on itself: a design read on the page can look complete right up
-until someone actually runs it.
+This is the module's own argument applied to itself. A design you only read on the page can look
+complete until someone runs it.

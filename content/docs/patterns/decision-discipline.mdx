@@ -1,7 +1,7 @@
 ---
-title: Module — Decision discipline
-description: Two prompts. Your agent measures where your decisions live and which ones are silently dead, asks only what it cannot measure, then builds records, a supersession check, and a gate that stops the next session re-proposing what you already rejected.
-updated: 2026-09-28
+title: "Module: decision discipline"
+description: Two prompts. In the first, your agent measures where your decisions live and which ones are silently dead, and asks you only what it cannot measure. In the second, it builds decision records, a supersession check, and a gate that stops the next session from proposing again what you already rejected.
+updated: 2026-10-31
 ---
 
 ```text title="prompt-1|Find where my decisions live, and interview me|claude-code|Surveys this machine for every decision, supersession, deletion and limit, interviews you one question at a time, and writes four files. Builds nothing."
@@ -340,28 +340,28 @@ Then say exactly the sentence the execution template ends with, filled in, and s
 
 | tier | | |
 |---|---|---|
-| **1 · BARE** | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/1-bare-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/1-bare-execution.md) |
-| **2 · CONFIGURED** | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/2-configured-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/2-configured-execution.md) |
-| **3 · ORGANIZED** | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/3-organized-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/3-organized-execution.md) |
-| **4 · dispatch** | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-dispatch-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-dispatch-execution.md) |
-| **4 · context** | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-context-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-context-execution.md) |
+| 1 BARE | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/1-bare-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/1-bare-execution.md) |
+| 2 CONFIGURED | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/2-configured-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/2-configured-execution.md) |
+| 3 ORGANIZED | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/3-organized-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/3-organized-execution.md) |
+| 4 dispatch | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-dispatch-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-dispatch-execution.md) |
+| 4 context | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-context-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-context-execution.md) |
 
 ## Where this module is currently weakest
 
-- **The interview it hands out failed the exact way it exists to catch.** Live dogfooding of prompt-1 —
-  the same eight-step survey-and-interview shape it still ships — got two of eight steps done before a
-  session timeout, with no way to continue except starting over. The duration line prompt-1 now carries
-  and its RESUMING checklist-recovery step exist because that run happened, not because someone
-  anticipated it.
-- **`check-supersession.py` checks one directory per invocation, and this fleet's own decisions do not
-  live in one directory.** `find . -type d -iname decisions` against `knowledge` — the repository this
-  fleet records its own decisions in — returns 54 separate folders: one per portfolio, one for org-wide
-  machinery, and one per piece of work filed under `work/specs/<issue>/decisions/`. The checker's default
-  argument is a single flat `decisions/` folder, read non-recursively; pointing it at any one of the 54
-  proves that folder's own links are whole and says nothing about a record in a different folder that
-  claims to supersede one here.
+- The interview this module hands out failed in the exact way it exists to catch. We tested prompt-1
+  live, in the same eight-step survey-and-interview shape it still ships. The session timed out after
+  two of eight steps, and the only way to continue was to start over. Prompt-1 now carries a duration
+  line and a RESUMING step that recovers from its checklist. Both exist because that run happened, not
+  because someone anticipated it.
+- `check-supersession.py` checks one directory per invocation, but this fleet's own decisions do not
+  live in one directory. This fleet records its decisions in the `knowledge` repository. Running
+  `find . -type d -iname decisions` there returns 54 separate folders. There is one per portfolio, one
+  for org-wide machinery, and one per piece of work filed under `work/specs/<issue>/decisions/`. By
+  default the checker reads a single flat `decisions/` folder, and it does not recurse. If you point it
+  at any one of the 54, it proves that the links inside that folder are whole. It says nothing about a
+  record in a different folder that claims to supersede one there.
 
-The second is the sharper failure. A resume mechanism that breaks loudly — a timeout, an obvious restart
-— teaches the person watching it happen. A supersession checker that prints "ok" after reading one folder
-out of fifty-four teaches the opposite lesson, silently, which is exactly the failure this module exists
-to prevent.
+The second failure is the worse one. A resume mechanism that breaks loudly, with a timeout or an obvious
+restart, teaches the person watching it. A supersession checker that prints "ok" after reading one folder
+out of fifty-four teaches them the opposite, and does it silently. That is exactly the failure this
+module exists to prevent.

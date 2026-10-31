@@ -1,39 +1,42 @@
 ---
 title: The Utopia fleet
-description: One Ubuntu box, five AI agents, a GitHub board as the queue and git as the state.
+description: One Ubuntu box runs five AI agents. A GitHub board is the work queue and git holds the state.
 _note: title/description drive the tab, OG image and llms.txt line. `app/docs/layout.tsx` hides the H1+lede on this page (Tyler, 2026-08-30) so it opens on the first heading.
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 ## Who wrote this, and what to read in two minutes
 
 I'm [Tyler Youk](https://tyleryouk.com), a software engineer. This site documents the agent fleet I
-designed and run: one Ubuntu server, Claude Code agents running as separate unix users, a GitHub project
-board as the only work queue, and git as the state. I write the specs and the process it runs on and
-direct the agents that implement the code.
+designed and run. It is one Ubuntu server with Claude Code agents running as separate unix users. A GitHub
+project board is the only work queue, and git holds the state. I write the specs and the process the
+fleet follows, and I direct the agents that write the code.
 
-If you are a person, read these three things first:
+If you are a person, read these three things first.
 
-1. [The dispatch runtime](/docs/operating/dispatch-runtime): how one issue becomes one systemd unit, and
-   the measured 26–27 second race that a per-user unit name could not close across users.
-2. [`utopia-models/dispatch-runtime`](https://github.com/utopia-models/dispatch-runtime): that dispatch
-   layer as a public repo, with the race test and its mutation control.
-3. [What the numbers say](#what-the-numbers-say): the measurements, each with its date and denominator.
+1. [The dispatch runtime](/docs/operating/dispatch-runtime) explains how one issue becomes one systemd
+   unit. It also covers a race I measured at 26 to 27 seconds, which a per-user unit name could not
+   prevent across users.
+2. [`utopia-models/dispatch-runtime`](https://github.com/utopia-models/dispatch-runtime) is that dispatch
+   layer as a public repo. It includes the race test and its mutation control.
+3. [What the numbers say](#what-the-numbers-say) lists the measurements, each with its date and
+   denominator.
 
-Contact: [dev@tyleryouk.com](mailto:dev@tyleryouk.com) · [Resume (PDF)](/resume.pdf)
+You can reach me at [dev@tyleryouk.com](mailto:dev@tyleryouk.com), and my [Resume (PDF)](/resume.pdf) is
+here.
 
 ## Point your agent at this fleet
 
-This site is written for agents as much as for people. Every page is also served as raw markdown at the
-same path with `.md` appended — [`/docs/structure/architecture.md`](/docs/structure/architecture.md) — and
-[`/llms.txt`](/llms.txt) indexes all of them. The whole corpus in one fetch is
-[`/llms-full.txt`](/llms-full.txt) — about 430 KB when measured on 2026-10-30, and growing as pages are
-added (`curl -s https://docs.utopiamodels.ai/llms-full.txt | wc -c` is today's size). An agent should start at
-[Start here for agents](/docs/agents), which says how to poll [`/feed.json`](/feed.json) for what changed.
+I write this site for agents as much as for people. Every page also exists as raw markdown at the same
+path with `.md` appended, for example [`/docs/structure/architecture.md`](/docs/structure/architecture.md),
+and [`/llms.txt`](/llms.txt) indexes all of them. [`/llms-full.txt`](/llms-full.txt) returns every page in
+one fetch. It was about 430 KB when I measured it on 2026-10-30, and it grows as I add pages
+(`curl -s https://docs.utopiamodels.ai/llms-full.txt | wc -c` gives today's size). An agent should start at
+[Start here for agents](/docs/agents), which explains how to poll [`/feed.json`](/feed.json) for changes.
 
-Five meta prompts follow, each run to completion in the harness it names. Two make an agent
-understand this fleet, one turns it on **your** setup, and two build you a fleet of your own. Pick a
-harness and hit copy.
+Five meta prompts follow. Each one runs to completion in the tool it names. Two of them get an agent to
+understand this fleet, one applies it to your own setup, and two build you a fleet of your own. Pick a
+tool and click copy.
 
 <HarnessToggle />
 
@@ -571,87 +574,86 @@ Order that list so the earliest items unblock the later ones, and mark which one
 
 ## How to read this
 
-This wiki is organized **by layer and by question**, never one page per component. That is not a style
-preference — it is the fix for a measured failure. The fleet's internal reference corpus has 65 files,
-one per component, and a reader asking *"can this agent run?"* lands in a page that is 100% about a
-healthy agent. Organizing by artifact hides drift; organizing by the question a reader arrives with does
-not.
+This wiki is organized by layer and by the question a reader brings, not one page per component. That layout
+fixes a measured failure. The fleet's internal reference corpus has 65 files, one per
+component. A reader asking *"can this agent run?"* lands on a page that is 100% about a healthy agent. When
+docs follow the artifacts, drift stays hidden. When they follow the reader's question, it shows.
 
 <Cards>
   <Card title="Architecture" href="/docs/structure/architecture">
     Hosts, agents, the dispatch runtime, the services, and how secrets work.
   </Card>
   <Card title="Operations" href="/docs/operating/operations">
-    Runbooks. Every command is executable exactly as written, and names the box it runs on.
+    Runbooks. Every command runs exactly as written and names the box it runs on.
   </Card>
   <Card title="Surfaces" href="/docs/structure/surfaces">
-    Every hostname the fleet owns, each with an explicit class — LIVE, RETIRED-BY-DECISION, or BROKEN.
+    Every hostname the fleet owns, each marked LIVE, RETIRED-BY-DECISION or BROKEN.
   </Card>
   <Card title="How work flows" href="/docs/operating/work">
     The board, lanes, the five-step plan lifecycle, specs, and why no gate can stop a merge.
   </Card>
   <Card title="Decisions" href="/docs/structure/decisions">
-    What was built, killed, and why — so nobody rebuilds it.
+    What was built, what was killed, and why, so nobody builds it again.
   </Card>
   <Card title="Workflows" href="/docs/modules/workflows">
-    Your agent measures your setup, then builds workflows and a gate that fires without you remembering it.
+    Your agent measures your setup, then builds workflows and a gate that runs without you having to remember it.
   </Card>
   <Card title="Decision discipline" href="/docs/patterns/decision-discipline">
-    Records, a supersession check, and a gate that stops the next session re-proposing what you rejected.
+    Decision records, a supersession check, and a gate that stops the next session from proposing what you already rejected.
   </Card>
   <Card title="Dispatched agents on a Linux server" href="/docs/ai-infrastructure-upgrades/dispatch">
-    Study a fleet that runs, design yours against your machine, build it, and dispatch one real task.
+    Study a working fleet, design yours for your machine, build it, and dispatch one real task.
   </Card>
   <Card title="How Claude Code assembles context" href="/docs/reference/context-assembly">
-    What is in the context window at the start of a turn, where each piece comes from, and what silently fails.
+    What the context window holds at the start of a turn, where each piece comes from, and which parts fail without an error.
   </Card>
 </Cards>
 
-## The four rules this wiki is written under
+## The four rules this wiki follows [#the-four-rules-this-wiki-is-written-under]
 
-Every page here obeys four rules. They exist because a full audit of the fleet's own documentation on
-**2026-08-16** found sixteen places where a doc caused a reader to take a wrong action.
+Every page here follows four rules. They come from a full audit of the fleet's own documentation on
+2026-08-16, which found sixteen places where a doc led a reader to do the wrong thing.
 
-1. **Every command names its box.** A command that runs on one machine and fails on another is not a
-   runbook. You will always see `ssh nova@<tailnet-ip> '<cmd>'`, never a bare alias. On **2026-08-16**
-   the fleet's component registry held seventy-three rows, seventy-two of them carrying a self-check
-   safe to run from anywhere; run from the wrong box, twenty-six of those seventy-two failed, and all
-   twenty-six passed from the right one. Nothing in that registry records which box a command belongs
+1. Every command names its box. A command that works on one machine and fails on another is not a
+   runbook. You will always see `ssh nova@<tailnet-ip> '<cmd>'`, never a bare alias. On 2026-08-16 the
+   fleet's component registry held seventy-three rows, and seventy-two of them had a self-check that was
+   listed as safe to run from anywhere. Run from the wrong box, twenty-six of those seventy-two failed.
+   All twenty-six passed from the right one. Nothing in that registry records which box a command belongs
    to.
-2. **RETIRED-BY-DECISION, BROKEN and LIVE are three different states.** A hostname returning 404 because
-   someone deliberately retired it and a hostname returning 404 by accident look identical in a status
-   column. Collapsing them once cost a P0 incident: a master was dispatched to "restore" a surface that
-   had been switched off on purpose.
-3. **An existence claim is not a liveness claim.** `getent passwd nova` succeeds on an agent that cannot
-   execute a single turn. Every "is it alive" statement on this site exercises the artifact — a real
-   `claude -p` probe for an agent, an HTTP status code for a surface, `Result=success` for a systemd
-   unit.
-4. **Generate the volatile, write the durable.** Disk usage, uptime, node liveness and issue counts all
-   drift within days of being written down. **No prose page on this site states one.** A volatile fact
-   on these pages is either generated from the knowledge base at request time, or replaced by the
-   command that measures it — which is what licenses the rest to be durable prose.
+2. RETIRED-BY-DECISION, BROKEN and LIVE are three different states. A hostname that returns 404 because
+   someone retired it on purpose looks the same in a status column as one that returns 404 by accident.
+   Treating them as one state caused a P0 incident once. The fleet dispatched a master to "restore" a
+   surface that someone had switched off on purpose.
+3. An existence claim is not a liveness claim. `getent passwd nova` succeeds for an agent that cannot
+   complete a single turn. Every "is it alive" statement on this site comes from running the thing. For
+   an agent that means a real `claude -p` probe, for a surface an HTTP status code, and for a systemd unit
+   `Result=success`.
+4. Generate facts that change, and write down facts that don't. Disk usage, uptime, node liveness and issue
+   counts all go out of date within days of being written down, so no prose page on this site states one.
+   Each such fact is either generated from the knowledge base when you request the page, or replaced by
+   the command that measures it. That is why the rest of the prose can stay unchanged for a long time.
 
 ## The six-node tailnet
 
-The entire fleet lives on one Tailscale tailnet, `<tailnet>.ts.net`. Six nodes, and only three of them
-are machines in the ordinary sense.
+The whole fleet is on one Tailscale tailnet, `<tailnet>.ts.net`. It has six nodes, and only three of them
+are machines in the usual sense.
 
 | Node | Tailnet IP | What it is |
 | --- | --- | --- |
-| **novaserver** | `100.x.x.x` | **The fleet's box.** An HP EliteDesk running Ubuntu 24.04. Hosts all four masters, the personal agent, the only secret store, and every scheduled timer |
-| **ETH** (WSL guest) | `100.x.x.x` | The Architect's box — a WSL2 Ubuntu guest on the founder's Lenovo. Plans, files, dispatches |
-| **utopiamodels** | `100.x.x.x` | **Not a machine.** A `tsnet` application node — an LLM gateway that joins the tailnet as if it were a host |
-| ETH (Windows) | `100.x.x.x` | The Windows host underneath the WSL guest |
-| a laptop | `100.x.x.x` | A second workstation, running one agent |
-| a phone | `100.x.x.x` | A mobile device on the tailnet — an endpoint, not a host |
+| novaserver | `100.x.x.x` | The fleet's box. An HP EliteDesk running Ubuntu 24.04. It hosts all four masters, the personal agent, the only secret store, and every scheduled timer |
+| ETH (WSL guest) | `100.x.x.x` | The Architect's box, a WSL2 Ubuntu guest on the founder's Lenovo. The Architect plans, files and dispatches work from here |
+| utopiamodels | `100.x.x.x` | Not a machine. It is a `tsnet` application node, an LLM gateway that joins the tailnet as if it were a host |
+| ETH (Windows) | `100.x.x.x` | The Windows host under the WSL guest |
+| a laptop | `100.x.x.x` | A second workstation that runs one agent |
+| a phone | `100.x.x.x` | A mobile device on the tailnet. It is an endpoint, not a host |
 
-Which of those are online right now is a volatile fact and therefore is not stated here. The one
-command that answers it is `ssh nova@<tailnet-ip> 'tailscale status'` — a page off the tailnet cannot
-read the tailnet, and saying so is worth more than a dot that might be a day old.
+Which of these are online right now changes constantly, so this page does not say. The command that
+answers it is `ssh nova@<tailnet-ip> 'tailscale status'`. A page outside the tailnet cannot read the
+tailnet, and saying that is more useful than a status dot that might be a day old.
 
 ## The dispatch loop
 
-This is the entire runtime. Two shell scripts, both readable end to end, and systemd.
+This is the whole runtime. It is two shell scripts, both readable end to end, plus systemd.
 
 ```text title="The dispatch loop"
 Architect (ETH)                          novaserver
@@ -665,37 +667,37 @@ Architect (ETH)                          novaserver
   │                                          │ OnFailure= fleet-notify@ → files a board issue
 ```
 
-**Starting the run IS the assignment.** There is no acceptance step, no claim, no lock file. Liveness is
-the close-out comment the run posts on its own issue — if a run dies, the trap still fires and says so,
-and if the whole unit fails, systemd's `OnFailure=` files a board issue about it. Silence is the only
-failure mode this design cannot produce.
+Starting the run is the assignment. There is no acceptance step, no claim and no lock file. The run shows
+it is alive by posting a close-out comment on its own issue. If a run dies, its trap still fires and posts
+that it died. If the whole unit fails, systemd's `OnFailure=` files a board issue about it. So a failed run
+always produces a message, and this design never fails silently.
 
 ## What the numbers say
 
-Measured **2026-08-16**, on the live fleet:
+I measured these on 2026-08-16, on the live fleet.
 
-- **~157 distinct dispatch runs in 24 hours** across the four masters, of which **2 failed** — and both
-  failures triggered the `OnFailure` path that files a board issue, so the failure-announcement
-  machinery is proven, not assumed.
-- **745 issues closed in the preceding 7 days.**
-- **3 of 4 masters could actually run** — not four. One is entitlement-revoked with no recovery timer,
-  and one survives only because it resolves to a different model provider at dispatch time.
-- **14 places claim to be a source of truth**, not the five the fleet's own documentation implies.
-- **Zero failed systemd units** in any of the five service contexts on the server.
+- About 157 distinct dispatch runs in 24 hours across the four masters, and 2 of them failed. Both
+  failures triggered the `OnFailure` path that files a board issue, so I have seen the failure alerts
+  work rather than assuming they do.
+- 745 issues closed in the previous 7 days.
+- 3 of 4 masters could actually run, not four. One had lost its entitlement and had no timer to recover
+  it. Another kept working only because it resolves to a different model provider at dispatch time.
+- 14 places claim to be a source of truth, not the five that the fleet's own documentation implies.
+- Zero failed systemd units in any of the five service contexts on the server.
 
-Those are point-in-time measurements, and they are dated for exactly that reason. For the current
-state, read the fleet's cockpit at [utopiamodels.ai](https://utopiamodels.ai).
+These numbers describe one moment, which is why each has a date. For the current state, read the fleet's
+cockpit at [utopiamodels.ai](https://utopiamodels.ai).
 
-## The honest framing
+## An honest description [#the-honest-framing]
 
-The fleet is real, busy, and structurally sound: a two-script runtime with no daemon to babysit, a
-command center that provably does not drift because it stores nothing, complete failure-announcement
-coverage (measured 2026-08-16: every transient run unit on every master carried the `OnFailure` hook),
-and a converged doctrine payload across every box.
+The fleet is real, busy and well built. The runtime is two scripts with no daemon to watch over. The
+command center provably does not drift, because it stores nothing. Failure announcements cover every run: on 2026-08-16,
+every transient run unit on every master had the `OnFailure` hook. Every box runs the same version of the
+doctrine files.
 
-What it is **not** is the four-master, one-list, one-tracker system its own documentation used to
-describe. It is three working masters, fourteen sources of truth, four parallel work trackers, and a
-self-check mechanism that, at the time of the audit, had never been executed by anything.
+It is not the system its own documentation used to describe, with four masters, one list and one tracker.
+It has three working masters, fourteen sources of truth and four parallel work trackers. At the time of
+the audit, nothing had ever run its self-check mechanism.
 
-The second description is the more impressive one, because it is checkable. This wiki publishes the
+The second description is the more impressive one, because you can check it. This wiki publishes the
 second.

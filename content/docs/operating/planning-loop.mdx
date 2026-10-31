@@ -1,7 +1,7 @@
 ---
 title: The planning loop
-description: Five steps from a rough note to filed, dispatchable work — and not one of them is reported. Every step is derived from an event or from the board, so a plan has no field it could lie in.
-updated: 2026-09-28
+description: Five steps take a rough note to filed, dispatchable work, and nobody reports any of them. Each step is derived from an event or from the board, so a plan has no field that could hold a wrong value.
+updated: 2026-10-31
 ---
 
 <Status value="in-flux" />
@@ -131,14 +131,15 @@ FINISH
 Every file created with its path, the drift you measured with its reproducing commands, and the one field that is now derived. For the board side of this (which fields an agent should write at all) see https://docs.utopiamodels.ai/docs/operating/board.md.
 ```
 
-Sourced from the fleet's own component document for `planning-loop`. Called in-flux rather than stable
-because it has accumulated seven decision records; because its own doctrine file states a count that disk
-has already outgrown; and because the hooks that derive its first two steps ship in a separately versioned
-package that nothing in the repository can grade.
+This page comes from the fleet's own component document for `planning-loop`. It is marked in-flux, not
+stable, for three reasons. It has collected seven decision records. Its own doctrine file states a count
+that the files on disk have already outgrown. And the hooks that derive its first two steps ship in a
+separately versioned package that nothing in the repository can check.
 
-This is the process a human and the planning agent run together, and the vocabulary the rest of the fleet
-uses to talk about work. Stop it and every agent keeps executing whatever is already filed, then runs dry —
-nothing else in the organization turns an intention into a board issue.
+This is the process that a human and the planning agent run together, and its vocabulary is the one the
+rest of the fleet uses to talk about work. If you stopped it, every agent would keep executing whatever is
+already filed and then run out of work, because nothing else in the organization turns an intention into a
+board issue.
 
 What the five steps *mean* is on [How work flows](/docs/operating/work). This page is about the one
 structural property that makes them trustworthy.
@@ -152,101 +153,102 @@ structural property that makes them trustworthy.
 
 | # | Step | Derived from |
 | --- | --- | --- |
-| 1 | **BRIEF** | a brief event, with its timestamp, on the plan's registry entry |
-| 2 | **LOOP** ⟳ | at least one recorded planning-agent turn on that entry |
-| 3 | **FILE** | an issue reference on that entry |
-| 4 | **DISPATCHED** | at least one referenced issue still open |
-| 5 | **DONE** | every referenced issue closed |
+| 1 | BRIEF | a brief event, with its timestamp, on the plan's registry entry |
+| 2 | LOOP ⟳ | at least one recorded planning-agent turn on that entry |
+| 3 | FILE | an issue reference on that entry |
+| 4 | DISPATCHED | at least one referenced issue still open |
+| 5 | DONE | every referenced issue closed |
 
-**That is why a plan cannot lie about where it is: there is no field to lie in.** Steps 3 through 5 are
-read off the board on every render. Steps 1 and 2 come from events a hook writes as they happen, not from a
-summary written afterwards.
+So a plan cannot report the wrong step, because it has no field where anyone records the step. The
+command center reads steps 3 through 5 off the board every time it renders. Steps 1 and 2 come from events
+that a hook writes as they happen, not from a summary written afterwards.
 
-`step < 3` is the whole definition of planning. The command center's planning and execution sections
-partition on that single number, which means the boundary between "still thinking" and "being built" is
-one comparison rather than a judgement anyone makes.
+`step < 3` is the whole definition of planning. The command center splits its planning and execution
+sections on that single number. So the line between "still thinking" and "being built" is one comparison,
+not a judgement anyone makes.
 
 ## Step zero asks three ordered questions, and the order is load-bearing
 
-Before step 1 there is a step zero: **mode, then portfolio, then subprocess.** The order matters because
-each answer narrows the next. Mode decides which section of a catalogue exists at all; portfolio decides
-which catalogue.
+Before step 1 there is a step zero. It asks for the mode, then the portfolio, then the subprocess. The
+order matters because each answer narrows the next. The mode decides which section of a catalogue exists
+at all, and the portfolio decides which catalogue.
 
-The modes are exactly two, and they are literals rather than descriptions:
+There are exactly two modes, and their names are fixed literals, not descriptions:
 
 | Mode | What it means |
 | --- | --- |
-| `dispatch` | agents execute; the planning agent's involvement ends at dispatch unless the chosen subprocess says otherwise |
+| `dispatch` | agents execute the work, and the planning agent stops being involved at dispatch unless the chosen subprocess says otherwise |
 | `interactive` | the human and the planning agent work it in session, with the human in it |
 
-**Whether a dispatched chain is watched is read, never asked.** It is a `monitor: yes|no` field on the
-subprocess chosen at the third question. There used to be two dispatch modes — one monitored, one not —
-and they were merged because the monitor half duplicated a fact the subprocess already held, and could
-contradict it.
+Nobody is asked whether a dispatched chain is watched. The answer is read from a `monitor: yes|no` field on
+the subprocess chosen at the third question. There used to be two dispatch modes, one monitored and one
+not. We merged them because the monitored mode repeated a fact the subprocess already held, and the two
+could contradict each other.
 
-🔴 **`interactive` is the whole name.** Not *needs-human*, not *blocked*, not *manual*, and above all it
-is **not a synonym for blocked**. It is a mode: work that is running, with a person in it. Work that
-genuinely cannot run unattended is *filed* as interactive; it is never filed as unattended work that then
-reports itself stuck.
+`interactive` is the whole name. It is not *needs-human*, not *blocked* and not *manual*, and above all it
+does not mean blocked. It is a mode for work that is running with a person in it. Work that really cannot
+run unattended is *filed* as interactive. It is never filed as unattended work that later reports itself
+stuck.
 
-That distinction sounds pedantic and is not. The moment "interactive" and "blocked" become the same word,
-a queue of work that is *running fine with a human in it* becomes indistinguishable from a queue of work
-that is *stopped*, and no dashboard can tell the two apart afterwards.
+That distinction sounds pedantic, but it is not. Once "interactive" and "blocked" mean the same thing, you
+can no longer tell a queue of work that is *running fine with a human in it* from a queue of work that is
+*stopped*, and no dashboard can separate them afterwards.
 
 ## Two things end the loop, and both are read rather than remembered
 
-Every turn in step 2 ends by asking the human a question whose last two options are, in that order,
-*research more* and *file it, move to step 3*. The loop ends when one of exactly two things happens:
+Every turn in step 2 ends with a question to the human. Its last two options are, in this order, *research
+more* and *file it, move to step 3*. The loop ends when one of exactly two things happens:
 
-1. The human **clicks** the second option.
-2. The human **types** the sentence that means the same thing.
+1. The human clicks the second option.
+2. The human types the sentence that means the same thing.
 
-An approving remark is neither. Enthusiasm about the artifact is neither.
+An approving remark does not end the loop, and neither does enthusiasm about the artifact.
 
-The click is the interesting half, because it is nearly invisible. **A click comes back as a tool result,
-not as a message** — so a per-turn injector that reads what the human said structurally cannot see it. A
-separate hook reads the tool response's answers field, and only that field, which is the difference
-between a mechanism that observes the exit and one that infers it from tone.
+The click is the more interesting half, because it is nearly invisible. A click comes back as a tool result, not as a
+message, so a per-turn injector that reads what the human said cannot see it at all. A separate hook reads
+the answers field of the tool response, and only that field. That hook observes the exit directly instead
+of guessing it from the human's tone.
 
-**And neither exit advances the step. Filing does.** The click ends a conversation; a step changes when an
-issue exists.
+Neither exit advances the step, though. Filing does. The click ends a conversation, and the step changes
+only when an issue exists.
 
 ## Filing is one command, and its shape is a real decision
 
-Filing chains or waves the work, and the difference is not cosmetic — a plan designed as parallel groups
-and filed as a chain has exactly one dispatchable issue. The mechanics, the refusal rule and the case that
-produced it are on [The board](/docs/operating/board).
+Filing either chains the work or groups it into waves, and the difference matters. A plan designed as
+parallel groups but filed as a chain has exactly one dispatchable issue. The mechanics, the refusal rule
+and the case that led to the rule are on [The board](/docs/operating/board).
 
 ## The loop ends at dispatch
 
-Steps 1 and 2 of the next plan run **concurrently with the execution of the last one**. The scheduler, the
-reaper and the announcer carry the tail; the planner does not.
+Steps 1 and 2 of the next plan run at the same time as the last plan executes. The scheduler, the reaper
+and the announcer handle the rest of the last plan, and the planner does not.
 
-**Watching an agent work is indistinguishable from not trusting it.** If the only reason to stay is to see
-whether the run succeeds, the run already announces that on the issue, and staying buys nothing but a
-serialized planner.
+Watching an agent work looks exactly like not trusting it. If the only reason to stay is to see whether
+the run succeeds, the run already announces that on the issue. Staying only means the planner works on one
+plan at a time.
 
-🔴 **The step-4 mode is not the planning mode, and the two words collide.** The planning mode is the step
-zero question above and decides which subprocesses exist. The step-4 mode is what the board shows for work
-already dispatched. They are different vocabularies that happen to share words, and the
-mapping between them is one table in doctrine rather than an inference anyone makes at the keyboard.
+The step-4 mode is not the planning mode, even though they use the same words. The planning mode is the
+step zero question above, and it decides which subprocesses exist. The step-4 mode is what the board shows
+for work already dispatched. They are separate vocabularies that happen to share words. One table in
+doctrine maps one to the other, so nobody has to work out the mapping at the keyboard.
 
 ## Where this loop is currently weakest
 
-- **A doctrine file states a subprocess count that disk has outgrown.** It heads its own table with a
-  count; a directory walk returns one more than that. The same section already carries a note saying the
-  count had drifted *once before* and instructing the reader to re-derive rather than edit the cell — and
-  it drifted again anyway. A number in prose is a claim about the filesystem, and nothing was re-checking
-  it.
-- **Nothing binds the two doctrine files to each other.** One is the full loop; the other is the compacted
-  version the executing agents read, and by design the same path resolves to a *different file* depending
-  on the agent's class. A rule changed in one is not checked against the other. A contradiction between
-  them is invisible to continuous integration and surfaces as an agent doing the planner's job, or the
-  reverse.
-- **The loop's own machinery is not gradable from the repository that documents it.** Everything that
-  derives steps 1 and 2 lives in a separate, version-gated package, so the repository's assertion checker
-  can bind the *doctrine* and never the *mechanism*. One script reads the real population across boxes,
-  and it is run by hand.
+- A doctrine file states a subprocess count that the files on disk have outgrown. The file puts a count at
+  the top of its own table, and a directory walk returns one more than that. The same section already has
+  a note saying the count drifted *once before*, telling the reader to re-derive it instead of editing the
+  cell. It drifted again anyway. A number in prose is a claim about the filesystem, and nothing was
+  re-checking it.
+- Nothing ties the two doctrine files to each other. One holds the full loop. The other is the shorter
+  version that the executing agents read, and by design the same path resolves to a *different file*
+  depending on the agent's class. Nothing checks a rule changed in one against the other. Continuous
+  integration cannot see a contradiction between them. It shows up as an agent doing the planner's job, or
+  the reverse.
+- The repository that documents the loop cannot check the loop's own machinery. Everything that derives
+  steps 1 and 2 lives in a separate package with its own version gate. So the repository's assertion
+  checker can check the *doctrine* but never the *mechanism*. One script reads the real state across
+  boxes, and someone has to run it by hand.
 
-Publishing that third one matters more than it looks: **a process whose enforcement lives in a different
-release train from its documentation will drift, and the drift will be invisible from either side.**
+Publishing that third weakness matters more than it looks. When a process's enforcement ships on a
+different release schedule from its documentation, the two drift apart, and neither side can see the
+drift.

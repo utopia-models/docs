@@ -1,7 +1,7 @@
 ---
-title: Reference — How Claude Code Assembles Context
-description: What is in the model's context window at the start of a Claude Code turn, where each piece comes from, and what silently fails.
-updated: 2026-09-28
+title: "Reference: how Claude Code assembles context"
+description: What the model's context window holds at the start of a Claude Code turn, where each piece comes from, and which failures produce no error.
+updated: 2026-10-31
 ---
 
 ```text title="prompt-1|Map what my Claude Code actually loads, against this page|claude-code|Measures what Claude Code actually loads on this machine against this page and records every contradiction in CONTEXT-MAP.md. Changes nothing else."
@@ -201,130 +201,141 @@ Then say exactly this:
 Then stop.
 ```
 
-This page is the ground truth behind every module prompt that says *"find the always-on instruction
-file this harness loads every session."* Every module on this wiki is written for Claude Code as its
-one harness, so it answers that for Claude Code, with real paths.
+Many module prompts on this wiki say *"find the always-on instruction file this harness loads every
+session."* This page answers that instruction. Every module here targets Claude Code as its one
+harness, so the answer is for Claude Code, with real paths.
 
-**Researched 2026-08-30 against primary sources.** Every claim is marked CONFIRMED with the page or
-source file it came from, or UNCONFIRMED. Where a doc contradicts the shipped source, the source
-wins and the contradiction is recorded.
+**Researched 2026-08-30 against primary sources.** Each claim is marked CONFIRMED, with the page or
+source file it came from, or UNCONFIRMED. Where a doc contradicts the shipped source, we trust the
+source and record the contradiction.
 
-**Read the marks.** A gap named is more useful than a plausible guess, because this file is used to
-write commands that must actually work.
+**Read the marks.** We use this file to write commands that must actually work, so a named gap is more
+useful than a plausible guess.
 
 ## Before you trust any of it: the doc tree moved in 2026
 
-Older guides point at URLs that now 404. If your agent fetches those, it gets nothing and says so.
+Older guides point at URLs that now return 404. An agent that fetches them gets nothing and reports that.
 
 | Old location | 2026 location |
 | --- | --- |
-| `code.claude.com/docs/en/docs/claude-code/<page>` (404s) | `code.claude.com/docs/en/<page>` · index at `/docs/llms.txt` |
+| `code.claude.com/docs/en/docs/claude-code/<page>` (returns 404) | `code.claude.com/docs/en/<page>`, with the index at `/docs/llms.txt` |
 
 ---
 
 # Claude Code (CLI)
 
-Measured against **v2.1.251** on Linux/WSL2 in addition to the docs.
+We measured against **v2.1.251** on Linux/WSL2 as well as reading the docs.
 
 ## A. Context assembly
 
-**Load order, broadest to most specific** (CONFIRMED, `/docs/en/memory`):
+Claude Code loads these scopes from broadest to most specific (CONFIRMED, `/docs/en/memory`):
 
 | Scope | Path |
 | --- | --- |
-| Managed policy | macOS `/Library/Application Support/ClaudeCode/CLAUDE.md` · Linux+WSL `/etc/claude-code/CLAUDE.md` · Windows `C:\Program Files\ClaudeCode\CLAUDE.md` |
+| Managed policy | macOS `/Library/Application Support/ClaudeCode/CLAUDE.md`, Linux and WSL `/etc/claude-code/CLAUDE.md`, Windows `C:\Program Files\ClaudeCode\CLAUDE.md` |
 | User | `~/.claude/CLAUDE.md` |
 | Project | `./CLAUDE.md` or `./.claude/CLAUDE.md` |
 | Local | `./CLAUDE.local.md` |
 
-**These concatenate, they do not override** — "All discovered files are concatenated into context
-rather than overriding each other… ordered from the filesystem root down to your working directory."
-`CLAUDE.local.md` is appended after `CLAUDE.md` within each directory and is **not deprecated**
-(CONFIRMED — it is still documented as live).
+The files concatenate. None of them overrides another. The docs say "All discovered files are
+concatenated into context rather than overriding each other… ordered from the filesystem root down to
+your working directory." Within each directory, `CLAUDE.local.md` is appended after `CLAUDE.md`. It is
+not deprecated (CONFIRMED, the docs still describe it as live).
 
-**CLAUDE.md is delivered as a user message after the system prompt**, not as part of it (CONFIRMED).
-Output styles are the thing that modifies the system prompt.
+Claude Code delivers CLAUDE.md as a user message after the system prompt, not as part of the system
+prompt (CONFIRMED). Output styles are what modify the system prompt.
 
-**Upward walk, lazy downward.** It loads from cwd "and every directory above it." Subdirectory files
-load only **when Claude reads a file in that directory with the Read tool** — not at launch, and
-**not when writing or creating files there** (CONFIRMED, `/docs/en/debug-your-config`).
+Claude Code walks upward at launch and downward only on demand. It loads files from the working directory
+"and every directory above it." A file in a subdirectory loads only when Claude reads a file in that
+directory with the Read tool. It does not load at launch, and it does not load when Claude writes or
+creates files there (CONFIRMED, `/docs/en/debug-your-config`).
 
-**@-imports:** `@path/to/import`, max **four hops**, relative paths resolve against the file
-containing the import, `@~/.claude/foo.md` works. Imports expand **at launch** — they do not save
-context.
+The import syntax is `@path/to/import`. Imports follow at most four hops. A relative path resolves
+against the file that contains the import, and `@~/.claude/foo.md` works. Imports expand at launch, so
+they do not save any context.
 
-**`.claude/rules/*.md`** (2026 mechanism): without `paths:` frontmatter they load at launch at the
-same priority as `.claude/CLAUDE.md`, user rules before project rules. With `paths:` they load only
-when a matching file is read. Brace-expansion budget is 1,000 patterns / 4 MiB; over-budget patterns
-are used unexpanded and **match nothing**.
+`.claude/rules/*.md` is the 2026 mechanism for rules. A rule file without `paths:` frontmatter loads at
+launch with the same priority as `.claude/CLAUDE.md`, and user rules load before project rules. A rule
+file with `paths:` loads only when Claude reads a matching file. The brace-expansion budget is 1,000
+patterns or 4 MiB. Claude Code uses an over-budget pattern unexpanded, and it then matches nothing.
 
-**Always vs on-trigger** (CONFIRMED, `/docs/en/context-window` — token counts are the doc's own):
-system prompt (~4,200) · auto memory `MEMORY.md` (~680) · environment info (~280) · **MCP tool names
-only** (~120, schemas deferred) · **skill descriptions only** · user then project CLAUDE.md. Full
-skill bodies load only on use, and once loaded **stay in the conversation across later turns**.
+The docs split what loads every time from what loads on a trigger (CONFIRMED, `/docs/en/context-window`;
+the token counts are the doc's own). Every session loads the system prompt (~4,200), auto memory
+`MEMORY.md` (~680), environment info (~280), MCP tool names only (~120, with schemas deferred), skill
+descriptions only, and then user and project CLAUDE.md. A full skill body loads only when the skill is
+used. Once loaded, it stays in the conversation for later turns.
 
-**Documented limits:**
+These are the documented limits:
 
 | Limit | Value |
 | --- | --- |
-| CLAUDE.md hard limit | **4 MiB — a larger file is skipped entirely** |
+| CLAUDE.md hard limit | 4 MiB. Claude Code skips a larger file entirely |
 | CLAUDE.md advisory | under 200 lines |
 | Auto memory `MEMORY.md` | first 200 lines or 25 KB |
 | Skill description in listing | truncated at 1,536 chars |
 | Skill listing budget | 1% of context window, fallback 8,000 chars |
 | MCP tool description | 2 KB each |
-| Number of skills | **no documented cap** — the budget is the constraint |
+| Number of skills | no documented cap. The budget is the real limit |
 
-**Compaction.** Re-injected from disk: project CLAUDE.md, unscoped rules, auto memory, the plan.
-Files read come back for **up to five** files. Invoked skill bodies return at 5,000 tokens each,
-25,000 total. Hook-added context is summarized away. **The skill listing is the exception nobody
-expects: it is not re-injected after `/compact`, so afterwards Claude can auto-invoke only skills it
-already used this session** (CONFIRMED). "Microcompact" appears in no page fetched — UNCONFIRMED.
+### Compaction
 
-**Showing what is loaded:** `/context [all]` is the answer — a colored grid breaking out system
-prompt, MCP tools, subagents *with the source each loaded from*, memory files and skills. `/memory`
-lists *locations* (including files that do not exist yet), not what loaded. `/status` shows active
-settings sources. `/doctor` is now a bundled skill, not a screen.
+After compaction, Claude Code re-injects project CLAUDE.md, unscoped rules, auto memory and the plan from
+disk. It brings back files Claude read, for up to five files. Invoked skill bodies come back at 5,000
+tokens each, with a 25,000 total. Context added by hooks is summarized away.
 
-## B. I/O surface
+The skill listing is the surprise. Claude Code does not re-inject it after `/compact`, so from then on
+Claude can auto-invoke only the skills it already used in that session (CONFIRMED). No page we fetched
+mentions "microcompact", so that term is UNCONFIRMED.
 
-**Permission modes** (CONFIRMED against the binary): `default` (alias `manual`) · `acceptEdits` ·
-`plan` · `auto` · `dontAsk` · `bypassPermissions`. Evaluation is **deny → ask → allow, first match
-wins; specificity does not reorder it**, so a broad `Bash(aws *)` deny beats a narrow
-`Bash(aws s3 ls)` allow.
+### Showing what is loaded
 
-Two syntax traps worth memorizing: `Bash(ls *)` with a space does **not** match `lsof`, while
-`Bash(ls*)` does. And in Read/Edit rules `/path` is **relative to the settings source**, not the
-filesystem root — `//path` is the absolute form.
+Use `/context [all]`. It shows a colored grid that breaks out the system prompt, MCP tools, subagents
+*with the source each one loaded from*, memory files and skills. `/memory` lists *locations*, including
+files that do not exist yet, rather than what actually loaded. `/status` shows the active settings
+sources. `/doctor` is now a bundled skill rather than a screen.
 
-**Sandboxing exists** on macOS (Seatbelt), Linux and WSL2 (bubblewrap); native Windows and WSL1 are
-unsupported. Default write is cwd plus `--add-dir`; **default read is the entire computer** except
-denied paths, which still allows `~/.aws/credentials` and `~/.ssh/`.
+## B. Inputs and outputs [#b-io-surface]
 
-**MCP scopes:** `local` (default, in `~/.claude.json`) · `project` (**`.mcp.json` at the repo root**)
-· `user`. Transports http / sse (deprecated) / stdio / ws. Project servers require a **one-time
-approval** per machine.
+The permission modes are `default` (alias `manual`), `acceptEdits`, `plan`, `auto`, `dontAsk` and
+`bypassPermissions` (CONFIRMED against the binary). Claude Code evaluates deny rules, then ask rules,
+then allow rules, and the first match wins. A more specific rule does not change that order, so a broad
+`Bash(aws *)` deny beats a narrow `Bash(aws s3 ls)` allow.
 
-**Subagents:** `.claude/agents/` and `~/.claude/agents/`, each with **its own context window**. Note
-the inversion — for skills, personal overrides project; for subagents, **project outranks user**.
-Built-in Explore and Plan **skip CLAUDE.md and git status**; custom subagents load it normally.
+Two syntax traps are worth memorizing. `Bash(ls *)`, with a space, does not match `lsof`, but
+`Bash(ls*)` does. In Read and Edit rules, `/path` is relative to the settings source and not to the
+filesystem root. The absolute form is `//path`.
 
-**Hooks: 33 events** (CONFIRMED, `/docs/en/hooks`), including `InstructionsLoaded`, which fires when
-a CLAUDE.md or rules file loads and is the documented way to "log exactly which instruction files are
-loaded, when they load, and why." Exit `2` is an absolute block that overrides JSON and cannot be
-overridden even by `permissionDecision: allow`; **stderr on exit 0 goes to the debug log only, never
-to Claude**. `PreToolUse` fires before any permission check **in every mode including
-`bypassPermissions`** — but a hook `allow` cannot loosen a settings deny.
+Sandboxing works on macOS (Seatbelt) and on Linux and WSL2 (bubblewrap). Native Windows and WSL1 are
+unsupported. By default the sandbox allows writes to the working directory plus any `--add-dir`. It
+allows reads of the entire computer except denied paths, which still includes `~/.aws/credentials` and
+`~/.ssh/`.
 
-**Headless:** `claude -p`, `--output-format text|json|stream-json`, `--json-schema` for structured
-output, exit 0 / non-zero / **143 on SIGTERM**. `--bare` skips discovery of hooks, skills, commands,
-subagents, plugins, MCP and CLAUDE.md, and never reads the keychain; it "will become the default for
-`-p` in a future release." SDK packages are `@anthropic-ai/claude-agent-sdk` and `claude-agent-sdk`
-— **not** `@anthropic-ai/claude-code`.
+MCP servers have three scopes. `local` is the default and lives in `~/.claude.json`. `project` lives in
+`.mcp.json` at the repo root. The third is `user`. The transports are http, sse (deprecated), stdio and
+ws. Each machine must approve a project server once.
+
+Subagents live in `.claude/agents/` and `~/.claude/agents/`, and each one gets its own context window.
+The precedence is inverted between the two. For skills, a personal skill overrides a project skill. For
+subagents, a project subagent outranks a user one. The built-in Explore and Plan subagents skip CLAUDE.md
+and git status, while custom subagents load it as usual.
+
+Claude Code has 33 hook events (CONFIRMED, `/docs/en/hooks`). One of them is `InstructionsLoaded`, which
+fires when a CLAUDE.md or rules file loads. The docs name it as the way to "log exactly which instruction
+files are loaded, when they load, and why." Exit code `2` blocks absolutely. It overrides JSON output, and
+not even `permissionDecision: allow` can override it. On exit 0, stderr goes only to the debug log and
+never reaches Claude. `PreToolUse` fires before any permission check in every mode, including
+`bypassPermissions`. Even so, a hook `allow` cannot loosen a deny in settings.
+
+For headless runs, use `claude -p` with `--output-format text|json|stream-json`, and `--json-schema` for
+structured output. The exit code is 0 on success, non-zero on failure and 143 on SIGTERM. `--bare` skips
+discovery of hooks, skills, commands, subagents, plugins, MCP and CLAUDE.md, and it never reads the
+keychain. The docs say it "will become the default for `-p` in a future release." The SDK packages are
+`@anthropic-ai/claude-agent-sdk` and `claude-agent-sdk`. The package `@anthropic-ai/claude-code` is not
+the SDK.
 
 ## C. State on disk
 
-Verified directly on a live install as well as in the docs.
+We checked these paths directly on a live install as well as in the docs.
 
 ```
 ~/.claude/CLAUDE.md                              user memory
@@ -338,36 +349,35 @@ Verified directly on a live install as well as in the docs.
 ~/.claude.json                                   MCP servers, trust decisions, OAuth account — NOT settings
 ```
 
-`~/.claude/todos/`, `statsig/` and `logs/` are **legacy and no longer written** — tooling that reads
-them is reading a vestige. `CLAUDE_CONFIG_DIR` relocates all of it.
+`~/.claude/todos/`, `statsig/` and `logs/` are legacy, and Claude Code no longer writes to them. Tooling
+that reads them reads stale data. `CLAUDE_CONFIG_DIR` moves all of these paths.
 
-**Never commit:** `.claude/settings.local.json`, `CLAUDE.local.md`, `.credentials.json`, anything
-under `~/.claude/`. Note the sharp edge: Claude Code adds `settings.local.json` to your **global** git
-excludes, not the repo's `.gitignore` — a hand-created file is your problem. And transcripts are
-**not encrypted at rest**: if a tool reads a `.env`, that value is now in the session `.jsonl`.
+Never commit `.claude/settings.local.json`, `CLAUDE.local.md`, `.credentials.json` or anything under
+`~/.claude/`. One catch is that Claude Code adds `settings.local.json` to your global git excludes, not
+to the repo's `.gitignore`. If you create the file by hand, you have to exclude it yourself. Transcripts
+are also not encrypted at rest. If a tool reads a `.env`, its values end up in the session `.jsonl`.
 
 ## D. The most common silent misconfiguration
 
-**A skill whose description names a topic rather than an occasion never fires.** It appears in
-`/skills`, is loaded, listed, and inert, with zero error output. The fix per the docs is to include
-"keywords users would naturally say."
+If a skill's description names a topic rather than an occasion, the skill never fires. It shows up in
+`/skills`, loads and appears in the listing, and does nothing, with no error output. The docs say to fix
+it by including "keywords users would naturally say."
 
-Four more that fail just as quietly:
+Four more fail just as quietly:
 
-1. **Skill descriptions are silently truncated — or dropped.** When the listing overflows its 1%
-   budget, Claude Code "drops descriptions starting with the skills you invoke least." **A skill that
-   worked can stop working purely because you added other skills.**
-2. **Malformed skill frontmatter loads the body with empty metadata** — `/skill-name` still works,
-   auto-invocation is dead.
-3. **`~/.claude.json` is not a settings file.** `permissions`, `hooks` and `env` put there are simply
-   never read.
-4. **In `-p` and the SDK the trust gate fails open in the wrong direction**: the repo's
-   `permissions.allow` is silently not applied, while its hooks, `env`, and `.mcp.json` servers all
-   run.
+1. Claude Code truncates skill descriptions without warning, or drops them. When the listing overflows
+   its 1% budget, Claude Code "drops descriptions starting with the skills you invoke least." A skill
+   that worked can stop working only because you added other skills.
+2. If a skill's frontmatter is malformed, Claude Code loads the body with empty metadata. `/skill-name`
+   still works, but auto-invocation stops.
+3. `~/.claude.json` is not a settings file. Claude Code never reads `permissions`, `hooks` or `env`
+   written there.
+4. In `-p` and the SDK, the trust gate fails open in the wrong direction. Claude Code silently skips the
+   repo's `permissions.allow`, but it still runs the repo's hooks, `env` and `.mcp.json` servers.
 
 ## What this page does not establish
 
-Named explicitly, because a gap is more useful than a guess:
+We list these because a named gap is more useful than a guess:
 
-- Whether Claude Code's CLAUDE.md walk stops at the repo root or continues to `/`; "microcompact"
-  appears in no current doc.
+- We do not know whether Claude Code's CLAUDE.md walk stops at the repo root or continues to `/`. No
+  current doc mentions "microcompact".
