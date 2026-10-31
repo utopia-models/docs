@@ -4,7 +4,7 @@ description: Two prompts that install the unslop skill (Lauren Tan, cursor/plugi
 updated: 2026-10-31
 ---
 
-unslop is one skill file. It lists 28 numbered patterns that make text read as machine-written (a list of overused words, em dashes,
+unslop is one skill file. It lists 28 patterns, numbered 3 to 33 with gaps the upstream keeps as stable ids, that make text read as machine-written (a list of overused words, em dashes,
 title case headings, chatbot sign-offs, forced groups of three) and tells the agent how to
 rewrite each one. Lauren Tan wrote it for Cursor's pstack plugin and published it under the MIT
 license. This module installs that one file, not all of pstack, and then runs it on something you wrote.
@@ -38,7 +38,7 @@ Check for each of these. For each, record: installed yes/no (the command and its
   Cursor        ~/.cursor/skills/, also reads ~/.agents/skills/ and ~/.claude/skills/            AGENTS.md, .cursor/rules/*.mdc
   Aider         no skills support                        none                               a file loaded with --read
 
-These paths were read from each vendor's docs on 2026-10-31 (the links are under Resources on this page). If what you find on disk disagrees, trust the disk and the vendor's current docs, and say so.
+These paths were read from each vendor's docs on 2026-10-31 (the links are under Resources on this page). If what you find on disk disagrees, trust the disk and the vendor's current docs, and say so. If the Gemini CLI docs say your tier moved to Antigravity CLI, read that tool's skills docs for its paths.
 
 Two directories cover every harness above that reads skills: ~/.claude/skills/ (Claude Code, OpenCode, Cursor) and ~/.agents/skills/ (Codex, Gemini, OpenCode, Cursor). Plan the smallest set of directories that covers what is installed. Do not plan a copy in a directory nothing installed reads.
 
