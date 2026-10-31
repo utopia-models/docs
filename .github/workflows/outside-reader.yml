@@ -55,8 +55,10 @@ jobs:
             || { echo "::error::could not fetch the reviewer from utopia-models/knowledge"; exit 1; }
           gh api repos/utopia-models/knowledge/contents/net/work/resume/tyler-youk.yaml \
             -H 'Accept: application/vnd.github.raw' > "$T/net/work/resume/tyler-youk.yaml" || true
-          python3 "$T/_infra/scripts/outside_reader.py" pr --repo "$REPO" --pr "$PR" --base-url "$PREVIEW" --post
-          rc=$?
+          # Actions runs this as `bash -e`, and `set -uo pipefail` does not clear -e: `|| rc=$?` is what keeps
+          # exit 1 (findings) from killing the step before it is read.
+          rc=0
+          python3 "$T/_infra/scripts/outside_reader.py" pr --repo "$REPO" --pr "$PR" --base-url "$PREVIEW" --post || rc=$?
           # 1 = blocking findings: a correct outcome, reported on the PR and in the status. Anything else (3 =
           # could not check, a crash) turns the job red, so a red job always means the reviewer, not the page.
           case "$rc" in 0|1) exit 0 ;; *) echo "::error::outside-reader exited $rc"; exit 1 ;; esac
