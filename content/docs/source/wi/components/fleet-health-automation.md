@@ -1,7 +1,7 @@
 ---
 title: "fleet-health-automation — the box's own self-heal and alarm layer"
 description: "Mirrored from the fleet knowledge base: wi/components/fleet-health-automation.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/fleet-health-automation.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -77,6 +77,12 @@ enrolled.
 per-unit `[Unit] OnFailure=` reset does not disarm the production notifier — the top-level drop-in is
 applied afterwards and re-adds itself. And `RestartMode=direct` suppresses `OnFailure=` entirely;
 plain `Restart=` does not.
+
+**A deliberate-failure experiment opts out through its own environment, not through `OnFailure=`.**
+`systemd-run --user -u <name> -E FLEET_NOTIFY=off …` — `fleet-notify` reads the failed unit's
+`Environment` and, on `FLEET_NOTIFY=off`, logs a line and files nothing (#10823). `-p OnFailure=` cannot
+do it, for the reason above. An unreadable unit falls through and files, so a broken read cannot eat a
+real alarm.
 
 **The scripts are not in this repo** — `~/.claude/ops/{disk-guard,nova-ops-integrity}.sh` in `brain-nova`
 for the nova half, and copies under svc-ops' `~/.claude/ops/{sudo-health,dmv-revenue-integrity}.sh` and
