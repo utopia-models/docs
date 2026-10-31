@@ -1,7 +1,7 @@
 ---
 title: "board-cli — the write path onto the board, and every refusal it makes before writing"
 description: "Mirrored from the fleet knowledge base: wi/components/board-cli.md"
-updated: 2026-10-25
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/board-cli.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -37,7 +37,7 @@ by then it costs a session.
 
 | script | what it is |
 |---|---|
-| `file-issue.sh` | files a Feature, a Task, or a whole plan in ONE call. Every body is validated before any issue is created, so partial completion stops existing |
+| `file-issue.sh` | files a Feature, a Task, or a whole plan in ONE call. Every body is validated before any issue is created, so partial completion stops existing. With `--porcelain` (#10775) stdout is only the filed URL(s), or ONE `ERROR:` line naming every failing criterion and its reason — for a caller that greps the output |
 | `board-project.sh` | a drop-in for `gh project item-add` / `item-edit` that speaks raw ProjectV2 GraphQL — same argv, one word changed at the call site |
 | `shared-board-helpers.sh` | the title conventions (`VERIFY`, parked tags) that `dispatch.sh`, `verify-verdict.sh` and `sweep-dispatch.sh` all read |
 | `feature-progress.sh` | Feature + sub-issue completion for N Features in **one** GraphQL call |
