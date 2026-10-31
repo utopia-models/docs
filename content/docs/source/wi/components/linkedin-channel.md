@@ -47,7 +47,7 @@ asset: a restricted account is worse than no channel, so every limit below exist
   08:00 and 21:00 America/Denver, so a tap request never arrives at night, and at most once every 2 hours. Each
   attempt writes a `login` ledger row BEFORE it starts (a run killed mid-wait still counts toward the 2 hours; when
   the row came after, a 900s timeout killed every attempt and each tick re-texted Tyler, #10886) and one with the
-  outcome; a failed attempt fails the unit. It resets the password only until one
+  outcome; a failed attempt fails the unit, except an unanswered tap (below). It resets the password only until one
   reset has succeeded; after that it signs in with the stored password.
 - **The queue.** Targets come from two places, merged by profile URL. Rows in `~nova/.claude/state/net/linkedin/queue.jsonl` are written by
   `linkedin_channel.py queue` or `resolve`. Rows in ronin's `linkedin-queue.jsonl` (`company_target.queue_linkedin`, #10802) are read in place with
@@ -99,6 +99,11 @@ systemctl --user list-timers linkedin-channel.timer; journalctl --user -u linked
 - **Signed out.** The next tick in Tyler's waking hours re-runs the login and texts him for the tap. If that
   attempt fails, `tick` exits 3 and the box-wide OnFailure drop-in files the failure. Outside his hours a
   signed-out tick exits 0 and prints why.
+- **Tyler does not tap.** The prompt times out, or lapses to LinkedIn's `challengesV2/inapp/expired` page
+  ("Password reset expired"). `login` exits 7 and the tick exits 0: the text to Tyler is the announcement, and a
+  board failure would dispatch a master to a phone tap it cannot make. The next try comes 2 hours later. Before
+  #10890 the expired page read as a tap (it lacks the "Check your LinkedIn app" text) and the reset died on "no
+  password form".
 - **"Sign in with Google" as tyler@utopiamodels.ai creates a second account.** LinkedIn has none on that address,
   and a duplicate breaks LinkedIn's terms. It happened on 2026-10-31 and was closed within the hour. Never use the
   Google button.
