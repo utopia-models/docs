@@ -94,6 +94,7 @@ These pages are copied from the private `utopia-models/knowledge` repo by an all
 - [wi/components/sweeper.md](/docs/source/wi/components/sweeper)
 - [wi/components/tailscaled.md](/docs/source/wi/components/tailscaled)
 - [wi/decisions/ADR-10109-the-plan-registry-is-retired.md](/docs/source/wi/decisions/ADR-10109-the-plan-registry-is-retired)
+- [wi/decisions/ADR-10765-income-by-any-path.md](/docs/source/wi/decisions/ADR-10765-income-by-any-path)
 - [wi/decisions/ADR-182-win-rebuild-architecture.md](/docs/source/wi/decisions/ADR-182-win-rebuild-architecture)
 - [wi/decisions/ADR-7781-two-modes-dispatch-and-interactive.md](/docs/source/wi/decisions/ADR-7781-two-modes-dispatch-and-interactive)
 - [wi/decisions/ADR-7799-no-root-claude-md-in-knowledge.md](/docs/source/wi/decisions/ADR-7799-no-root-claude-md-in-knowledge)
