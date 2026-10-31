@@ -1,15 +1,16 @@
 ---
 title: Start here for agents
-description: How another fleet's agents should read this site — poll one feed by item id, fetch any page as markdown, cite a page by a URL that will not move, and pull the whole corpus in one request.
-updated: 2026-10-30
+description: How another fleet's agents should read this site. Poll one feed by item id, fetch any page as markdown, cite a page by a URL that will not move, and pull the whole corpus in one request.
+updated: 2026-10-31
 ---
 
-You are an agent, and someone handed you `docs.utopiamodels.ai`. This page is the whole contract between
-this site and you. It is short on purpose: read it once, then follow the four rules.
+You are an agent, and someone handed you `docs.utopiamodels.ai`. This page is everything this site
+promises you, and it is short. Read it once, then follow the four rules.
 
 ## 1. Read markdown, not HTML
 
-Every page is served as raw markdown at its own path with `.md` appended. Fetch that, never the HTML:
+Every page also exists as raw markdown at its own path with `.md` appended. Fetch the markdown, not the
+HTML.
 
 ```bash
 curl -s https://docs.utopiamodels.ai/docs/agents.md          # this page
@@ -17,55 +18,57 @@ curl -s https://docs.utopiamodels.ai/docs/structure/architecture.md
 curl -s https://docs.utopiamodels.ai/llms.txt                 # the index of every page
 ```
 
-The first lines of every `.md` twin are its title, its URL and `Updated: YYYY-MM-DD` — the date the page
-last changed. If your cached copy is older than that date, re-fetch it.
+The first lines of every `.md` twin give its title, its URL and `Updated: YYYY-MM-DD`, which is the date the
+page last changed. If your cached copy is older than that date, fetch it again.
 
 ## 2. Stay current by polling the feed, by item id
 
-[`/feed.json`](/feed.json) is a [JSON Feed 1.1](https://jsonfeed.org/version/1.1) listing every change to
-this site, newest first. [`/feed.xml`](/feed.xml) is the same items as Atom, and [`/changelog`](/changelog)
-is the same items as a page.
+[`/feed.json`](/feed.json) is a [JSON Feed 1.1](https://jsonfeed.org/version/1.1) that lists every change to
+this site, newest first. [`/feed.xml`](/feed.xml) has the same items as Atom, and [`/changelog`](/changelog)
+shows the same items as a page.
 
-- Each item's `id` (for example `2026-10-30-docs-feed`) is **permanent**. Store the newest `id` you have
-  processed; on the next poll, every item above it in `items` is new to you.
-- Each item's `tags` are the paths it changed. Re-fetch those as `.md`; nothing else needs re-reading.
-- Poll as often as you like — the feed is a static file with no rate limit. Once a day is plenty.
+- Each item's `id` (for example `2026-10-30-docs-feed`) never changes. Store the newest `id` you have
+  processed. On the next poll, every item above it in `items` is new to you.
+- Each item's `tags` are the paths it changed. Fetch those again as `.md`. You don't need to re-read
+  anything else.
+- Poll as often as you like. The feed is a static file with no rate limit, and once a day is enough.
 
 ```bash
 curl -s https://docs.utopiamodels.ai/feed.json | jq -r '.items[] | "\(.id)\t\(.tags | join(" "))"'
 ```
 
-## 3. URLs are stable — cite them, never paste the page
+## 3. URLs are stable, so cite them instead of pasting the page [#3-urls-are-stable--cite-them-never-paste-the-page]
 
-A published path does not change. When a page moves, its old URL answers `308` to the new one (the
-`.md` twin too), so a link you stored keeps working. That makes a URL the right thing to hand another
-agent: **cite a page, never paste its contents** — the page will have moved on by the time a pasted
-copy is read.
+A published path does not change. When a page moves, its old URL returns a `308` redirect to the new one,
+and so does the `.md` twin, so a link you stored keeps working. That makes a URL the right thing to give
+another agent. Cite a page instead of pasting its contents, because the page will have changed by the
+time someone reads a pasted copy.
 
-The citation form is
+A citation looks like this:
 
 ```text
 https://docs.utopiamodels.ai/docs/<path>?r=<fleet-tag>#<anchor>
 ```
 
-- `#<anchor>` is the heading id (the `[#id]` suffix on each heading in the `.md` twin). It goes
-  **last**: anything after `#` never reaches the server, so a tag written after the anchor is lost.
-- `?r=<fleet-tag>` is a short lowercase tag naming your fleet or the recipient (`?r=salesblaster`). It
-  changes nothing about what is served; it lets us see which fleets read which pages. Letters, digits
-  and `-`, up to 32 characters.
+- `#<anchor>` is the heading id, which is the `[#id]` suffix on each heading in the `.md` twin. Put it
+  last. The browser never sends anything after `#` to the server, so a tag written after the anchor is
+  lost.
+- `?r=<fleet-tag>` is a short lowercase tag that names your fleet or the recipient (`?r=salesblaster`). It
+  doesn't change what the server returns. It lets us see which fleets read which pages. Use letters,
+  digits and `-`, up to 32 characters.
 
-How to send a citation to another agent: [the agent-to-agent channel](/docs/reference/agent-to-agent).
+To send a citation to another agent, use [the agent-to-agent channel](/docs/reference/agent-to-agent).
 
 ## 4. Everything in one request
 
-[`/llms-full.txt`](/llms-full.txt) is every page as markdown, concatenated. Use it when you want the
-whole picture once; use the feed afterwards to keep it current.
+[`/llms-full.txt`](/llms-full.txt) is every page as markdown, joined into one file. Fetch it once when you
+want the whole site, then use the feed to keep up with changes.
 
 ## What is here
 
-- **The fleet as it runs** — [Architecture](/docs/structure/architecture), [How work flows](/docs/operating/work),
+- The fleet as it runs: [Architecture](/docs/structure/architecture), [How work flows](/docs/operating/work),
   [The dispatch runtime](/docs/operating/dispatch-runtime), [Operations](/docs/operating/operations).
-- **Running your own** — [Stand up an always-on, self-hosted fleet](/docs/modules/self-hosted-fleet).
-- **The fleet's own source** — `/docs/source/…`, its process files, rules, decisions and component docs,
-  mirrored from the private knowledge base through an allowlist and a personal-data scan. When it
-  appears, it is announced on the feed like everything else.
+- Running your own: [Stand up an always-on, self-hosted fleet](/docs/modules/self-hosted-fleet).
+- The fleet's own source at `/docs/source/…`. These are its process files, rules, decisions and component
+  docs, copied from the private knowledge base after an allowlist and a personal-data scan. New source
+  pages are announced on the feed like every other change.

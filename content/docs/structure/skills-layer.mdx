@@ -1,7 +1,7 @@
 ---
 title: The skills layer
-description: Reusable agent behaviour packaged as a directory with one markdown file. Its defining property is negative — a skill reaches exactly one machine — and the fleet has three delivery layers with three different reaches.
-updated: 2026-09-28
+description: A skill is reusable agent behaviour stored as a directory with one markdown file. It reaches exactly one machine. The fleet has three delivery layers, and each one reaches a different set of machines.
+updated: 2026-10-31
 ---
 
 <Status value="in-flux" />
@@ -153,31 +153,31 @@ If I approved an edit to a file you did not create, name that file in the same l
 After writing, prove it: in a fresh `claude -p`, say a sentence that SHOULD trigger it and one that should NOT, and paste both results. A skill that fires on everything is as broken as one that never fires.
 ```
 
-Sourced from the fleet's own component document for `skills-layer`. Called in-flux because three of its
-own in-repository pointers resolve to files that are wired to nothing; because only two of the fleet's
-seven agent repositories carry a skills directory at all; and because the two that do have diverged, with
-nothing measuring the gap.
+This page comes from the fleet's own component document for `skills-layer`. It is marked in-flux for
+three reasons. Three of the component's own in-repository pointers resolve to files that nothing calls.
+Only two of the fleet's seven agent repositories have a skills directory at all. And those two have
+diverged, and nothing measures the gap.
 
-A skill is a directory holding one markdown file. The file's frontmatter description is what the model
-matches on to decide whether the skill applies — which means **the description is not documentation, it is
-the routing key**, and a vague one makes a skill that exists and never fires.
+A skill is a directory that holds one markdown file. The model reads the description in that file's
+frontmatter to decide whether the skill applies. So the description is not documentation. It is the
+routing key, and a skill with a vague description exists but never fires.
 
-This is where the fleet's process *doors* live: the entry points that start a plan, continue one, or run a
-feedback pass. Delete the layer and no agent stops executing — but every way of *starting* something goes
-with it.
+The fleet's process entry points live here. These are the skills that start a plan, continue one, or run a
+feedback pass. If you deleted this layer, every agent would keep executing work, but there would be no way
+left to start anything.
 
-This page is about delivery: who gets a skill, and how far it actually travels.
+This page is about delivery: which machines get a skill, and how far it actually travels.
 
 ## The defining property is negative
 
-🔴 **A skill reaches exactly one machine.**
+A skill reaches exactly one machine.
 
-The fleet ships a plugin to every box — hooks and scripts, pinned to a commit and gated on a version. It
-is genuinely one push and every box pulls. **That is true of the plugin and of nothing else**, and the
-sentence *"one push, every machine gets it"* has been applied to skills more than once by people who had
-read the plugin's documentation.
+The fleet ships a plugin to every box. The plugin carries hooks and scripts, is pinned to a commit, and is
+gated on a version. One push really does reach every box, because every box pulls it. That is true of the
+plugin and of nothing else. People who had read the plugin's documentation have more than once applied
+the sentence *"one push, every machine gets it"* to skills.
 
-The plugin does not carry skills. It never has.
+The plugin does not carry skills, and it never has.
 
 ## Three delivery layers, three reaches
 
@@ -195,72 +195,74 @@ SKILL         one box's own repository  →  exactly ONE box
               arrives at that box's next pull
 ```
 
-**Conflating any two of these is the recurring error**, and the middle one is where it bites, because it
-is the second layer wearing the third layer's clothes.
+People keep confusing two of these layers with each other. The middle one causes the most trouble,
+because doctrine looks like it is delivered the way skills are.
 
-Doctrine is symlinked live out of each machine's own clone, so a rule change reaches every box without a
-release. But the *symlink itself* is a tracked file in that machine's own repository. When the links were
-repointed by hand on five machines and committed on none, every subsequent checkout restored nine symlinks
-into a directory the rebuilt tree no longer had — and the automatic pull then skipped, because it refuses
-to run over uncommitted deletions. Five machines, silently pinned to a stale tree.
+Each machine reads doctrine through a symlink into its own clone, so a rule change reaches every box
+without a release. But the symlink itself is a tracked file in that machine's own repository. On five
+machines, someone repointed the links by hand and committed the change on none of them. After that, every
+checkout restored nine symlinks into a directory that the rebuilt tree no longer had. The automatic pull
+then skipped, because it refuses to run over uncommitted deletions. The result was five machines pinned
+to a stale tree, with no warning.
 
-**A repoint is not delivered until it is committed.** A change made by hand on a live machine is a change
-that exists until the next checkout, and no longer.
+A repoint is not delivered until someone commits it. A change made by hand on a live machine lasts until
+the next checkout and no longer.
 
 ## What belongs in a skill, and what does not
 
-**A skill belongs to the agent that owns the folder.** A machine's agent directory is that agent's; a
-project's own skills, commands and rules never live there. That boundary is what stops one agent's
-behaviour leaking into another's by proximity.
+A skill belongs to the agent that owns the folder. A machine's agent directory belongs to that agent, and
+a project's own skills, commands and rules never go there. That boundary stops one agent's behaviour from
+leaking into another agent's because their files sit near each other.
 
-Four conventions this fleet holds its own skills to, each earned rather than chosen:
+The fleet holds its own skills to four conventions. Each one came from a past failure, not from a
+preference.
 
-- **A skill that touches more than one file loads its context and shows a status table before any write.**
-  The reader sees what is about to happen while it is still cheap to stop.
-- **An interactive question is never step one.** A skill that opens by asking has not read anything yet,
-  so its question is uninformed by definition.
-- **A skill with side effects opts out of automatic invocation.** Auto-matching on a description is right
-  for a skill that reads and wrong for one that writes.
-- **The verbs are fixed**: *audit* is read-only, *self-enhance* is autonomous, *update* and *fix* are
-  scoped. A skill whose name does not start with one of those is claiming a shape the fleet has no rules
-  for.
+- A skill that touches more than one file loads its context and shows a status table before it writes
+  anything. The reader sees what is about to happen while it is still cheap to stop.
+- A skill never asks an interactive question as its first step. A skill that opens with a question has not
+  read anything yet, so it cannot ask an informed one.
+- A skill with side effects opts out of automatic invocation. Matching on the description automatically is
+  right for a skill that reads and wrong for one that writes.
+- Skill names start with one of a fixed set of verbs. *audit* is read-only, *self-enhance* runs on its own,
+  and *update* and *fix* are limited in scope. A skill whose name starts with any other verb claims a shape
+  the fleet has no rules for.
 
 ### A door is thin; the process is a frame
 
-The skills that start things resolve *which* process you mean and then hand off to a frame document. **The
-process lives in the frame, never in the door.**
+The skills that start things work out *which* process you mean and then hand off to a frame document. The
+process itself lives in the frame document, never in the entry-point skill.
 
-This matters more than it sounds. A door that contains its process cannot be shared with a second door, so
-the moment two entry points need the same steps, the steps get copied — and two copies of a process
-diverge exactly the way two copies of anything else do.
+This matters more than it sounds. If an entry point contains its process, a second entry point cannot
+share it. As soon as two entry points need the same steps, someone copies the steps, and the two copies
+diverge the way any two copies do.
 
 ### A fact a skill would assert becomes a command that reads it
 
-🔴 In a skill file, an exclamation mark immediately followed by a backticked command **runs in a shell
-before the content is sent to the model**, and the output replaces the placeholder. Verified here both
-without any tool allowlist and with automatic invocation disabled.
+In a skill file, an exclamation mark directly followed by a backticked command runs in a shell before the
+content goes to the model, and the command's output replaces the placeholder. We verified this here both
+with no tool allowlist and with automatic invocation turned off.
 
-So: a sentence stating a count, a path or a version is a sentence that rots. The live read cannot. This is
-the same discipline the pages on this wiki follow — [state the probe, not the answer](/docs/operating/operations) —
-applied one layer down, inside the instruction itself.
+So a sentence that states a count, a path or a version goes out of date, and a command that reads the value
+does not. The pages on this wiki follow the same discipline, [state the probe, not the answer](/docs/operating/operations),
+and this applies it one layer down, inside the instruction itself.
 
 ### The executing agents have no skills at all
 
-🔴 And that is the current design, not a gap. An agent executing a filed piece of work reads its
-specification and its checklist; anything it needs from a process arrives **written into the issue body at
-filing time**.
+That is the current design, not a gap. An agent that executes a filed piece of work reads its
+specification and its checklist. Anything it needs from a process is written into the issue body when the
+issue is filed.
 
-Worth sitting with, because it inverts the obvious approach. The machines doing the work carry the least
-process. Process lives where work is *shaped*, and travels to where work is *done* as data rather than as
-installed behaviour — which means the shape of a process can change without a deployment to anywhere.
+This is the opposite of the obvious approach. The machines that do the work carry the least process.
+Process lives where work is *planned*, and it reaches the place where work is *done* as data in the issue,
+not as installed behaviour. That means a process can change without deploying anything anywhere.
 
 ## Grade the population, never one machine
 
-🔴 *"The fleet has skill X"* is only ever true of machines individually, and most of them are not readable
-from any one account. A verification that read one machine and pronounced the layer sound has already
-shipped here once.
+*"The fleet has skill X"* can only be true of each machine separately, and no single account can read most
+of them. A verification here once read one machine and declared the whole layer sound.
 
-Every fact about this layer is off-repository, so this page states the readings rather than the answers:
+Every fact about this layer lives outside the repository, so this page gives the commands that read each
+fact instead of the answers:
 
 | Question | Command |
 | --- | --- |
@@ -270,22 +272,21 @@ Every fact about this layer is off-repository, so this page states the readings 
 | Does the plugin carry skills (it does not) | `gh api repos/<org>/<repo>/contents/plugins/<plugin> --jq '.[].name'` |
 | Is a machine on the current plugin payload | `bash _infra/scripts/plugin-deploy-check.sh` |
 
-One trap in that table, and it costs an hour the first time: **`gh api` writes its 404 body to standard
-output**, so a bare fallback prints the error JSON *and* the fallback text on one line. Filter for the
-shape you expect rather than for non-emptiness.
+That table has one trap, and it costs an hour the first time. `gh api` writes its 404 body to standard
+output, so a bare fallback prints the error JSON *and* the fallback text on one line. Filter for the shape
+of output you expect, not for whether the output is empty.
 
 ## Where this layer is currently weakest
 
-- **Two of seven agent repositories hold a skills directory at all.** The rest return 404. So the layer's
-  real population is two machines, and the larger set — the majority of every skill that exists here — is
-  reachable by nobody else. **Any plan that says "ship a skill to the fleet" is describing a mechanism
-  that does not exist.**
-- **The two sets have diverged with nothing measuring the gap.** Twenty-four named skills against
-  fifty-one. No shared manifest, no linter, no index. There is no command that answers *"which skills
-  exist in the fleet"* — the probe table above is one read per machine precisely because that single
-  command has never existed.
-- **A backup file sits inside the skills directory**, in the same directory the loader walks. It is not a
-  skill and nothing prunes it, against this fleet's own standing rule that git history is the archive.
-- **Three of this component's own in-repository pointers are wired to nothing.** The assertion checker
-  reports them present on disk and called by nobody — which is exactly what a door that was replaced but
-  not deleted looks like.
+- Only two of seven agent repositories have a skills directory. The rest return 404. So the layer really
+  reaches two machines, and nobody else can reach the larger set, which holds most of the skills that exist
+  here. Any plan that says "ship a skill to the fleet" describes a mechanism that does not exist.
+- The two sets have diverged, and nothing measures the gap. One has twenty-four named skills and the other
+  has fifty-one. There is no shared manifest, no linter and no index. No command answers *"which skills
+  exist in the fleet"*. The table above needs one read per machine because that single command has never
+  existed.
+- A backup file sits inside the skills directory, the same directory the loader walks. It is not a skill
+  and nothing removes it, which breaks this fleet's own standing rule that git history is the archive.
+- Three of this component's own in-repository pointers point at files that nothing calls. The assertion
+  checker reports them as present on disk and called by nobody. That is what an entry point looks like when
+  someone replaced it but did not delete it.

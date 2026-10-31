@@ -1,7 +1,7 @@
 ---
 title: The always-on agent
-description: The fleet forbids resident processes, then permits exactly one. What earns that exception, what the exception has to declare about itself, and the three properties that keep a permanent loop from dying quietly.
-updated: 2026-09-28
+description: The fleet forbids resident processes and then permits exactly one. This page covers what earned that exception, what the process has to declare about itself, and the three properties that stop a permanent loop from dying without anyone noticing.
+updated: 2026-10-31
 ---
 
 <Status value="experimental" />
@@ -163,39 +163,39 @@ If I approved an edit to a file you did not create, name that file in the same l
 Finish with: the three piles, what changed, and the one process you would bet is dead right now.
 ```
 
-Sourced from the fleet's own component document for `agent-always-on`. Called experimental because there
-is exactly one instance of it; because it exists under an amendment to a rule that forbids its entire
-class; and because its service units live in no repository, so nothing compares what is running against a
-committed artifact.
+This page comes from the fleet's own component document for `agent-always-on`. It is marked experimental
+for three reasons. There is exactly one instance of it. It exists under an amendment to a rule that forbids
+every process of its kind. And its service units live in no repository, so nothing compares what is
+running against a committed artifact.
 
 Everything else in this fleet is event-driven. Work arrives on a board, a run announces itself on an
-issue, a merge moves a status. **A resident process is forbidden for anything the board, a dispatched run
-or a git event already announces** — heartbeat polls and scheduled health checks are exactly that, and
-their failure mode is silence, which is indistinguishable from health.
+issue, and a merge changes a status. The fleet forbids a resident process for anything that the board, a
+dispatched run or a git event already announces. Heartbeat polls and scheduled health checks fall in that
+group. When they fail they go silent, and silence looks exactly like health.
 
-Then there is one exception, and this page is about what earned it.
+There is one exception, and this page is about why it was allowed.
 
 ## What a permanent loop has to prove
 
-The amendment permits a resident process **only** to observe an external system that emits no signal
-anyone can subscribe to, and only where latency below the polling interval is the actual point. It adds
-one requirement that does most of the work:
+The amendment permits a resident process only to watch an external system that emits no signal anyone
+can subscribe to, and only where reacting faster than the polling interval is the actual goal. It adds one
+requirement that does most of the work.
 
-🔴 **The process must name the external event it exists to catch, in its own documentation.**
+The process must name the external event it exists to catch, in its own documentation.
 
-That single requirement is the transferable part. A daemon that cannot name the unsubscribable event it
-watches is a daemon that is polling something it could have been told about, and writing the name down is
-where that becomes obvious — to the author, before anyone else has to review it.
+That requirement is the part other teams can reuse. If a daemon cannot name the event it watches that
+nobody can subscribe to, then it is polling something it could have been told about. Writing the name down
+makes that obvious to the author, before anyone else has to review it.
 
-The one process here names two:
+This process names two events:
 
-- **A role appearing on an applicant-tracking board.** No webhook, no feed and no subscription exists for
-  *"a role opened at any company in this region"*. Being early is the entire edge, and two minutes and
-  twelve hours are different applications.
-- **A chat-membership update at bootstrap.** The moment a human adds the bot to a group. This one is
-  finished: the poll stopped **permanently** once the identifier was captured, and the published feed
-  reports it as captured rather than as running. A watch that has caught its event and stopped is the
-  right shape; a watch that keeps polling for something it already has is the wrong one.
+- **A role appearing on an applicant-tracking board.** No webhook, feed or subscription exists for *"a
+  role opened at any company in this region"*. The only advantage is being early, and an application sent
+  after two minutes is a different application from one sent after twelve hours.
+- **A chat-membership update at bootstrap.** This is the moment a human adds the bot to a group. This watch
+  is finished. The poll stopped for good once it captured the identifier, and the published feed reports it
+  as captured, not as running. A watch should stop once it has caught its event. A watch that keeps polling
+  for something it already has is built wrong.
 
 ## The loop
 
@@ -221,73 +221,76 @@ every cycle merges a liveness block into a state file
 
 ### A duty is registered in the loop, not discovered from its directory
 
-*Which* directories run is a list of literal calls in the loop body. A handler dropped into a directory
-that is not on that list is **dead code that looks installed** — present, executable, and never invoked.
+The loop body lists, as literal calls, *which* directories run. If someone drops a handler into a
+directory that is not on that list, the handler looks installed but is dead code. It is present and
+executable, and nothing ever calls it.
 
-Discovery-by-directory is the tempting alternative and it trades a small convenience for a silent failure
-mode. An explicit list means adding a handler requires one edit that a reviewer can see.
+The tempting alternative is to discover handlers by scanning directories. That buys a small convenience
+and costs a failure that nobody sees. With an explicit list, adding a handler takes one edit that a
+reviewer can see.
 
-The last duty runs last for a measured reason. It is the only handler that can spend minutes rather than
-seconds — median 19 seconds, 90th percentile 98, maximum 246, across 45 records — and the duties run
-sequentially. Placed ahead of the watch, it would spend the very latency budget the process exists to
-protect.
+The last duty runs last for a measured reason. It is the only handler that can take minutes instead of
+seconds. Across 45 records its median is 19 seconds, its 90th percentile is 98 and its maximum is 246. The
+duties run one after another, so if it ran before the watch, it would use up the latency budget that the
+process exists to protect.
 
-**Order matters in a sequential loop, and the ordering argument belongs next to the order.**
+In a loop that runs duties in sequence, order matters, so write the reason for the order next to the order.
 
 ### The restart limit is what makes death visible
 
-`Restart=always` on its own restarts a crash loop **forever**. The unit never enters a failed state, the
-failure handler never fires, and an always-on agent dies silently while its service manager reports it as
+`Restart=always` on its own restarts a crash loop forever. The unit never enters a failed state, the
+failure handler never fires, and the always-on agent dies while its service manager still reports it as
 active.
 
-Adding a start-limit interval and burst is what converts an endless crash loop into a unit that eventually
-gives up, enters `failed`, and triggers the notification path. Without it, the most important property of
-the whole design — that failure announces itself — is quietly absent for the one component that has no
-other liveness signal.
+A start-limit interval and burst turn an endless crash loop into a unit that eventually gives up, enters
+`failed`, and triggers the notification path. Without them, the design loses its most important property,
+that failure announces itself. It loses it for the one component that has no other liveness signal, and
+nothing tells you.
 
 ### A schedule is a timer. Only the watch is resident
 
-The daily rollup that summarizes what the loop did is a **timer**, not a sixth duty. Three reasons, and
-each one is a test a future addition should be run against:
+The daily rollup that summarizes what the loop did is a timer, not a sixth duty. There are three reasons,
+and you should test any future addition against each one:
 
-1. A rollup of rows already written has **no latency edge**, so it fails the criterion that permitted the
+1. A rollup of rows already written gains nothing from low latency, so it fails the test that allowed the
    resident process in the first place.
-2. The duties are sequential, so a rollup inside the loop spends the watch's budget.
-3. A surface reporting what the system did today **must not go dark when the thing it reports on does.**
+2. The duties run in sequence, so a rollup inside the loop would use up the watch's time budget.
+3. A report on what the system did today must keep working when the thing it reports on stops.
 
-**Anything that is a schedule is a timer here; only the watch is resident.** That is the line a proposed
-sixth thing gets tested against, and it is a much easier test than "is this important enough."
+Here, anything that runs on a schedule is a timer, and only the watch is resident. That is the test for any
+proposed sixth duty, and it is much easier to apply than "is this important enough."
 
 ## Its isolation is enforced by code that never reads the registry
 
 The scheduler's list of dispatchable agents is a hardcoded string in two scripts. This agent is in
-neither, so **no board issue can route to it** — not by misconfiguration, not by a lane typo, not by
-someone assigning it in good faith.
+neither, so no board issue can route to it. A misconfiguration, a typo in a lane name, or someone assigning
+it in good faith cannot change that.
 
-Adding it to either list would make an always-on agent dispatchable, which is the one property the class
-denies. The isolation is therefore not a policy anyone has to remember; it is the absence of a name in two
-string literals, which is the kind of guarantee that survives everyone forgetting about it.
+Adding it to either list would make an always-on agent dispatchable, and that is the one property agents
+of this kind must not have. So the isolation is not a policy that anyone has to remember. It is a name
+missing from two string literals, and that guarantee keeps holding even after everyone forgets about it.
 
-There is a second half worth stating plainly: this agent is **never foreground**. All human interaction
-with it proxies through the planning agent. A resident process with its own conversational surface would
-be a second place to give it instructions, and a second place to give a system instructions is a second
-tracker wearing different clothes.
+The second half is simple. This agent never runs in the foreground. All human interaction with it goes
+through the planning agent. If the resident process had its own chat interface, people would have a second
+place to give it instructions, and a second place to give a system instructions is a second tracker by
+another name.
 
 ## Where this one is currently weakest
 
-- **The unit files are not in any repository.** They are installed from a different repository by a
-  script, and the main repository holds neither — so nothing compares the running schedule against a
-  committed artifact. Read the live one on the box; do not trust a written copy, including this page.
-- **The interpreter is a virtual environment on the box that nothing in git describes.** One duty needs a
-  real browser under a virtual display, and the system interpreter has no package directory of its own on
-  this distribution. The environment is created by three commands documented in the agent's own brain
-  repository, and the handler's pre-flight names it concretely when it is missing rather than failing as a
-  bare non-zero exit. Probe it; do not assume it.
-- **A probe run as the wrong user reports absence and non-existence identically.** These are per-user
-  service units, invisible to a probe from another account, and the failure text does not distinguish
-  "not there" from "not yours to see." Run the probe as that account with the runtime directory set, or
-  fall back to the committed feed — which carries its own timestamp, and is the only reading available
+- The unit files are not in any repository. A script installs them from a different repository, and the
+  main repository holds neither the files nor the script, so nothing compares the running schedule against
+  a committed artifact. Read the live unit files on the box. Do not trust a written copy, including this
+  page.
+- The interpreter is a virtual environment on the box, and nothing in git describes it. One duty needs a
+  real browser under a virtual display, and on this distribution the system interpreter has no package
+  directory of its own. Three commands documented in the agent's own brain repository create the
+  environment. When it is missing, the handler's pre-flight check names it, instead of failing with a bare
+  non-zero exit. Check that it exists. Do not assume it.
+- A probe run as the wrong user reports a missing unit and a unit it cannot see in the same way. These are
+  per-user service units, so a probe from another account cannot see them, and the failure text does not
+  tell "not there" apart from "not yours to see." Run the probe as that account with the runtime directory
+  set. Otherwise read the committed feed, which carries its own timestamp and is the only reading available
   from an account that cannot reach the box at all.
 
-That last point generalizes past this fleet: **a health check that cannot tell "absent" from "not
-permitted" is a health check that will eventually report a working system as dead.**
+That last point applies well beyond this fleet. A health check that cannot tell "absent" from "not
+permitted" will eventually report a working system as dead.

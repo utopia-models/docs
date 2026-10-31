@@ -1,7 +1,7 @@
 ---
 title: How work flows
-description: The board is the queue, git is the state, and a merged pull request is the only status change. Plans, features, issues, lanes, specs, and why no check can stop a merge.
-updated: 2026-09-28
+description: The board is the queue and git holds the state. A merged pull request is the only thing that changes status. This page covers plans, features, issues, lanes and specs, and explains why no check can stop a merge.
+updated: 2026-10-31
 ---
 
 ```text title="prompt-1|Learn how work flows from plan to merge|claude-code|Reads this page, explains the three words, the five derived steps and the advisory gates back to you, then tests you on real scenarios. Writes nothing."
@@ -140,23 +140,24 @@ FINISH
 Every file created with its path, and the three fractions you measured (thin tasks, hand closes, real gates) so I can re-measure them in a month. The runbook companion to this page is https://docs.utopiamodels.ai/docs/operating/operations.md.
 ```
 
-**One principle underneath all of it: no stored copies of state, no resident processes, and the documents
-are the config.** Anything that can drift is deleted rather than monitored. Anything unattended announces
-itself where the founder already looks — the board — so silence can never be mistaken for health.
+One principle sits under all of it. We keep no stored copies of state and run no resident processes, and
+the documents are the config. We delete anything that can drift instead of monitoring it. Anything that
+runs unattended reports on the board, which is where the founder already looks, so nobody can mistake
+silence for health.
 
 ## The three words
 
-Three layers, three words. Getting these confused is the most common vocabulary failure, so the fleet
-deliberately retired a fourth word ("task") that used to mean two of them at once.
+There are three layers and one word for each. People confuse these words more often than any others, so
+the fleet retired a fourth word, "task", which used to mean two of them at once.
 
 | Layer | Word | What it is | Example id |
 | --- | --- | --- | --- |
-| Above the board | **PLAN** | One thinking session: a document, its research, and the forks it closed | `PLAN-178` |
-| On the board | **Feature** | A body of shippable work with ordered children | `#5878` |
-| On the board | **issue** | One dispatchable unit, run to a merged pull request | `#5882` |
+| Above the board | PLAN | One thinking session: a document, its research, and the open questions it settled | `PLAN-178` |
+| On the board | Feature | A body of shippable work with ordered child issues | `#5878` |
+| On the board | issue | One unit of work you can dispatch, run until its pull request merges | `#5882` |
 
-A PLAN is **not** a Feature. It references Features; it does not equal one. A PLAN can spawn several, and
-some of what a PLAN decides never becomes work at all.
+A PLAN is not a Feature. A PLAN references Features but is not one. One PLAN can produce several Features,
+and some of what a PLAN decides never turns into work at all.
 
 ## The five steps
 
@@ -166,21 +167,21 @@ some of what a PLAN decides never becomes work at all.
 
 | # | Step | What it means |
 | --- | --- | --- |
-| 1 | **BRIEF** | A rough note from the founder, restated. No research yet |
-| 2 | **LOOP** ⟳ | Research ⇄ questions, repeating, until the plan is complete |
-| 3 | **FILE** | At least one issue exists for this plan |
-| 4 | **DISPATCHED** | A master is executing |
-| 5 | **DONE** | Every referenced issue is closed |
+| 1 | BRIEF | The founder's rough note, restated. No research has happened yet |
+| 2 | LOOP ⟳ | Research and questions alternate until the plan is complete |
+| 3 | FILE | At least one issue exists for this plan |
+| 4 | DISPATCHED | A master is doing the work |
+| 5 | DONE | Every referenced issue is closed |
 
-**Every step is derived, never reported.** Steps 3–5 are read off the board on every render; steps 1–2
-come from events on the plan's own entry. Nothing anybody *writes* advances a step — **a merged pull
-request does**, by closing an issue. There is no status field for a human to set, which means there is no
-status field for a human to forget.
+Nobody reports a step. The system works each one out. It reads steps 3 to 5 off the board every time it
+renders, and it reads steps 1 and 2 from events on the plan's own entry. Nothing anyone writes moves a
+step forward. A merged pull request does, because merging closes an issue. There is no status field for a
+human to set, so there is no status field for a human to forget.
 
-Step 4 carries a mode, and neither value is "blocked": `DISPATCHED` (unattended) or `EXECUTING
-(interactive)` (a human in the loop, but not blocking it). Being genuinely stuck is not a state — it is a
-comment on the issue saying exactly what blocks you, followed by a clean exit. Stopping silently is the
-one unacceptable outcome.
+Step 4 has a mode, and neither mode is "blocked". The two modes are `DISPATCHED` (unattended) and `EXECUTING
+(interactive)`, where a human takes part but does not hold the work up. Being stuck is not a state. If you
+are stuck, you write a comment on the issue that says exactly what blocks you, and then you exit cleanly.
+The one outcome we do not accept is stopping without saying anything.
 
 ## The loop, end to end
 
@@ -195,28 +196,28 @@ PLAN (a thinking session)
 
 ## The board
 
-**There is exactly one tracker**: a GitHub organization project board. Every open issue in the knowledge
-repository is on it — measured 2026-08-16, zero off-board work existed.
+We use exactly one tracker, a GitHub organization project board. Every open issue in the knowledge
+repository is on it. When we measured on 2026-08-16, no work existed off the board.
 
-Work that becomes a board issue lives on the board and nowhere else. It specifically does **not** also
-live in an agent harness's private to-do list; two trackers cannot both be true.
+Work that becomes a board issue lives on the board and nowhere else. In particular, it does not also go
+into an agent harness's private to-do list, because two trackers cannot both be correct.
 
-What the board carries per row: the issue, its **Lane** (which master serves it), **Priority**,
-**Portfolio**, and a **Status** that is derived rather than typed.
+Each row on the board has the issue, its Lane (the master that serves it), its Priority, its Portfolio,
+and a Status. The system works the Status out. Nobody types it.
 
 ### Lanes, and the failure mode nobody expects
 
-A lane routes an issue to a master. The important property is the negative one: **an issue with no lane,
-or on a lane no master serves, is structurally undispatchable** — permanently, silently, and regardless
-of how idle the fleet is.
+A lane sends an issue to a master. What matters most is what happens without one. If an issue has no
+lane, or sits on a lane that no master serves, no master can ever pick it up. This holds permanently, it
+happens without any warning, and it does not matter how idle the fleet is.
 
-This is the single most misread signal in the system. A board showing plenty of open work and zero
-dispatchable looks exactly like a capacity problem, and investigations have gone looking for a broken
-scheduler while the scheduler was printing the real cause every five minutes. Measured 2026-08-16: of the
-open issues at that moment, thirteen were undispatchable — eleven with no lane at all, plus two on a lane
-that no sweeper reaches. That is a routing defect, and no amount of extra compute fixes it.
+People misread this signal more than any other in the system. A board with plenty of open work and
+nothing dispatchable looks exactly like a capacity problem. People have gone looking for a broken
+scheduler while the scheduler printed the real cause every five minutes. On 2026-08-16 we found thirteen
+open issues that no master could pick up. Eleven had no lane at all, and two were on a lane that no
+sweeper reaches. That is a routing defect, and more compute does not fix it.
 
-The diagnostic exists and takes one command:
+One command shows the cause:
 
 ```bash
 # on novaserver, from the knowledge clone
@@ -225,110 +226,111 @@ bash _infra/scripts/sweep-dispatch.sh --explain
 
 ### Board hygiene, honestly
 
-Two measured weaknesses, recorded here rather than smoothed over:
+We measured two weaknesses, and we record them here as they are:
 
-- **Closed rows from other repositories never converge.** The reconciler archives rows only for the
-  repository it runs in, so closed items from sibling repos accumulate. On 2026-08-16 they were the
-  majority of all rows on the board.
-- **Rows can carry no lane and no status at all.** Nothing rejects a row in that state at creation time,
-  and a row in that state is invisible to routing.
+- Closed rows from other repositories never get cleaned up. The reconciler archives rows only for the
+  repository it runs in, so closed items from sibling repos pile up. On 2026-08-16 they made up most of
+  the rows on the board.
+- A row can have no lane and no status at all. Nothing rejects a row like that when someone creates it,
+  and routing cannot see it.
 
-## Thick tasks — never work a thin one
+## Thick tasks: never work a thin one [#thick-tasks--never-work-a-thin-one]
 
-A dispatched issue is not a sentence. The brief lives **beside the work**, in the repository:
+A dispatched issue is more than one sentence. Its brief lives in the repository, next to the work:
 
 ```text
 <portfolio>/specs/<issue#>-<slug>/spec.md    objective · acceptance · scope · grounding
 <portfolio>/specs/<issue#>-<slug>/plan.md    phases → checkbox items
 ```
 
-**The `plan.md` checkboxes are the live work state.** Tick `[ ] → [~] → [x]` and commit as you go. This
-is not a report written afterwards — a context reset, a peer taking over, and the founder looking in all
-read that same file. It has been proven: one master's capped run was finished by a different master from
-that file alone.
+The checkboxes in `plan.md` are the live state of the work. Tick each one through `[ ] → [~] → [x]` and
+commit as you go. This is not a report you write afterwards. After a context reset, a peer taking over or
+the founder looking in, everyone reads the same file. This has worked in practice. One master's run hit
+its cap, and a different master finished the work from that file alone.
 
-Two rules that keep this from rotting:
+Two rules keep the brief from going stale:
 
-1. **The issue body must contain the literal spec path.** A runner reads a spec only *if the issue names
-   one*. An unnamed spec does not exist to the master executing the work — the highest-leverage line in
-   the pipeline, and the easiest to omit.
-2. **If the spec references dead prerequisites, or there is no spec, stop cleanly and say exactly why on
-   the issue.** Never churn a stale brief. A spec can cite dead machinery in perfectly good faith, so
-   every reference gets re-grounded in the session that acts on it.
+1. The issue body must contain the literal spec path. A runner reads a spec only if the issue names
+   it. If the issue does not name the spec, the master doing the work never sees it. This line matters
+   more than any other in the pipeline, and it is the easiest one to leave out.
+2. If the spec refers to prerequisites that no longer exist, or there is no spec, stop cleanly and explain
+   why on the issue. Do not keep working from a stale brief. A spec can cite machinery that no longer
+   exists without anyone meaning harm, so whoever acts on it checks every reference again in that session.
 
-Non-trivial architecture choices get a decision record beside the work, in
-`<portfolio>/specs/<issue#>-<slug>/decisions/`. Superseding one edits the old record's `Superseded-by`
-header **in the same commit** — a silently invalidated decision is this fleet's most repeated failure.
+A non-trivial architecture choice gets a decision record next to the work, in
+`<portfolio>/specs/<issue#>-<slug>/decisions/`. When you supersede one, edit the old record's `Superseded-by`
+header in the same commit. A decision that becomes invalid without anyone recording it is the failure
+this fleet repeats most.
 
 ## Communication
 
-Masters talk to each other by **@mentioning a GitHub account in a comment on the relevant issue**. That
-is the whole mechanism. A master's next dispatched run receives unread mentions injected at start, which
-gives at-least-once delivery with a durable read state, and it happens where the founder is already
-looking.
+One master reaches another by @mentioning a GitHub account in a comment on the relevant issue. There is no
+other mechanism. At the start of a master's next dispatched run, the system injects its unread mentions.
+Each mention arrives at least once, the read state persists, and the conversation happens where the
+founder already looks.
 
-There is no chat system, no message bus and no inbox service. There was a NATS bus; it was deleted. See
+We run no chat system, no message bus and no inbox service. We had a NATS bus and deleted it. See
 [Decisions](/docs/structure/decisions).
 
-**Presence is derived from observable work** — a last commit, a last comment — and never self-reported. A
-heartbeat that an agent writes about itself is a claim, not evidence.
+We work out presence from observable work, such as a last commit or a last comment. Agents never report
+their own presence. A heartbeat that an agent writes about itself is a claim, not evidence.
 
 ## Gates: all of them are advisory
 
-**Nothing gates `main`.** Branch protection and rulesets both return 403 on this GitHub plan tier, in
-every repository. That is not a loophole being exploited; it is the actual configuration, and the fleet's
-process is built to be honest about it.
+Nothing gates `main`. On this GitHub plan tier, branch protection and rulesets both return 403 in every
+repository. We are not exploiting a loophole. That is the real configuration, and we built the fleet's
+process to state it openly.
 
-Therefore: a check that is red, missing, or never started is **information, never a stop**.
+So when a check is red, missing or never started, treat it as information and keep going.
 
-**Fix-forward is the rule.** When a check fails, identify the real failure. A broken build or a genuine
-security finding is real — fix it. Infrastructure being down is not — use the documented fallback and
-proceed. Waiting for a human to unblock a merge is never the move.
+The rule is to fix forward. When a check fails, find the real failure. A broken build or a genuine
+security finding is real, so fix it. Infrastructure being down is not, so use the documented fallback and
+carry on. Never wait for a human to unblock a merge.
 
 | Gate | If it fails |
 | --- | --- |
-| **Secret scan** | The one hard stop. If the workflow cannot run, run the same pinned scanner locally (see [Operations](/docs/operating/operations)) and only then merge |
-| **A real build, typecheck or deploy failure** | Real. Fix the code |
-| **Shell syntax check** | Real, and cheap: a script that cannot be *parsed* cannot run. Read backwards from the reported line — an unbalanced quote is reported at the next paren, not at the defect |
-| **A lint on a title, a filename, or a doc convention** | Not real. Never blocks a merge |
+| Secret scan | This is the one hard stop. If the workflow cannot run, run the same pinned scanner locally (see [Operations](/docs/operating/operations)), and merge only after that |
+| A real build, typecheck or deploy failure | Real. Fix the code |
+| Shell syntax check | Real, and cheap to fix. A script that the shell cannot parse cannot run. Read backwards from the reported line, because the shell reports an unbalanced quote at the next paren, not where the mistake is |
+| A lint on a title, a filename, or a doc convention | Not real. It never blocks a merge |
 
-**A merge is never a human gate.** If a merge does not go through, read the actual error and act on it:
-rebase a conflicting branch, or use `gh pr merge <n> --squash --admin`. Escalating a merge — "needs
-eyes", "should I force it?" — is explicitly banned. A merge is reversible in git; leaving a pull request
-open is what actually costs.
+A merge never waits on a human. If a merge does not go through, read the actual error and act on it.
+Rebase a branch that conflicts, or use `gh pr merge <n> --squash --admin`. Escalating a merge with lines
+like "needs eyes" or "should I force it?" is banned. You can reverse a merge in git, and a pull request
+left open is what actually costs us.
 
-Two gate designs are **forbidden outright**, both because they were tried:
+We forbid two gate designs outright, because we tried both:
 
-- A gate that blocks on content keywords or on a generated map. That class false-blocked documentation
-  and auto-reverted its own cleanup.
-- Resident processes, heartbeat polls, and scheduled "health checks". The board is the queue, and silence
-  is the failure mode.
+- A gate that blocks on content keywords or on a generated map. Gates like that blocked documentation by
+  mistake and reverted their own cleanup.
+- Resident processes, heartbeat polls and scheduled "health checks". The board is the queue, and the
+  failure we guard against is silence.
 
 ## Finishing
 
-**Finish means: a pull request whose body says `Closes #N`, merged.** The merge closes the issue and
-moves the board. Nobody types a status; the board cannot lie about work that git already did.
+Work is finished when a pull request whose body says `Closes #N` merges. The merge closes the issue and
+moves the board. Nobody types a status, so the board cannot disagree with what git already recorded.
 
-**Arming auto-merge is not finishing.** If the pull request is still open when the run exits, the work is
-not done, and the run's close-out comment has to say so. Fifteen pull requests once stacked up unnoticed
-behind exactly that misunderstanding.
+Turning on auto-merge does not finish the work. If the pull request is still open when the run exits, the
+work is not done, and the run's close-out comment must say so. Once, fifteen pull requests piled up
+unnoticed because runs treated an armed auto-merge as finished.
 
 ## What the loop actually produced
 
-Measured 2026-08-16, over the preceding seven days: **745 issues closed**. Over the preceding twenty-four
-hours: roughly **157 dispatch runs**, of which **two failed** — and both failures filed their own board
-issue automatically through systemd's `OnFailure` path.
+We measured on 2026-08-16. Over the previous seven days the fleet closed 745 issues. Over the previous
+twenty-four hours it made roughly 157 dispatch runs, and two of them failed. Both failures filed their
+own board issue automatically through systemd's `OnFailure` path.
 
-That last detail is the one worth taking away. The system is not designed to avoid failure; it is
-designed so that a failure announces itself within seconds, on the surface a human already reads.
+That last detail is the useful one. We did not design the system to avoid failure. We designed it so a
+failure reports itself within seconds, in a place a human already reads.
 
 ## The uncomfortable part
 
-Doctrine says *"the board is the ONLY tracker"* and also *"the `plan.md` checkboxes ARE the work state"*.
-Both statements are load-bearing, and they do not reconcile with each other. Counting honestly, there are
-**four parallel trackers** for one body of work: the board, a plan registry, the plan documents
-themselves, and the per-spec `plan.md` checkboxes. Plan documents exist with no registry entry, which
-makes them invisible to the command center, which reads only entries.
+Our doctrine says *"the board is the ONLY tracker"* and also *"the `plan.md` checkboxes ARE the work state"*.
+We depend on both statements, and they contradict each other. If we count honestly, one body of work has
+four parallel trackers. They are the board, a plan registry, the plan documents themselves, and the
+checkboxes in each spec's `plan.md`. Some plan documents have no registry entry. The command center reads
+only entries, so it cannot see those documents.
 
-This is published rather than hidden because a wiki that claims one tracker while the fleet runs four is
-the exact category of document this whole site was built to replace.
+We publish this instead of hiding it. A wiki that claims one tracker while the fleet runs four is exactly
+the kind of document this site exists to replace.

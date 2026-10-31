@@ -1,7 +1,7 @@
 ---
-title: Module — Running Dispatched Agents on a Linux Server for Maximum Execution Efficiency
-description: Four steps. Study a fleet that actually runs, design yours against what your machine has, build it, and dispatch one real task end to end.
-updated: 2026-09-28
+title: Module. Running dispatched agents on a Linux server for maximum execution efficiency
+description: Four steps. You study a fleet that runs, design yours around what your machine has, build it, and dispatch one real task from start to finish.
+updated: 2026-10-31
 ---
 
 ```text title="prompt-1|Study a fleet that runs, and measure mine against it|claude-code|Studies a dispatch fleet that runs and measures your setup against it, into FLEET-GAP.md. Writes nothing else."
@@ -554,20 +554,20 @@ Then stop. There is no step 5 — from here it is real work, and the next thing 
 
 | | | ends with |
 |---|---|---|
-| **1** | Study a fleet that runs, measure mine against it | `FLEET-GAP.md` |
-| **2** | Design mine, then stop for approval | `FLEET-DESIGN.md` + a manifest |
-| **3** | Build every file in the manifest | a running fleet, verifications pasted |
-| **4** | Dispatch one real task, end to end | `FLEET-VERIFIED.md` |
+| 1 | Study a fleet that runs, and measure mine against it | `FLEET-GAP.md` |
+| 2 | Design mine, then stop for approval | `FLEET-DESIGN.md` + a manifest |
+| 3 | Build every file in the manifest | a running fleet, with the verification output pasted |
+| 4 | Dispatch one real task from start to finish | `FLEET-VERIFIED.md` |
 
-Each step names the next. Paste one, run it, paste the next.
+Each step names the next one. Paste a step, run it, then paste the next.
 
 ## What the steps read
 
-- [`kit/fleet-architecture.md`](https://docs.utopiamodels.ai/kit/fleet-architecture.md) — **twenty design decisions from a working ~7,000-line runtime**, each paired with the failure that produced it
-- [`kit/dispatch-anatomy.md`](https://docs.utopiamodels.ai/kit/dispatch-anatomy.md) — the run path, every pre-flight refusal in order, and the ~250-line minimum viable version
+- [`kit/fleet-architecture.md`](https://docs.utopiamodels.ai/kit/fleet-architecture.md) has twenty design decisions from a working ~7,000-line runtime. Each one comes with the failure that produced it.
+- [`kit/dispatch-anatomy.md`](https://docs.utopiamodels.ai/kit/dispatch-anatomy.md) has the run path, every pre-flight refusal in order, and the ~250-line minimum viable version.
 
 ## Resources
 
-- [Claude Code headless](https://code.claude.com/docs/en/sdk) · [memory](https://code.claude.com/docs/en/memory) · [skills](https://code.claude.com/docs/en/slash-commands) · [subagents](https://code.claude.com/docs/en/sub-agents) · [hooks](https://code.claude.com/docs/en/hooks)
-- [`systemd-run`](https://www.freedesktop.org/software/systemd/man/systemd-run.html) · [systemd timers](https://www.freedesktop.org/software/systemd/man/systemd.timer.html) · [systemd in WSL](https://learn.microsoft.com/en-us/windows/wsl/systemd)
-- [`git worktree`](https://git-scm.com/docs/git-worktree) · [GitHub issue dependencies](https://docs.github.com/en/issues) · [`gh` CLI](https://cli.github.com/manual/)
+- [Claude Code headless](https://code.claude.com/docs/en/sdk), [memory](https://code.claude.com/docs/en/memory), [skills](https://code.claude.com/docs/en/slash-commands), [subagents](https://code.claude.com/docs/en/sub-agents) and [hooks](https://code.claude.com/docs/en/hooks)
+- systemd docs for [`systemd-run`](https://www.freedesktop.org/software/systemd/man/systemd-run.html), [systemd timers](https://www.freedesktop.org/software/systemd/man/systemd.timer.html) and [systemd in WSL](https://learn.microsoft.com/en-us/windows/wsl/systemd)
+- Git and GitHub docs for [`git worktree`](https://git-scm.com/docs/git-worktree), [GitHub issue dependencies](https://docs.github.com/en/issues) and the [`gh` CLI](https://cli.github.com/manual/)

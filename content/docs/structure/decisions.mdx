@@ -1,7 +1,7 @@
 ---
 title: Decisions
-description: What was built, killed, and why — each one sourced. Read this before proposing to rebuild any of it, because re-litigating a decision that was already paid for is this fleet's most expensive recurring failure.
-updated: 2026-09-28
+description: What the fleet built and killed, and why, with a source for each. Read this before you propose rebuilding any of it, because arguing again over a decision it already paid for is this fleet's most expensive recurring failure.
+updated: 2026-10-31
 ---
 
 ```text title="prompt-1|Learn why re-deciding is the expensive failure|claude-code|Reads this page, explains the reopening rule, the four kills and the standing decisions back to you, then quizzes you. Writes only its checklist."
@@ -159,66 +159,66 @@ If I approved an edit to a file you did not create, name that file in the same l
 Finish with: what you wrote and where, the residue list with its status, and the one decision you think I am most likely to re-make without knowing I already made it.
 ```
 
-The fleet's most expensive recurring failure is **re-deciding something that was already decided and paid
-for.** Every entry below says what the thing was, why it died, and what replaced it. If you are about to
-propose one of these, the burden is new information — not a fresh opinion.
+The fleet's most expensive recurring failure is deciding again something it already decided and paid
+for. Each entry below says what the thing was, why it died, and what replaced it. If you want to propose
+one of these again, bring new information. A fresh opinion is not enough.
 
-A decision is not reopened by disagreement. It is reopened by a **superseding record that names what
-changed**, written beside the original, with the original's `Superseded-by` header updated in the same
-commit. A silently invalidated decision record is worse than none.
+Disagreement does not reopen a decision. A superseding record that names what changed does. You write it
+beside the original and update the original's `Superseded-by` header in the same commit. A decision
+record that someone silently invalidated is worse than no record.
 
-## Killed: ralph — the 24×7 autonomous loop
+## Killed: ralph, the 24×7 autonomous loop [#killed-ralph--the-247-autonomous-loop]
 
 **Deleted 2026-07-24.**
 
-`ralph.service`, with `Restart=always`, drove a loop: pick the next open board issue for this master's
-lane, run headless `claude -p`, repeat. Around it accreted watchdogs, heartbeats, priority-sort tests,
-self-reload fixes and a pick-order bug — an entire body of supervision machinery whose only job was
-keeping a resident process honest.
+`ralph.service` ran with `Restart=always` and drove a loop. It picked the next open board issue for this
+master's lane, ran headless `claude -p`, and repeated. Over time it collected watchdogs, heartbeats,
+priority-sort tests, self-reload fixes and a pick-order bug. All of that supervision code existed only to
+keep one resident process honest.
 
-**Replaced by on-demand dispatch**: `dispatch.sh` plus `task-runner.sh`, no resident agent process at all.
-The close-out measured the replacement rather than asserting it — **7 dispatched runs, 7 verified
-outcomes, 0 runtime failures**, against a roughly 20% baseline.
+On-demand dispatch replaced it. `dispatch.sh` plus `task-runner.sh` do the work, and no agent process
+stays resident. The close-out measured the replacement instead of asserting it. It recorded **7
+dispatched runs, 7 verified outcomes, 0 runtime failures**, against a baseline of roughly 20%.
 
-The residue was instructive, and it took a second deletion to clear. For weeks after the loop was
-deleted, the registry still carried a per-agent field named after it, still described as the live backend
-selector — and the field really was read, so nobody could call it dead. The framing outlived the system,
-then the field outlived the framing. Both are gone now: nothing in the dispatch scripts selects a backend,
-and the launcher passes one literal provider name to every run.
+Clearing what it left behind took a second deletion. For weeks after we deleted the loop, the registry
+still had a per-agent field named after it, still described as the live backend selector. Code really
+did read the field, so nobody could call it dead. The description outlived the system, and then the
+field outlived the description. Both are gone now. Nothing in the dispatch scripts selects a backend, and
+the launcher passes one literal provider name to every run.
 
-**A name outliving its system is how a deleted thing keeps costing you**, and the cost is specifically
-that the surviving name makes the deletion look incomplete to everyone who reads it afterwards.
+A name that outlives its system keeps costing you. Everyone who reads the surviving name afterwards
+concludes the deletion is incomplete.
 
 ## Killed: the generated component catalog and its fail-closed gates
 
 **Deleted 2026-07-23/24.**
 
-An 804-line machine-generated registry where every component carried a shell predicate, run
-**fail-closed on every pull request** by three separate workflows plus a post-commit regeneration hook.
-Its own header claimed *"a fix isn't done until catalog = reality."*
+This was an 804-line machine-generated registry. Every component in it carried a shell predicate, and
+three separate workflows plus a post-commit regeneration hook ran those predicates **fail-closed on every
+pull request**. Its own header claimed *"a fix isn't done until catalog = reality."*
 
-It was killed because a gate that blocks on a generated map **false-blocked documentation changes and
-auto-reverted its own cleanup**. Eighteen dead gate workflows went in one commit.
+We killed it because a gate that blocks on a generated map **blocked documentation changes that were
+fine, and reverted its own cleanup automatically**. One commit removed eighteen dead gate workflows.
 
-The replacement inverts the design deliberately. There is one hand-maintained component registry, and
-every entry carries a `verify:` command **you run**, with the instruction *"run it — never trust this
-file's prose."* Advisory by construction.
+The replacement reverses the design on purpose. One component registry exists, maintained by hand. Every
+entry has a `verify:` command that **you run**, and the file tells you to run it and never trust its
+prose. Nothing enforces it, by design.
 
-Then the honest footnote, because this wiki does not publish only the flattering half: an audit found
-that `verify:` is **read by humans and executed by nothing**, and that it records no box, so a quarter of
-its commands fail from the wrong machine and pass from the right one. The mechanism is better than what
-it replaced and it is not yet what its own header claims.
+This wiki publishes the unflattering half too. An audit found that humans read `verify:` and nothing
+executes it. It also records no box, so a quarter of its commands fail from the wrong machine and pass
+from the right one. The new registry is better than the catalog it replaced, but it does not yet do what
+its own header claims.
 
 ## Killed: the NATS message bus
 
-`nats.service` and its reload units are on the **never resurrect** list. Cross-machine agent comms
-were replaced by **issue comments and @mentions** — delivery that is durable, at-least-once, and
-visible on the surface a human already reads.
+`nats.service` and its reload units are on the **never resurrect** list. Issue comments and @mentions
+replaced it for cross-machine agent messages. That delivery is durable and at-least-once, and it shows up
+where a human already reads.
 
-**Three zombie units survive on the box, and one of them is active.** Their residue was documented
-in a file that was itself deleted, which is why they get named here. This page said *two*, and said
-they were *inactive and disabled*, until a reader running the pattern walk ran the command and
-reported otherwise (knowledge#6665). Re-measured on the box, 2026-08-23:
+**Three leftover units remain on the box, and one of them is active.** The only file that documented them
+was itself deleted, so we name them here. This page used to say there were *two*, and that they were
+*inactive and disabled*. Then a reader doing the pattern walk ran the command and reported otherwise
+(knowledge#6665). We measured again on the box on 2026-08-23:
 
 ```console
 $ systemctl list-unit-files | grep -i nats
@@ -232,130 +232,132 @@ nats-reload.service   loaded inactive dead     Reload NATS on config change
 nats.service          loaded inactive dead     NATS JetStream fleet hub
 ```
 
-`nats-reload.path` is `enabled` and `active (waiting)` — a live path unit watching for changes to
-the config of a service that will never start again. A deletion in a repository is half a deletion,
-and the surviving half is the half that keeps running.
+`nats-reload.path` is `enabled` and `active (waiting)`. It is a live path unit watching the config of a
+service that will never start again. Deleting something in a repository is half of the deletion, and the
+other half is the part that keeps running.
 
 ## Killed: the command center's generated infrastructure surface
 
-Built on the deleted catalog, so it returned a permanent empty state once the catalog died. Removed in a
-single pull request that deleted *"11 callerless routes, 7 orphaned components, 5 dead libs."*
+This view was built on the deleted catalog, so once the catalog died it showed a permanent empty state.
+A single pull request removed it, deleting *"11 callerless routes, 7 orphaned components, 5 dead libs."*
 
-This one is listed because **open plans still name deleting it as a to-do.** Anyone dispatched on that
-line finds nothing to delete, which reads like a lost change rather than an already-shipped one. A stale
-local clone will happily disagree; `git ls-tree origin/main` is the truth and a local `ls` is not.
+It is listed here because **open plans still name its deletion as a to-do.** Anyone dispatched on that
+line finds nothing to delete, and that looks like a lost change rather than one that already shipped. A
+stale local clone may disagree. Trust `git ls-tree origin/main`, not a local `ls`.
 
 ## Killed: a scheduled local re-run of another repository's CI
 
 **Deleted 2026-08-15.**
 
-A timer fired every three hours on one master: check out the product repo, typecheck, build, test, file a
-P0 on any real failure. It was built to close a genuine blind spot and was repeatedly repaired over
-months.
+A timer on one master fired every three hours. It checked out the product repo, ran typecheck, build and
+test, and filed a P0 on any real failure. Someone built it to cover a real blind spot, and people
+repaired it many times over months.
 
-It died because the product repo's own CI runs those same three phases on every push to main — it just
-**told nobody**. Once it announced for itself, a second box re-running identical work was duplicated
-effort.
+It died because the product repo's own CI runs those same three phases on every push to main. That CI
+simply **told nobody**. Once the CI announced its own results, a second box re-running the same work was
+wasted effort.
 
 ### The half-deletion, which is the real lesson
 
 **Deleting the unit from the agent's brain repository did not stop it running.** `~/.config/systemd/user/`
-holds *copies*, not symlinks into the repo. The timer stayed `active waiting` with its `ExecStart`
-pointing at a script that no longer existed, and the next firing — nearly three hours after the "delete"
-— exited `203/EXEC` and filed a P0 about itself.
+holds *copies* of unit files, not symlinks into the repo. The timer stayed `active waiting`, and its
+`ExecStart` pointed at a script that no longer existed. The next firing came nearly three hours after
+the "delete". It exited `203/EXEC` and filed a P0 about itself.
 
-A brain-repo deletion is **half** of a deletion. The other half is on the box, and it is five commands.
-They are written out in [Operations](/docs/operating/operations).
+Deleting from the brain repo is **half** of a deletion. The other half happens on the box and takes five
+commands. [Operations](/docs/operating/operations) lists them.
 
 ## Standing decisions
 
-These are not history. They are current, and they constrain new work.
+These decisions are current, not history, and they constrain new work.
 
 ### Publish the mechanics, not the identifying values
 
-**Superseded 2026-09-27.** This entry used to read *"publish everything, unsanitized"*: real hostnames,
-real tailnet IPs and real usernames, decided after measuring what that exposed, with an explicit
-instruction that a contributor sanitizing the site was a regression. The founder narrowed it. What
-changed is the audience — these pages now exist to be copied into strangers' agents as prompts, and a
-literal tailnet address or an admin UI's hostname teaches such a reader nothing a placeholder does not.
+**Superseded 2026-09-27.** This entry used to say *"publish everything, unsanitized"*. That meant real
+hostnames, real tailnet IPs and real usernames. We decided it after measuring what that exposed, and the
+entry said outright that a contributor who sanitized the site was causing a regression. The founder
+narrowed the rule because the audience changed. People now copy these pages into their own agents as
+prompts. For that reader, a literal tailnet address or an admin UI's hostname teaches nothing that a
+placeholder does not.
 
-The current rule: **publish how everything works; withhold the literal values that locate private
-infrastructure.** Tailnet addresses become `100.x.x.x` or `<tailnet-ip>`, internal hostnames and bucket
-URLs become named placeholders, and every row, class and lesson around them stays exactly as it was.
-The redaction is applied page by page; [Surfaces](/docs/structure/surfaces) and
-[Architecture](/docs/structure/architecture) carry it, and so does the [landing page](/docs)'s tailnet table.
+The current rule is to **publish how everything works and withhold the literal values that locate
+private infrastructure.** Tailnet addresses become `100.x.x.x` or `<tailnet-ip>`. Internal hostnames and
+bucket URLs become named placeholders. Every row, class and lesson around them stays the same. We apply
+the redaction one page at a time. [Surfaces](/docs/structure/surfaces) and
+[Architecture](/docs/structure/architecture) have it, and so does the tailnet table on the [landing page](/docs).
 
-This is also the reopening rule at the top of this page, followed: the old entry is not silently
-deleted, it is marked superseded here with what changed.
+This change also follows the reopening rule at the top of this page. We did not silently delete the old
+entry. We marked it superseded here and said what changed.
 
-**The one hard stop is unchanged and absolute: never a secret in a tracked file.** Publishing the vault's
-mechanics is in scope; publishing a credential never is.
+**The one hard stop has not changed and has no exceptions. Never put a secret in a tracked file.**
+Publishing how the vault works is in scope. Publishing a credential never is.
 
 ### One secret store
 
-Infisical, self-hosted, and nothing else. No local vault, no second store, no `.env` in a repository.
-A separate registry carries each credential's *meaning* — account, scopes, what it can and cannot do —
-so that "I don't have access" is a claim that must be checked against a list before it can be made.
+The fleet uses self-hosted Infisical and nothing else. There is no local vault, no second store and no
+`.env` in a repository. A separate registry records what each credential *means*, meaning its account,
+its scopes, and what it can and cannot do. That way, anyone who says "I don't have access" has to check
+the claim against a list first.
 
 ### Subtract by default
 
-Before adding a script, a rule, a service, a gate or a file, the question is what can be **deleted or
-merged instead**. Legacy that is replaced is deleted at the moment of replacement. Git history is the
-archive; `archive/` folders are banned. A convention gets an advisory linter; only a stable invariant
-gets a blocking gate.
+Before you add a script, a rule, a service, a gate or a file, ask what you can **delete or merge
+instead**. When something replaces legacy code, delete the legacy code at that moment. Git history is
+the archive, and `archive/` folders are banned. A convention gets a linter that only warns. Only an
+invariant that has stopped changing gets a gate that blocks.
 
 ### Options before decisions
 
-A non-trivial architecture or tooling choice gets researched alternatives — at least two real options,
-plus do-nothing, plus integrate-something-existing — before the decision, and the decision is written
-down. Proven native and open-source tools beat custom machinery; custom is the exception that must
+Before a non-trivial architecture or tooling choice, research the alternatives. That means at least two
+real options, plus doing nothing, plus using something that already exists. Then write the decision
+down. Proven native and open-source tools beat custom code. Custom code is the exception, and it has to
 justify itself.
 
-This site is its own example. The wiki lives in a standalone repository rather than inside the product
-monorepo, and the record naming the four options considered, the reason, and the **costs the choice
-imposes** was committed before the first line of the app.
+This site is an example. The wiki lives in its own repository rather than inside the product monorepo.
+Before anyone wrote the first line of the app, we committed the record that names the four options
+considered, the reason for the choice, and the **costs the choice imposes**.
 
 ### A limit is a measurement, never a precaution
 
-Before setting any ceiling — concurrency, retries, batch size, timeout — measure the real headroom and
-**write the measurement next to the number**. A cap chosen out of caution silently becomes the system's
-capacity, and unlike a bug it never announces itself: it reports success while doing a fraction of the
-work.
+Before you set any ceiling, such as concurrency, retries, batch size or timeout, measure the real
+headroom and **write the measurement next to the number**. A cap chosen out of caution quietly becomes
+the system's capacity. Unlike a bug, it never shows itself. It reports success while doing a fraction of
+the work.
 
-The fleet learned this in the most annoying possible way. Its dispatch scheduler ran for days at roughly
-**8% of proven capacity** — three of four masters idle on a 12-core box under a load average below 1 —
-because caps of 1, 4 and 2 had been set against a failure mode that two other mechanisms already covered.
-The defence was real; it was simply aimed at the wrong axis.
+The fleet learned this the annoying way. Its dispatch scheduler ran for days at roughly **8% of proven
+capacity**. Three of four masters sat idle on a 12-core box with a load average below 1. The cause was
+caps of 1, 4 and 2, set against a failure mode that two other mechanisms already covered. The defence
+was real, but it guarded against the wrong failure.
 
 ### Fix forward, never pre-gate
 
-Build, merge, deploy. If it breaks, revert or fix and redeploy. The alternative — a human approving each
-step — was measured and is slower at every scale this fleet operates at. What this explicitly does *not*
-license: skipping verification, force-pushing shared branches, or claiming completion that was not
+Build, merge and deploy. If something breaks, revert it or fix it and redeploy. We measured the
+alternative, a human approving each step, and it is slower at every scale this fleet runs at. This rule
+does *not* allow skipping verification, force-pushing shared branches, or claiming a result nobody
 observed.
 
 ## Never resurrect
 
-- **ralph** and every watchdog, heartbeat and supervisor built to babysit it.
-- **The NATS bus** and its three remaining zombie units.
+- **ralph** and every watchdog, heartbeat and supervisor built to watch over it.
+- **The NATS bus** and its three remaining leftover units.
 - **The generated component catalog** and any fail-closed gate built on a generated map.
 - **Content-keyword gates** of any kind.
-- **Resident processes, heartbeat polls and scheduled health checks** as a way of knowing whether the
-  fleet is alive. The board is the queue; a run's own close-out comment is the liveness signal; and the
-  one page that reads current state does so at request time and stores nothing.
+- **Resident processes, heartbeat polls and scheduled health checks** as a way to know whether the
+  fleet is alive. The board is the queue. A run's own close-out comment is the liveness signal. The one
+  page that reads current state reads it at request time and stores nothing.
 
-  **One sanctioned exception, named here so a reader does not have to discover it with `ps`.** A
-  `*/5 * * * *` cron entry on each master's own crontab POSTs that master's record to the command
-  centre, which stores it under a five-minute TTL; the TTL expiring is what turns a box grey on a
-  dashboard a human is looking at. That is a self-reported heartbeat and it was adopted deliberately
-  (2026-07-22) because it answers a different question: *which box is online right now*, not *is
-  this work alive*. Nothing in the work loop reads it — no dispatch, no gate and no close-out
-  depends on it, which is what keeps the ban meaningful. Separately, a master's own standing
-  interactive session is resident for as long as nobody restarts it (measured 13.3 days on one
-  master, 2026-08-23); no *dispatched run* leaves a process behind. The ban is on resident
-  machinery as the ANSWER to "is the fleet alive". It has never been a ban on every scheduled job,
-  and a reader who runs the walk from inside this fleet will find both of these — so they are
-  written down rather than left to look like drift (knowledge#6665).
+  **There is one sanctioned exception, and we name it here so you do not have to find it with `ps`.**
+  Each master's own crontab has a `*/5 * * * *` entry that POSTs that master's record to the command
+  centre. The command centre stores it with a five-minute TTL. When the TTL expires, the box turns grey
+  on a dashboard a human is watching. That is a self-reported heartbeat, and we adopted it on purpose
+  (2026-07-22) because it answers a different question. It tells you *which box is online right now*,
+  not *whether this work is alive*. Nothing in the work loop reads it. No dispatch, gate or close-out
+  depends on it, and that keeps the ban meaningful. Separately, a master's own standing interactive
+  session stays resident until someone restarts it (measured at 13.3 days on one master, 2026-08-23).
+  No *dispatched run* leaves a process behind. The ban is on resident machinery as the way to answer "is
+  the fleet alive". It has never banned every scheduled job. A reader who runs the walk from inside this
+  fleet will find both of these, so we wrote them down rather than let them look like drift
+  (knowledge#6665).
 
-If you believe one of these should come back, the path is a superseding decision record naming what
-changed. Not a rebuild.
+If you think one of these should come back, write a superseding decision record that names what
+changed. Do not rebuild it.

@@ -6,18 +6,18 @@ pages:
   - /docs/modules/self-hosted-fleet
   - /docs/reference/agent-to-agent
   - /changelog
-summary: Every page now carries an updated date; /feed.json and /feed.xml announce each change; /docs/agents tells another fleet's agents how to read, poll and cite this site; and the fleet's own process files are mirrored here from the knowledge base through an allowlist.
+summary: Every page now shows the date it was last updated, and /feed.json and /feed.xml announce each change. A new page, /docs/agents, tells another fleet's agents how to read, poll and cite this site. An allowlisted pipeline now copies the fleet's own process files here from the knowledge base.
 ---
 
-This site is now something you subscribe to, not something you re-read.
+You can now subscribe to this site instead of re-reading it.
 
-- **Start here for agents** — [`/docs/agents`](/docs/agents): how to poll the feed, fetch any page as
-  markdown and cite a page so the reference survives.
-- **Feeds** — [`/feed.json`](/feed.json) (JSON Feed 1.1) and [`/feed.xml`](/feed.xml) (Atom). One item per
-  entry on [`/changelog`](/changelog); an item's `id` never changes.
-- **Every page is dated** — an `updated:` date on the page and in its `.md` twin.
-- **Two fleet-to-fleet pages** — [Stand up an always-on, self-hosted fleet](/docs/modules/self-hosted-fleet)
+- A start page for agents at [`/docs/agents`](/docs/agents). It explains how to poll the feed, fetch any
+  page as markdown and cite a page so the link keeps working.
+- Two feeds, [`/feed.json`](/feed.json) (JSON Feed 1.1) and [`/feed.xml`](/feed.xml) (Atom). Each has one item
+  per entry on [`/changelog`](/changelog), and an item's `id` never changes.
+- A date on every page. Each page has an `updated:` date, and its `.md` twin shows the same date.
+- Two pages for fleets that talk to other fleets, [Stand up an always-on, self-hosted fleet](/docs/modules/self-hosted-fleet)
   and the [agent-to-agent channel](/docs/reference/agent-to-agent).
-- **Fixed** — 63 garbled character references (`&#x2A;`) and one dead link in the `.md` twins, and the
-  generated unit-name block on [Operations](/docs/operating/operations), which had been failing since
+- Fixes for 63 garbled character references (`&#x2A;`) and one dead link in the `.md` twins. The generated
+  unit-name block on [Operations](/docs/operating/operations) also works again. It had failed since
   `dispatch.sh` changed shape.

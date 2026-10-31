@@ -1,7 +1,7 @@
 ---
 title: Operations
-description: Runbooks for the Utopia fleet. Every command is executable exactly as written and states the box it runs on, because a command that works from one machine and fails from another is not a runbook.
-updated: 2026-10-30
+description: Runbooks for the Utopia fleet. Every command runs exactly as written and names the box it runs on, because a command that works from one machine and fails from another is not a runbook.
+updated: 2026-10-31
 ---
 
 ```text title="prompt-1|Learn to verify a fleet the way its runbooks do|claude-code|Reads this page, explains why every command names its box and why a clean status is weaker than it looks, then runs the public-surface probe live. Writes nothing."
@@ -138,21 +138,21 @@ FINISH
 Every file changed with its path, the count of findings per category before and after, and the one check you added a negative control for, with the output showing it go red.
 ```
 
-**Every command on this page names its box.** That is not decoration. An audit of the fleet's own
-registry on 2026-08-16 ran the seventy-two of its then-seventy-three self-checks that were safe to run
-from anywhere, from the Architect box: twenty-six failed — and all twenty-six passed when re-run on the
-server. The registry was accurate and location-blind, so following its instruction from the wrong
-machine manufactured twenty-six false failures.
+Every command on this page names the box it runs on, for a measured reason. On 2026-08-16 we audited
+the fleet's own registry. At the time it had seventy-three self-checks, and seventy-two of them were safe
+to run from anywhere. We ran those seventy-two from the Architect box, and twenty-six failed. All
+twenty-six passed when we ran them again on the server. The registry was accurate but never said where
+to run anything, so following it from the wrong machine produced twenty-six false failures.
 
-Two conventions used throughout:
+The page uses two labels throughout:
 
-- `# on ETH` — the Architect's WSL box (its tailnet address is written `100.x.x.x` on this site).
-- `# on novaserver` — the fleet's server, `<tailnet-ip>` below. If you are not already on it, prefix with
-  `ssh nova@<tailnet-ip>`.
+- `# on ETH` means the Architect's WSL box. This site writes its tailnet address as `100.x.x.x`.
+- `# on novaserver` means the fleet's server, written `<tailnet-ip>` below. If you are not already on it,
+  prefix the command with `ssh nova@<tailnet-ip>`.
 
-**Never write the bare alias** — `ssh` with `nova` as the whole host, no user and no IP. There is no
-`~/.ssh/config` on the Architect box to expand it, so it fails with `Name or service not known`. Thirteen
-files in the fleet's internal docs still write it that way; none of them work.
+Never write the bare alias, meaning `ssh` with `nova` as the whole host and no user or IP. The Architect
+box has no `~/.ssh/config` to expand it, so the command fails with `Name or service not known`. Thirteen
+files in the fleet's internal docs still write it that way, and none of them work.
 
 ## Reaching a box
 
@@ -164,16 +164,17 @@ ssh nova@<tailnet-ip>
 ssh nova@<tailnet-ip> 'sudo -u cloud -H bash -lc "whoami; pwd"'
 ```
 
-`nova` here is a unix account that happens to share a name with one of the masters — it is the SSH entry
-point for the box, and `sudo -u <account>` is how you become any of the others.
+Here `nova` is a unix account that happens to share its name with one of the masters. It is the SSH
+entry point for the box, and you use `sudo -u <account>` to become any of the other accounts.
 
-**The account is not the lane, and this page used to say it was.** A master's board lane, its GitHub
-identity and its unix account are three separate names that usually agree and are not required to. Which
-accounts exist and which lanes the scheduler routes to are both read from the fleet's own files, here:
+The account is not the lane, although this page used to say it was. A master has a board lane, a GitHub
+identity and a unix account. These are three separate names. They usually match, but nothing requires
+them to. The table below reads both the existing accounts and the lanes the scheduler routes to from the
+fleet's own files:
 
 <Generated id="dispatch-lanes" />
 
-There is also a **browser terminal per master**, read-only, served by `ttyd` on the tailnet:
+Each master also has a read-only browser terminal, which `ttyd` serves on the tailnet:
 
 ```bash
 # on novaserver — confirm the four viewports are listening
@@ -182,8 +183,8 @@ ss -ltn | grep -E ':781[0-3]'
 
 ## Dispatching work
 
-Dispatch is how a master receives an issue. **Starting the run is the assignment** — there is no separate
-claim step.
+Dispatch is how a master receives an issue. Starting the run assigns the issue, and there is no
+separate claim step.
 
 ```bash
 # on ETH, from the knowledge repo
@@ -191,18 +192,18 @@ bash _infra/scripts/dispatch.sh <master> <issue#> [owner/repo]
 ```
 
 The repo argument defaults to `utopia-models/knowledge`. The script runs three pre-flight guards, syncs
-that master's clones, launches a detached transient systemd unit, and returns. The guards, their exit
-codes and their escape hatches are on [The dispatch runtime](/docs/operating/dispatch-runtime). The run posts **▶ started** on the issue, and its exit trap posts **✔**, **✘**, **⚠** or **⛔**
-with the pull-request link.
+that master's clones, launches a detached transient systemd unit, and returns. [The dispatch runtime](/docs/operating/dispatch-runtime) documents the guards, their exit
+codes and how to override each one. The run posts ▶ started on the issue. When it exits, its exit trap
+posts ✔, ✘, ⚠ or ⛔ with the pull-request link.
 
-### Before you dispatch: is the master dark?
+### Before you dispatch, check whether the master is dark [#before-you-dispatch-is-the-master-dark]
 
 ```bash
 # on ETH — the whole table
 bash _infra/scripts/dispatch.sh --quota
 ```
 
-Real output, 2026-09-04 — shown as a sample of the shape, not as a current reading:
+This is real output from 2026-09-04. It shows the format, not a current reading:
 
 ```text
 win    clear
@@ -211,8 +212,8 @@ cloud  clear
 dust   clear
 ```
 
-A refused master replaces `clear` with the reason it was refused. That row, observed on 2026-08-16, is
-the shape to recognise:
+For a refused master, the row shows the reason instead of `clear`. We saw this row on 2026-08-16, and it
+is the format to recognise:
 
 ```text
 nova   dark   resets=unknown provider=claude source=entitlement-capture
@@ -229,28 +230,28 @@ bash _infra/scripts/dispatch.sh --preflight-quota cloud; echo "exit=$?"
 DISPATCH_IGNORE_QUOTA=1 bash _infra/scripts/dispatch.sh cloud 1234
 ```
 
-`resets=unknown` is the state with no recovery path: the provider named no reset time, so nothing brings
-that agent back on its own. A reset time in the *past* counts as clear.
+`resets=unknown` means there is no recovery path. The provider gave no reset time, so nothing brings
+that agent back by itself. A reset time in the *past* counts as clear.
 
 ### Why is nothing being dispatched?
 
-If the board has open work and the scheduler is dispatching none of it, the scheduler will tell you why,
-per issue:
+If the board has open work and the scheduler dispatches none of it, ask the scheduler. It gives the
+reason for each issue:
 
 ```bash
 # on novaserver, from the knowledge clone
 bash _infra/scripts/sweep-dispatch.sh --explain
 ```
 
-Each rejected issue prints its own reason — `lane-not-in-masters`, `has-hold-label`,
-`is-a-grouper:has-open-subissues`, `last-marker-is-terminal`, `parent-closed`, `is-parked`. A large open
-count with zero dispatchable is almost always **routing**, not capacity: an issue with no lane, or on a
-lane no master serves, can never be picked up however idle the fleet is.
+Each rejected issue prints its reason, which is one of `lane-not-in-masters`, `has-hold-label`,
+`is-a-grouper:has-open-subissues`, `last-marker-is-terminal`, `parent-closed` or `is-parked`. When many
+issues are open and none can be dispatched, the cause is almost always routing, not capacity. No master
+will ever pick up an issue that has no lane, or whose lane no master serves, however idle the fleet is.
 
 ## Is an agent actually alive?
 
-**`getent passwd nova` is not this check.** It succeeds on an agent that cannot run a single turn. To
-answer the question you must exercise the artifact:
+`getent passwd nova` does not answer this. It succeeds for an agent that cannot run a single turn. To
+answer the question, make the agent do real work:
 
 ```bash
 # on novaserver — the real probe. Anything other than a normal completion is the finding.
@@ -260,14 +261,14 @@ sudo -u nova -H claude -p 'reply with the single word: alive'
 sudo -u nova -H cat /home/nova/.claude/state/quota-status.json
 ```
 
-An `api_error_status: 403` here means entitlement was withdrawn at the account, not that anything on the
-box is broken — the binary, the credentials file and the unix account are all still perfectly healthy.
-`"resetsAt": null` in that state file means there is no timer that restores it.
+An `api_error_status: 403` here means the provider withdrew the account's entitlement. Nothing on the
+box is broken. The binary, the credentials file and the unix account all still work. If the state file
+shows `"resetsAt": null`, no timer will restore the entitlement.
 
 ## Watching a run
 
-Runs are transient systemd units under the master's **user** manager. The name is built in
-`dispatch.sh`, so it is read from there rather than described from memory:
+Each run is a transient systemd unit under the master's user manager. `dispatch.sh` builds the unit
+name, so the page reads it from that script instead of describing it from memory:
 
 <Generated id="run-unit-name" />
 
@@ -279,8 +280,8 @@ sudo -u cloud -H XDG_RUNTIME_DIR=/run/user/$(id -u cloud) systemctl --user list-
 sudo -u cloud -H journalctl --user -u task-<issue> --no-pager
 ```
 
-The board is the other half of this, and usually the better half: the run's own ▶ and ✔/✘ comments are
-on the issue, and they are the fleet's definition of liveness.
+The board is the other place to watch, and usually the better one. The run posts its own ▶ and ✔/✘
+comments on the issue, and the fleet defines liveness by those comments.
 
 ## Secrets
 
@@ -295,9 +296,9 @@ bash ~/.claude/scripts/infisical-get.sh --keys fleet-infra prod /
 printf '%s' "$NEW_VALUE" | bash ~/.claude/scripts/infisical-set.sh fleet-infra SOME_KEY prod
 ```
 
-Passing a secret as an argument is rejected by a guard: argv lands in shell history and in the process
-table. Before concluding a credential is absent, list the whole project — the fleet's recurring failure
-is not a missing credential but a grep for the wrong key name.
+A guard rejects any secret passed as an argument, because argv ends up in shell history and in the
+process table. Before you conclude a credential is absent, list the whole project. The fleet rarely
+lacks a credential. It often greps for the wrong key name.
 
 ## Checking services and timers
 
@@ -309,28 +310,28 @@ systemctl --failed
 sudo -u nova -H XDG_RUNTIME_DIR=/run/user/$(id -u nova) systemctl --user --failed
 ```
 
-**A clean `--failed` is weaker evidence than it looks.** A dead timer never fails. Enumerate the timers
-themselves and look at the last and next columns:
+A clean `--failed` proves less than it seems to, because a dead timer never fails. List the timers
+themselves and read the last and next columns:
 
 ```bash
 # on novaserver — every scheduled timer for a master, with last/next fire times
 sudo -u nova -H XDG_RUNTIME_DIR=/run/user/$(id -u nova) systemctl --user list-timers --all
 ```
 
-Two traps that produce a clean bill of health on a broken box:
+Two traps make a broken box look healthy:
 
-1. An **enabled timer whose service is `not-found`** never runs and never fails.
-2. **Cron is a second scheduling layer.** Masters carry crontab entries with no systemd timer at all.
-   One `sudo -u` line per account the fleet actually dispatches to, generated so that none of them can
-   name an account that does not exist:
+1. An enabled timer whose service is `not-found` never runs and never fails.
+2. Cron is a second scheduling layer. Masters have crontab entries with no systemd timer at all. The
+   lines below have one `sudo -u` per account the fleet actually dispatches to. They are generated, so
+   none of them can name an account that does not exist:
 
 <Generated id="crontab-probe" />
 
-### Deleting a scheduled unit — a two-half operation
+### Deleting a scheduled unit takes two steps [#deleting-a-scheduled-unit--a-two-half-operation]
 
-Removing a unit from an agent's brain repo does **not** stop it running: `~/.config/systemd/user/` holds
-*copies*, not symlinks. A real deletion cost the fleet a spurious P0 when the orphaned timer kept firing
-against a script that no longer existed and exited `203/EXEC`. Both halves:
+Removing a unit from an agent's brain repo does not stop it running, because `~/.config/systemd/user/`
+holds *copies* of unit files, not symlinks. One real deletion cost the fleet a false P0. The orphaned
+timer kept firing against a script that no longer existed, and it exited `203/EXEC`. Do both steps:
 
 ```bash
 # on novaserver, as the owning master — the on-box half
@@ -341,11 +342,11 @@ rm -f ~/.config/systemd/user/<unit>.{service,timer}
 systemctl --user daemon-reload
 ```
 
-...and then delete it from the brain repo and push, or a sync job will put it back.
+Then delete the unit from the brain repo and push. Otherwise a sync job puts it back.
 
 ## Checking a public surface
 
-A status code alone is never the answer — see [Surfaces](/docs/structure/surfaces) for why a 404 has at least three
+A status code alone never answers the question. [Surfaces](/docs/structure/surfaces) explains why a 404 has at least three
 different meanings.
 
 ```bash
@@ -356,18 +357,18 @@ curl -s -o /dev/null -w '%{http_code} redirects=%{num_redirects} final=%{url_eff
 curl -sI https://<host>/ | grep -iE 'server|x-vercel|cf-ray|x-matched-path'
 ```
 
-An `x-vercel-error: DEPLOYMENT_NOT_FOUND` on a 404 means no deployment is attached to that hostname,
-which is what both a *deliberately retired* surface and an *accidentally dead* one look like. The
-difference is a decision record, not a header. A `530` with Cloudflare error 1033 means a tunnel origin
-is unreachable — that one is never deliberate.
+An `x-vercel-error: DEPLOYMENT_NOT_FOUND` on a 404 means no deployment is attached to that hostname. A
+site we retired on purpose and a site that died by accident both look like that. Only a decision record
+tells them apart, not a header. A `530` with Cloudflare error 1033 means a tunnel origin is unreachable,
+and that is never deliberate.
 
-**A 200 does not prove a page is public.** An SSO gate redirects to a login page that itself returns 200,
-so assert `redirects=0` and check the final URL, not just the code.
+A 200 does not prove a page is public. An SSO gate redirects to a login page, and that login page
+returns 200. Assert `redirects=0` and check the final URL as well as the code.
 
 ## Shipping: merging when a check is red
 
-Nothing gates `main`. Branch protection and rulesets both return 403 on this plan tier, in every repo, so
-every check is **information, never a stop**.
+Nothing gates `main`. Branch protection and rulesets both return 403 on this plan tier, in every repo.
+So every check gives you information and never stops a merge.
 
 ```bash
 # from anywhere with gh auth
@@ -376,7 +377,7 @@ gh pr merge <n> --squash --admin
 
 If that fails, read the actual error:
 
-- **CONFLICTING / DIRTY** — rebase and force-push **your own topic branch by name**:
+- If the PR is CONFLICTING or DIRTY, rebase and force-push your own topic branch by name:
 
   ```bash
   git fetch origin && git rebase origin/main
@@ -384,15 +385,15 @@ If that fails, read the actual error:
   git push --force-with-lease origin HEAD:<your-branch>
   ```
 
-  Never a bare `git push --force`: it takes whatever HEAD happens to be. One such command once moved 501
-  commits off a shared clone's `main`, and nothing local showed it.
-- **A real build, typecheck or deploy failure** — that failure is real. Fix the code.
-- **Anything else** — retry with `--admin`.
+  Never run a bare `git push --force`, because it pushes whatever HEAD happens to be. One such command
+  once moved 501 commits off a shared clone's `main`, and nothing local showed it.
+- If a build, typecheck or deploy really failed, fix the code.
+- For anything else, retry with `--admin`.
 
 ### When the secret scanner cannot run
 
-The secret scan is the one check treated as binding. If the workflow itself cannot start, run it locally
-against the same pinned version rather than skipping it:
+The secret scan is the one check the fleet treats as binding. If the workflow itself cannot start, run
+the scan locally with the same pinned version. Do not skip it:
 
 ```bash
 # on any box, from the repo root
@@ -403,16 +404,16 @@ curl -sL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/git
      --log-opts "--no-merges <base>..<head>"
 ```
 
-Clean means merge. Findings mean fix, rescan, then merge.
+If the scan is clean, merge. If it finds something, fix it, scan again, then merge.
 
 ## Verifying a claim about the fleet
 
-The habit that produces the fewest wrong answers:
+These habits produce the fewest wrong answers:
 
-1. **Read the source, do not recall it.** Every exact value — a path, a port, a key name, a count — comes
-   from the file or the probe this session, never from memory.
+1. **Read the source, do not recall it.** Take every exact value, such as a path, a port, a key name or
+   a count, from the file or the probe in this session, never from memory.
 2. **Exercise the artifact, not the build.** A green build proves the source compiles. Curl the deploy,
    run the binary, render the page.
-3. **State the box.** A result without the machine it came from is not reproducible.
-4. **Prefer the negative control.** Confirm your check can *fail* — run it against something you know is
-   broken. A check that passes on everything is measuring nothing.
+3. **State the box.** Nobody can reproduce a result that does not say which machine it came from.
+4. **Prefer the negative control.** Confirm your check can *fail* by running it against something you
+   know is broken. A check that passes on everything measures nothing.

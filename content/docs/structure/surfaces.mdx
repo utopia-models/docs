@@ -1,7 +1,7 @@
 ---
 title: Surfaces
-description: Every hostname the fleet owns or references, each with an explicit class — LIVE, RETIRED-BY-DECISION or BROKEN. A status code on its own is not a state.
-updated: 2026-10-30
+description: Every hostname the fleet owns or references, each with an explicit class of LIVE, RETIRED-BY-DECISION or BROKEN. A status code by itself does not tell you the state.
+updated: 2026-10-31
 ---
 
 ```text title="prompt-1|Learn why a status code is not a state|claude-code|Reads this page, explains the three classes and why a status code is evidence rather than a state, then quizzes you. Writes only its checklist."
@@ -152,110 +152,111 @@ When the writes are done, tell me in one line, filled in with the real paths:
 Finish with: counts per class, every BROKEN row, every would-be-RETIRED row missing its decision, and every unmonitored LIVE host.
 ```
 
-**A status code is not a state.** Two hostnames returning an identical `404` can mean completely
-different things: one was switched off on purpose and is behaving correctly, the other is an accident
-nobody has noticed. Collapsing that distinction into a single "404" cell once cost this fleet a P0
-incident — a master was dispatched to "restore" a surface that had been deliberately retired ten days
-earlier, and it did exactly as it was told.
+A status code is not a state. Two hostnames can return the same `404` for completely different reasons.
+One was switched off on purpose and is behaving correctly. The other broke by accident and nobody has
+noticed. We once recorded both cases as a single "404" cell, and it cost the fleet a P0 incident. A master
+was dispatched to "restore" a surface that someone had retired on purpose ten days earlier, and the
+master did exactly what it was told.
 
-So every row below carries a **class**, and the class is the durable fact. The status code is evidence
-for the class, not a substitute for it.
+So every row below has a class, and the class is the fact that lasts. The status code is evidence for the
+class. It does not replace the class.
 
 | Class | Meaning |
 | --- | --- |
-| **LIVE** | Intended to serve, and serving. |
-| **RETIRED-BY-DECISION** | Not serving, **and that is correct.** A human decided to switch it off, and the decision is sourced. Do not "fix" one of these. |
-| **BROKEN** | Not serving, and nothing says that was intended. This is the only class that is a bug. |
+| LIVE | Meant to serve, and serving. |
+| RETIRED-BY-DECISION | Not serving, and that is correct. A human decided to switch it off, and we can point to where that decision is written. Do not "fix" one of these. |
+| BROKEN | Not serving, and nothing says anyone meant that. This is the only class that is a bug. |
 
-A fourth label, **NEVER-EXISTED**, is used at the bottom of the page for names that appear in the fleet's
-own documents but have never resolved in DNS. They are not surfaces; they are citations of surfaces that
-were never built.
+The bottom of the page uses a fourth label, NEVER-EXISTED, for names that appear in the fleet's own
+documents but have never resolved in DNS. These are not surfaces. They are references to surfaces that
+nobody ever built.
 
-Hostnames, addresses and object paths that identify private infrastructure — the secret-store UI,
-tunnel origins, the object-storage bucket — are shown as placeholders in angle brackets (`<tunnel-host>`).
-Each row keeps its class, its evidence and its lesson; only the identifying value is withheld.
+Some hostnames, addresses and object paths identify private infrastructure, such as the secret-store UI,
+tunnel origins and the object-storage bucket. We show those as placeholders in angle brackets
+(`<tunnel-host>`). Each row keeps its class, its evidence and its lesson. We withhold only the
+identifying value.
 
-All codes below were measured by the run that wrote this page, **2026-08-16**, from the fleet's own box. They are
-evidence with a date on them, not a live reading — for a current code, `curl -sI` the host yourself.
+The run that wrote this page measured every code below on **2026-08-16**, from the fleet's own box. They are
+dated evidence, not a live reading. For a current code, run `curl -sI` against the host yourself.
 
-A dated table decays, so a row here is a claim to re-measure, not a reading to trust. Two rows have gone
-stale that way. `creatives.utopiamodels.ai`
-was recorded as `200` until the **5am** domain landed and the migration redirect fired — stale because
-the world moved, not because it was measured wrong, which is the failure a re-measure catches and a
-careful first reading cannot. And `docs.utopiamodels.ai` — this host — has now changed root shape
-twice: a `307` to `/docs` when this page was written, then a `301` off the host entirely while it was
-retired, and today a plain `200` (see its row below).
+A dated table goes out of date, so treat each row as a claim to measure again, not a reading to trust.
+Two rows have gone stale this way. We recorded `creatives.utopiamodels.ai`
+as `200` until the 5am domain went live and the migration redirect started. That row went stale because
+the world changed, not because anyone measured it wrong. A second measurement catches that kind of change,
+and a careful first one cannot. The other row is `docs.utopiamodels.ai`, this host. Its root has changed
+shape twice. It returned a `307` to `/docs` when this page was written, then a `301` off the host entirely
+while it was retired, and today it returns a plain `200` (see its row below).
 
 ## LIVE
 
 | Hostname | Class | What it is | Basis (measured 2026-08-16) |
 | --- | --- | --- | --- |
-| `utopiamodels.ai` | **LIVE** | **The Org Command Center** — the fleet's cockpit, and the surface the founder actually watches | `200`. Unique in the fleet for being both Cloudflare-fronted and Vercel-origin: `cf-ray` and `x-vercel-id` are both present |
-| `www.utopiamodels.ai` | **LIVE** | Apex alias | `200` |
-| `docs.utopiamodels.ai` | **LIVE** | **This wiki** | `200` at `/`, no redirect in the chain (re-measured 2026-09-04). It has not always read that way, and the history is the point: `307` at `/` → `200` at `/docs` when this page was written 2026-08-16, then `301` to `school.utopiamodels.ai` on every path from 2026-08-30 while the host was retired by decision, then un-retired 2026-09-04 with the root rewritten rather than redirected — so `/` now serves the docs index itself. A check that reads only the first code would have called this surface healthy, broken and healthy again without the class ever changing |
-| `dmvresearch.shop` | **LIVE** | The DMV Research storefront — real catalog, real prices, real revenue | `200` |
-| `www.dmvresearch.shop` | **LIVE** | Storefront alias | `301` to the apex |
-| `dev.dmvresearch.shop` | **LIVE** | The storefront's preview host | `200` |
-| `dmvclothes.shop` | **LIVE** | DMV ad-bridge surface | `200` |
-| `dmvresearch.io` | **LIVE** | DMV ad-bridge surface | `200` |
-| `rawphones.com` | **LIVE** | **The RAW brand surface** — the phone brand's public front | `200`, served via a path rewrite (`x-matched-path: /raw/index.html`) off a shared Vercel project |
-| `www.rawphones.com` | **LIVE** | Brand alias | `308` to the apex |
-| `nothing.utopiamodels.ai` | **LIVE** | The RAW design "rip" — a full reconstruction of a competitor's site, used as a design reference | `200`, and by a wide margin the heaviest page the fleet serves |
-| `raw1.utopiamodels.ai` | **LIVE** | RAW design variant | `200` |
-| `raw2.utopiamodels.ai` | **LIVE** | RAW design variant | `200` |
-| `raw3.utopiamodels.ai` | **LIVE** | RAW design variant | `200` |
-| `os.utopiamodels.ai` | **LIVE** | The RTOS concept page | `200` |
-| `hack.utopiamodels.ai` | **LIVE** | The RAW investor deck | `200` |
-| `community.utopiamodels.ai` | **LIVE** | Community surface, Cloudflare-served rather than Vercel | `200` |
-| `creatives.utopiamodels.ai` | **GONE** | The **5am** agency's creative showcase. **Plural** — the singular name is a different, dead thing | No DNS record, re-measured 2026-10-30 — and the agency domain it used to `301` to resolves to nothing either, since 5am was frozen. Kept as a row so a reader who finds the name elsewhere learns it is gone rather than guessing |
-| `<secret-store-ui-host>` | **LIVE** | A friendly admin UI over the secret store, published through the Cloudflare tunnel to a local port on the fleet's box | `200`, `redirects=0` — and gated all the same. It renders a server-side Google SSO allow-list of exactly three accounts in page instead of redirecting to one, so the usual "`redirects=0` means ungated" reading is exactly backwards here. See rule 2 at the foot of this page |
-| `<data-replica-host>` | **LIVE** | A data-replica surface, paired with the two always-on services on one master's box | `200`. Has **no registry row and no doc** — a live public host on the company domain that nothing can notice going down |
-| `org.utopiamodels.ai` | **LIVE** | A legacy name, deliberately redirecting | `301` → `https://utopiamodels.ai/`, `redirects=1`. Matches the `occ-redirect` responder on the fleet's box |
-| `<object-storage-host>` | **LIVE** | Object storage for showcase media | **A bare code lies here.** `/` returns `404` and so does a directory path, but a real object returns `200` — verified against a real object path (`<object-storage-host>/<prefix>/<object>.png`). There is no index; that is not a fault |
+| `utopiamodels.ai` | LIVE | The Org Command Center. This is the fleet's main dashboard, and the surface the founder actually watches | `200`. It is the only host in the fleet that has Cloudflare in front and a Vercel origin behind, so the response carries both `cf-ray` and `x-vercel-id` |
+| `www.utopiamodels.ai` | LIVE | Alias for the apex | `200` |
+| `docs.utopiamodels.ai` | LIVE | This wiki | `200` at `/`, with no redirect in the chain (re-measured 2026-09-04). It has not always looked like that, and the history is why the row is here. When this page was written on 2026-08-16, `/` returned `307` and `/docs` returned `200`. From 2026-08-30 the host was retired by decision and returned `301` to `school.utopiamodels.ai` on every path. On 2026-09-04 we brought it back and rewrote the root instead of redirecting it, so `/` now serves the docs index itself. A check that reads only the first code would have called this surface healthy, then broken, then healthy again, while its class never changed |
+| `dmvresearch.shop` | LIVE | The DMV Research storefront, with a real catalog, real prices and real revenue | `200` |
+| `www.dmvresearch.shop` | LIVE | Alias for the storefront | `301` to the apex |
+| `dev.dmvresearch.shop` | LIVE | The storefront's preview host | `200` |
+| `dmvclothes.shop` | LIVE | DMV ad-bridge site | `200` |
+| `dmvresearch.io` | LIVE | DMV ad-bridge site | `200` |
+| `rawphones.com` | LIVE | The RAW brand site, the public front of the phone brand | `200`. A shared Vercel project serves it through a path rewrite (`x-matched-path: /raw/index.html`) |
+| `www.rawphones.com` | LIVE | Alias for the brand site | `308` to the apex |
+| `nothing.utopiamodels.ai` | LIVE | The RAW design "rip", a full reconstruction of a competitor's site that we use as a design reference | `200`. It is by far the heaviest page the fleet serves |
+| `raw1.utopiamodels.ai` | LIVE | RAW design variant | `200` |
+| `raw2.utopiamodels.ai` | LIVE | RAW design variant | `200` |
+| `raw3.utopiamodels.ai` | LIVE | RAW design variant | `200` |
+| `os.utopiamodels.ai` | LIVE | The RTOS concept page | `200` |
+| `hack.utopiamodels.ai` | LIVE | The RAW investor deck | `200` |
+| `community.utopiamodels.ai` | LIVE | Community site, served by Cloudflare rather than Vercel | `200` |
+| `creatives.utopiamodels.ai` | GONE | The 5am agency's gallery of creative work. The name is plural. The singular name is a different host, and that one is dead | No DNS record, re-measured 2026-10-30. The agency domain it used to `301` to resolves to nothing either, since we froze 5am. We keep the row so that a reader who finds the name somewhere else learns it is gone instead of guessing |
+| `<secret-store-ui-host>` | LIVE | An admin UI for the secret store. The Cloudflare tunnel publishes it from a local port on the fleet's box | `200` and `redirects=0`, and still gated. Instead of redirecting to a login page, it renders a server-side Google SSO allow-list of exactly three accounts on the page itself. The usual reading, that "`redirects=0` means ungated", is exactly wrong here. See rule 2 at the foot of this page |
+| `<data-replica-host>` | LIVE | A data-replica host, paired with the two always-on services on one master's box | `200`. It has no registry row and no doc. It is a live public host on the company domain, and nothing would notice if it went down |
+| `org.utopiamodels.ai` | LIVE | A legacy name that redirects on purpose | `301` to `https://utopiamodels.ai/`, `redirects=1`. This matches the `occ-redirect` responder on the fleet's box |
+| `<object-storage-host>` | LIVE | Object storage for gallery media | Here a bare code is misleading. `/` returns `404`, and so does a directory path, but a real object returns `200`. We checked this against a real object path (`<object-storage-host>/<prefix>/<object>.png`). The host has no index, and that is not a fault |
 
 ## RETIRED-BY-DECISION
 
 | Hostname | Class | Basis |
 | --- | --- | --- |
-| `raw.utopiamodels.ai` | **RETIRED-BY-DECISION** | `404 DEPLOYMENT_NOT_FOUND`, measured 2026-08-16. Retired by the founder on **2026-08-06**. This is the row that earned this class its existence: an auto-loaded doctrine file went on describing it as a live surface, a master read that and was dispatched to restore it, and the resulting P0 was entirely self-inflicted. **Do not fix this. It is off on purpose.** |
+| `raw.utopiamodels.ai` | RETIRED-BY-DECISION | `404 DEPLOYMENT_NOT_FOUND`, measured 2026-08-16. The founder retired it on 2026-08-06. This row is the reason the class exists. A doctrine file that loads automatically kept describing the host as live. A master read that file and was dispatched to restore the host, and we caused the resulting P0 ourselves. **Do not fix this. It is off on purpose.** |
 
 ## BROKEN
 
 | Hostname | Class | Basis |
 | --- | --- | --- |
-| `<tunnel-host>` | **BROKEN** | `530` — Cloudflare error 1033, tunnel origin unreachable. A `530` is never deliberate at the edge. There is a plausible explanation (a cost teardown named in one govcon spec) but **no decision record and no registry row**, so by this page's own rules it cannot be called retired. Unclassified is broken |
-| `creative.utopiamodels.ai` | **BROKEN** | `404 DEPLOYMENT_NOT_FOUND`. The **singular** of the live plural `creatives.`. Either an unrecorded retirement or a name nobody ever claimed — nothing in any registry says which, and that ambiguity is the finding |
-| `booking.tyleryouk.com` | **BROKEN** | `404 DEPLOYMENT_NOT_FOUND` — while an agent's durable memory still carries a whole entry describing a working partnership flow at this address |
+| `<tunnel-host>` | BROKEN | `530`, which is Cloudflare error 1033 (the tunnel origin is unreachable). The edge never returns a `530` on purpose. One govcon spec names a cost teardown that could explain it, but there is no decision record and no registry row. By this page's own rules we cannot call it retired, and a host nobody has classified counts as broken |
+| `creative.utopiamodels.ai` | BROKEN | `404 DEPLOYMENT_NOT_FOUND`. This is the singular form of the live plural `creatives.`. Either someone retired it without recording it, or nobody ever claimed the name. No registry says which, and that gap is the finding |
+| `booking.tyleryouk.com` | BROKEN | `404 DEPLOYMENT_NOT_FOUND`. Meanwhile, an agent's durable memory still has a whole entry describing a working partnership flow at this address |
 
 ## NEVER-EXISTED
 
-These names are referenced in the fleet's own documents and have **never resolved**. A citation is not a
-surface: each of these exists only as a string in a markdown file.
+The fleet's own documents mention these names, but they have never resolved. A reference is not a
+surface. Each of these exists only as text in a markdown file.
 
 | Hostname | Class | Basis (measured 2026-08-16) |
 | --- | --- | --- |
-| `rawnothing.utopiamodels.ai` | **NEVER-EXISTED** | `NXDOMAIN` |
-| `hack-creatives.utopiamodels.ai` | **NEVER-EXISTED** | `NXDOMAIN` |
-| `research.dmvresearch.shop` | **NEVER-EXISTED** | `NXDOMAIN` |
-| `bridge.dmvresearch.shop` | **NEVER-EXISTED** | `NXDOMAIN` |
-| `health.tyleryouk.com` | **NEVER-EXISTED** | `NXDOMAIN` |
-| `send.tyleryouk.com` | **NEVER-EXISTED** | `NOERROR`, but no A record — the name is delegated and answers nothing |
+| `rawnothing.utopiamodels.ai` | NEVER-EXISTED | `NXDOMAIN` |
+| `hack-creatives.utopiamodels.ai` | NEVER-EXISTED | `NXDOMAIN` |
+| `research.dmvresearch.shop` | NEVER-EXISTED | `NXDOMAIN` |
+| `bridge.dmvresearch.shop` | NEVER-EXISTED | `NXDOMAIN` |
+| `health.tyleryouk.com` | NEVER-EXISTED | `NXDOMAIN` |
+| `send.tyleryouk.com` | NEVER-EXISTED | `NOERROR`, but there is no A record. The name is delegated and answers nothing |
 
 ## How this table is kept honest
 
-Three rules, learned the expensive way:
+We learned three rules from costly mistakes:
 
-1. **A hostname with no registry row cannot be monitored, so it cannot be noticed.** Several of the LIVE
-   rows above have no entry in the fleet's component registry — including one serving on the company's
-   own domain. No row means no check, and no check means the day it breaks is the day someone happens to
-   look.
-2. **A 200 does not prove a page is public — and neither does `redirects=0`.** An SSO gate redirects to
-   a login page that itself returns `200`, so a check has to report `redirects=` and the final URL, not
-   the status code alone. The converse is the trap this page shipped with: an app that renders its login
-   **in page** answers `200` with `redirects=0` and is completely gated. The secret-store admin UI,
-   two tables up, is exactly that — and a stranger's agent reading this rule correctly concluded from
-   `200 redirects=0` that our secret store was open to the world. A status line only ever supports the
-   claim "something answered". Read the body.
-3. **Which edge served it matters.** `cf-ray` means Cloudflare; `x-vercel-id` means Vercel; both together
-   means Cloudflare in front of a Vercel origin. A doc that says a hostname "does not touch the tunnel"
-   is a claim about routing, and routing is checkable in one `curl -sI`.
+1. **No registry row means no monitoring.** Nothing can monitor a hostname that has no registry row, so
+   nobody notices when it breaks. Several of the LIVE rows above have no entry in the fleet's component
+   registry, and one of them serves on the company's own domain. Without a row there is no check, and
+   without a check the breakage surfaces only when someone happens to look.
+2. **Neither a 200 nor `redirects=0` proves a page is public.** An SSO gate redirects to a login page,
+   and that login page itself returns `200`. So a check has to report `redirects=` and the final URL, not
+   only the status code. The opposite case is the mistake this page first shipped with. An app that
+   renders its login on the page itself answers `200` with `redirects=0` and is still fully gated. The
+   secret-store admin UI, two tables up, works exactly that way. A stranger's agent applied this rule
+   correctly, saw `200 redirects=0`, and concluded that our secret store was open to the world. A status
+   line only ever tells you that something answered. Read the body.
+3. **Which edge served it matters.** `cf-ray` means Cloudflare and `x-vercel-id` means Vercel. Both
+   together mean Cloudflare in front of a Vercel origin. If a doc says a hostname "does not touch the
+   tunnel", that is a claim about routing, and one `curl -sI` can check it.

@@ -1,7 +1,7 @@
 ---
 title: The board
-description: One GitHub project board is the only tracker. An agent writes two fields; every other field is derived on a runner, and status changes only when a merged pull request closes an issue.
-updated: 2026-09-28
+description: One GitHub project board is the only tracker. An agent writes two fields, a job on a runner computes every other field, and status changes only when a merged pull request closes an issue.
+updated: 2026-10-31
 ---
 
 <Status value="stable" />
@@ -153,51 +153,54 @@ FINISH
 Every file created, with its path. The one number I should watch — not a dashboard — and what it means when it moves. For runbook-level detail on reading a fleet's live state, point me at https://docs.utopiamodels.ai/docs/operating/operations.md.
 ```
 
-Sourced from the fleet's own component document for `board`. Called stable because the one constant every
-script uses to address it is bound in five separate files and re-checked on every pull request — which is
-the only part of a hosted product a repository can hold still.
+This page comes from the fleet's own component document for `board`. We call it stable because every
+script addresses the board through one constant. Five separate files bind that constant, and every pull
+request checks it again. That constant is the only part of a hosted product a repository can pin.
 
-Work exists here or it does not exist.
+If work is not on the board, it does not exist.
 
-A body of work is a **Feature** issue with ordered sub-issues. Status derives from a merged pull request
-whose body closes the issue, and **nobody ever types one**. If this surface is wrong, the fleet works on
-the wrong thing — there is no second list to cross-check against, deliberately, and creating one is the
-fence this whole component exists to hold.
+A body of work is a Feature issue with ordered sub-issues. Its status comes from a merged pull request
+whose body closes the issue, and nobody ever types a status. If the board is wrong, the fleet works on the
+wrong thing. We keep no second list to check it against, on purpose, and this component exists to stop
+anyone from creating one.
 
-The vocabulary — plan, Feature, issue — and the lane routing that decides which agent serves a row are on
-[How work flows](/docs/operating/work). This page is the mechanism underneath: which fields are written,
-which are derived, and the four ways this board has been made to lie.
+The vocabulary (plan, Feature, issue) and the lane routing that decides which agent serves a row are
+covered on [How work flows](/docs/operating/work). This page covers the mechanism underneath. It explains
+which fields an agent writes, which ones a job computes, and the four ways the board has ended up showing
+something false.
 
 ## The fleet owns no file that *is* the board
 
-The component's list of owned files is **empty, and that is the fact rather than an omission**. The board
-is a hosted product. Everything in the repository that touches it belongs to a neighbour, and the
-partition is exactly three ways: one script owns the write path in, one set of workflows owns the
-mechanisms that keep it honest, and the scheduler owns the single consumer of the Todo status.
+The component's list of owned files is empty. That is accurate, not something we forgot to fill in. The
+board is a hosted product. Everything in the repository that touches it belongs to some other component,
+and exactly three parts split the work. One script owns the path that writes to the board. One set of
+workflows owns the checks that keep it accurate. The scheduler owns the only thing that reads the Todo
+status.
 
-Naming that boundary explicitly is what stops a fourth thing quietly growing a copy of the board.
+Because we name that boundary explicitly, no fourth component can quietly start keeping its own copy of
+the board.
 
 ## An agent writes two fields. Everything else is derived
 
-**An agent's entire board job is: assign itself, and give the issue a title** — plus an optional priority
-label. Every other field is derived on a hosted runner by a reconciliation workflow, and written **only on
-diff**.
+An agent's whole job on the board is to assign itself and give the issue a title. It can also add a
+priority label if it wants. A reconciliation workflow on a hosted runner computes every other field, and
+writes a field only when its value has changed.
 
 | Field | Derived from |
 | --- | --- |
-| Lane | the primary assignee's login — the lane names the **box**, never the portfolio |
-| Priority | the priority label, defaulting to the middle value |
-| Sprint | the current iteration if unset; a deliberately-chosen one is never clobbered |
-| Status | the board's own native workflows; the reconciler is only the closed-to-done backstop |
-| Archived | closed and done goes off the board; open and archived is pulled **back onto** it |
-| Week / Cycle | **never written by any script** — see below |
+| Lane | the login of the primary assignee. The lane names the box, never the portfolio |
+| Priority | the priority label, or the middle value if there is no label |
+| Sprint | the current iteration if the field is empty. The reconciler never overwrites an iteration someone chose on purpose |
+| Status | the board's own built-in workflows. The reconciler only acts as the backstop that moves closed issues to done |
+| Archived | an issue that is closed and done comes off the board. An issue that is open and archived goes **back onto** it |
+| Week / Cycle | no script ever writes this field. See below |
 
-Two properties fall out of that, and both are the point:
+This design has two useful results:
 
-- **Agents make zero field calls**, so no amount of agent activity can cause an agent-side rate-limit
-  outage against the tracker.
-- **Writing only on diff** means the reconciler is idempotent. Running it twice is indistinguishable from
-  running it once, which is what makes it safe to run on a timer *and* on an event.
+- Agents make zero field calls. However busy the agents get, they cannot cause a rate-limit outage
+  against the tracker from their side.
+- Because the reconciler writes only when a value changed, it is idempotent. Running it twice has the same
+  effect as running it once, so it is safe to run on a timer *and* on an event.
 
 ## The shape of a filing is a real choice
 
@@ -210,81 +213,83 @@ Two properties fall out of that, and both are the point:
                      → a whole group starts at once
 ```
 
-A plan designed as five parallel waves was once filed as a fourteen-deep chain. Nothing errored; the board
-simply had one dispatchable issue instead of five, and the fleet ran at a fifth of its shape for as long
-as nobody looked at the dependency graph.
+Someone once designed a plan as five parallel waves and filed it as a chain fourteen issues deep. Nothing
+reported an error. The board just had one issue ready to dispatch instead of five, and the fleet ran at a
+fifth of the parallel capacity the plan had, until someone looked at the dependency graph.
 
-**If two phases can run at once, the shape is a wave.** The filing tool now refuses a long chain whose
-tasks name no file in common, and prints the wave rewrite — a serial order needs a stated reason, not a
-default.
+If two phases can run at the same time, file them as a wave. The filing tool now refuses a long chain when
+its tasks share no file, and it prints the same plan rewritten as waves. A serial order needs a stated
+reason. It is not the default.
 
 ## The iteration field is read-only to every script, and this one is worth stealing
 
-Any API write to a board's iteration configuration **mints new iteration ids and orphans every assignment
-that pointed at the old ones**. On this board that cost 84 field assignments in a single call.
+Any API write to a board's iteration configuration creates new iteration ids, and every assignment that
+pointed at the old ids is left pointing at nothing. On this board, a single call lost 84 field
+assignments.
 
-The reason is visible in the schema rather than in the documentation, so reproduce it rather than trusting
-this paragraph:
+The schema shows why, and the documentation does not, so reproduce it yourself instead of trusting this
+paragraph:
 
 ```bash
 gh api graphql -f query='{ a: __type(name:"ProjectV2IterationFieldIterationInput"){name}
                            e: __type(name:"ProjectV2Iteration"){kind inputFields{name}} }'
 ```
 
-`a` comes back `null` — the input type a caller would need does not exist. And `e.inputFields` has no
-`id`: an iteration's complete input set is a start date, a duration and a title, so there is no way to
-say *"update this one"*, only *"here is the new list"*.
+`a` comes back `null`, which means the input type a caller would need does not exist. And `e.inputFields`
+has no `id`. The full input for an iteration is a start date, a duration and a title. So you cannot say
+*"update this one"*. You can only say *"here is the new list"*.
 
-**The field id is durable and is the only id worth hardcoding. An iteration id rotates the moment a human
-edits the field in the interface**, which is why the filing script resolves the current iteration live on
-every filing and treats the result as advisory.
+**The field id is durable, and it is the only id worth hardcoding. An iteration id changes as soon as a
+human edits the field in the interface.** For that reason the filing script looks up the current iteration
+live every time it files an issue, and treats the result as advisory.
 
-The transferable rule: before writing to a hosted API, introspect whether the thing you are updating has
-an identity the API will preserve. If its input type has no id field, you are not updating — you are
-replacing.
+The rule that applies elsewhere is this. Before you write to a hosted API, check through introspection
+whether the API keeps the identity of the thing you are updating. If its input type has no id field, you
+are not updating it. You are replacing it.
 
 ## Read the board, never recall it
 
-Every count on it changes by the minute, so this page states the reading rather than the number.
+Every count on the board changes by the minute, so this page tells you how to read each number instead of
+stating it.
 
 | You want | Run |
 | --- | --- |
 | Open issues | `gh api repos/<org>/<repo>/issues --jq 'length'` |
-| Feature rollups, one call | `bash _infra/scripts/feature-progress.sh` |
+| Progress for every Feature, in one call | `bash _infra/scripts/feature-progress.sh` |
 | One issue with its comments | `gh api repos/<org>/<repo>/issues/<n>` |
-| One line per queued issue, and why each is held | `bash _infra/scripts/sweep-dispatch.sh --explain` |
+| One line for each queued issue, with the reason it is held | `bash _infra/scripts/sweep-dispatch.sh --explain` |
 
-Two traps in that table. `gh issue view` currently fails against this board with a deprecation error from
-the older projects API, so the `gh api` form is the working one. And **`gh api` prints its errors to
-standard output**, not standard error — so validate the *shape* of what you captured, never merely that it
+That table has two traps. `gh issue view` currently fails against this board with a deprecation error from
+the older projects API, so use the `gh api` form, which works. Also, **`gh api` prints its errors to
+standard output**, not standard error. Check the *shape* of what you captured. Do not only check that it
 is non-empty.
 
 ## Four ways this board has been made to lie
 
-- **Saying you are *not* closing an issue closes it.** The platform matches a closing keyword immediately
-  followed by an issue reference anywhere in a pull request body or commit message, and does not read the
-  words around it. A sentence of the form *"this does NOT close `#1234`"* is a closing reference. This
-  fired twice in one day on one issue: first from a pull request whose entire point was that the issue
-  must stay open, and then from the follow-up pull request **documenting the trap**, which fired it by
-  quoting the sentence into its own body.
+- **Saying you are *not* closing an issue closes it.** GitHub matches a closing keyword followed
+  directly by an issue reference anywhere in a pull request body or commit message, and it ignores the
+  words around it. A sentence like *"this does NOT close `#1234`"* counts as a closing reference. This
+  happened twice in one day on one issue. The first time, it came from a pull request whose whole purpose
+  was to keep the issue open. The second time, it came from the follow-up pull request that documented
+  the trap, because that pull request quoted the sentence in its own body.
 
-  Recovery is two steps and only the first is obvious. A close also sets the status to done, and reopening
-  the issue does not undo that — leaving it open **and** done, which is the one state no selector reads.
-  Reopen, *and* set the status back, then read both back. To refer to an issue without acting on it, use a
-  non-keyword form, and keep any illustration on a placeholder number, which is why the example above is
-  `#1234`.
+  Recovery takes two steps, and only the first one is obvious. A close also sets the status to done, and
+  reopening the issue does not reset it. The issue ends up open **and** done, and no selector reads that
+  state. So reopen the issue, *and* set the status back, then read both values back to confirm. To mention
+  an issue without acting on it, use a form with no keyword, and use a placeholder number in any example.
+  That is why the example above uses `#1234`.
 
-- **The terminal state is eventually consistent, not instant.** Archiving is *attempted* on the close event
-  and *guaranteed* by a scheduled sweep, and concurrency cancellation killed 25 of 30 consecutive event
-  runs in one measured window. Expect a handful of closed-but-still-listed rows at any moment. Filing
-  "done is stuck at zero" off a single read is a false alarm this fleet has already raised.
+- **The final state arrives eventually, not instantly.** The close event *tries* to archive the issue, and
+  a scheduled sweep *guarantees* it. In one measured window, concurrency cancellation killed 25 of 30
+  event runs in a row. Expect a few rows at any moment that are closed but still listed. This fleet has
+  already raised a false alarm by filing "done is stuck at zero" after reading the board once.
 
-- **A Feature never closes itself.** A closing keyword structurally cannot fire on a parent issue, because
-  a parent has no pull request. So the agent that finishes the last child *attests* the Feature, and a
-  separate sweep closes it. A complete Feature with no attestation is **surfaced, never closed** — which is
-  the correct failure, because the alternative is a parent that auto-closes over its own verifier's
-  objection.
+- **A Feature never closes itself.** A parent issue has no pull request, so a closing keyword can never
+  fire on it. Instead, the agent that finishes the last child issue *attests* the Feature, and a separate
+  sweep closes it. If a Feature is complete but has no attestation, the sweep **flags it and does not
+  close it**. That is the right way to fail, because the alternative is a parent that closes itself while
+  its own verifier objects.
 
-- **Nothing gates the default branch.** Branch protection and rulesets both return 403 on this plan tier,
-  in every repository. A red check is information. A merge is never a human gate. The full argument is on
+- **Nothing gates the default branch.** On this plan tier, branch protection and rulesets both return 403
+  in every repository. A red check is information. A merge never waits on a human. The full argument is on
   [How work flows](/docs/operating/work).

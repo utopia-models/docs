@@ -1,7 +1,7 @@
 ---
 title: Architecture
-description: Hosts, agents, the dispatch runtime, the services that run on the box, and how secrets are held. The physical and logical shape of a one-server fleet.
-updated: 2026-09-28
+description: How a one-server fleet is laid out, covering its hosts, its agents, the dispatch runtime, the services on the box and how it stores secrets.
+updated: 2026-10-31
 ---
 
 ```text title="prompt-1|Learn the five layers, and existence versus liveness|claude-code|Reads this page, explains the five layers and why existence is not liveness back to you, then quizzes you. Writes only its checklist."
@@ -164,176 +164,179 @@ If I approved an edit to a file you did not create, name that file in the same l
 Finish with: the map's path, the findings, what you changed, and the one layer where my setup is weakest.
 ```
 
-Five layers, in the order they depend on each other: the **hosts** that exist, the **agents** that run on
-them, the **runtime** that starts an agent, the **services** that stay up between runs, and the **secret
-store** everything authenticates against.
+The fleet has five layers, listed in the order they depend on each other. The **hosts** exist, the
+**agents** run on them, the **runtime** starts an agent, the **services** stay up between runs, and the
+**secret store** is what everything authenticates against.
 
 ## The vocabulary
 
-The fleet's structural choices are **architectural patterns** — there are 14 of them, and the term is
-the fleet's own, decided rather than drifted into. Everything below is one of two things:
+The fleet calls its structural choices **architectural patterns**. There are 14 of them, and the fleet
+chose that term on purpose rather than drifting into it. Everything below is one of two things.
 
-- a **component** — something that *runs* or *holds state*. The box, the sweeper, the secret store. The
-  fleet keeps a registry of them, one document each, and that registry is what this page describes.
-- an **architectural pattern** — one structural choice, stated so a reader on different substrate can
-  **adopt it or reject it**. Several of them do not run at all: decision discipline and
-  liveness-vs-existence are policy, not processes.
+- A **component** is something that *runs* or *holds state*, such as the box, the sweeper or the secret
+  store. The fleet keeps a registry of components, one document each, and this page describes that
+  registry.
+- An **architectural pattern** is one structural choice, written so that a reader on a different base can
+  **adopt it or reject it**. Several patterns do not run at all. Decision discipline and
+  liveness-vs-existence are policies, not processes.
 
-That second half is why this site does not call them *mechanisms*, *components*, *Fleet Architecture* or
-*Fleet Infrastructure* when naming them as a set — each of those fits the runtime half and is wrong for
-the policy half. The adopt-or-reject test is the one a name here has to pass, and only *pattern* passes
-it. Elsewhere on these pages "mechanism" keeps its ordinary English meaning; the rule binds the set.
+That second point is why this site does not call the set *mechanisms*, *components*, *Fleet Architecture*
+or *Fleet Infrastructure*. Each of those names fits the half that runs and is wrong for the policy half. A
+name for the set has to pass the adopt-or-reject test, and only *pattern* passes it. Elsewhere on these
+pages "mechanism" keeps its ordinary English meaning. The rule applies only to the name of the set.
 
-The fleet's canonical inventory of the 14 lives in its knowledge base, at
-`wi/work/reference/architectural-patterns.md`. The pages here are the exposition of them.
+The fleet's canonical list of the 14 patterns is in its knowledge base, at
+`wi/work/reference/architectural-patterns.md`. The pages on this site explain them.
 
 Nothing on this page is a health reading. Whether a host is online, whether an agent can run *today*,
-and how full the disk is are all volatile, and a written page that stated them would be wrong within
-days. Where this page needs one, it gives **the exact command and the box that answers it** rather than
-a number, and the fleet's cockpit at [utopiamodels.ai](https://utopiamodels.ai) carries its current state.
+and how full the disk is all change often, and a written page that stated them would be wrong within
+days. Where this page needs one of these values, it gives **the exact command and the box that answers
+it** instead of a number. The fleet's cockpit at [utopiamodels.ai](https://utopiamodels.ai) shows the
+current state.
 
 ## Hosts
 
-### novaserver — the fleet's box
+### novaserver, the fleet's box [#novaserver--the-fleets-box]
 
-One machine does essentially everything. It is an HP EliteDesk 805 G6 running Ubuntu 24.04, reachable on
-its tailnet address (written `100.x.x.x` on this site) and on the LAN.
+One machine does almost everything. It is an HP EliteDesk 805 G6 running Ubuntu 24.04. You can reach it
+on its tailnet address (written `100.x.x.x` on this site) and on the LAN.
 
 | | |
 | --- | --- |
-| CPU | AMD Ryzen 5 PRO 4650GE — 6 cores / 12 threads |
+| CPU | AMD Ryzen 5 PRO 4650GE, 6 cores / 12 threads |
 | RAM | 30 GiB, plus 8 GiB of swap |
-| GPU | Integrated Radeon RX Vega 6. **No NVIDIA** — `nvidia-smi` is not installed, and nothing on this box does GPU inference beyond what Ollama does on CPU |
-| Root filesystem | 295 GB, and it is the fleet's most persistent capacity worry. `disk-guard.timer` fires hourly and reclaims a few megabytes per pass — it is running, and it is not winning. The figure is not readable from a public page, so this names the command (`ssh nova@<tailnet-ip> 'df -h /'`) rather than showing a number it cannot measure |
+| GPU | Integrated Radeon RX Vega 6. There is no NVIDIA card. `nvidia-smi` is not installed, and nothing on this box does GPU inference beyond what Ollama does on CPU |
+| Root filesystem | 295 GB. Disk space is the fleet's most persistent capacity problem. `disk-guard.timer` fires hourly and reclaims a few megabytes per pass. It runs, but the disk still fills faster than it frees space. A public page cannot read the current figure, so this row gives the command (`ssh nova@<tailnet-ip> 'df -h /'`) instead of a number |
 | Reached by | `ssh nova@<tailnet-ip>` |
 
-**The bare alias does not resolve.** Writing `ssh` with just `nova` as the whole host — no user, no IP —
-exits with `Name or service not known`, because there is no `~/.ssh/config` on the Architect box to
-expand it. The working address is always the user at the tailnet IP, which is
-exactly what the dispatch script itself uses (`NOVA="${DISPATCH_NOVA_IP:-100.x.x.x}"`). This is the
-single most common error in the fleet's internal docs — thirteen files still write the bare alias, one
-of them inside a copy-pasteable runbook block, so a reader following them fails on their first command.
+**The bare alias does not resolve.** If you run `ssh` with just `nova` as the host, with no user and no
+IP, it exits with `Name or service not known`. The Architect box has no `~/.ssh/config` to expand the
+alias. The working address is always the user at the tailnet IP, which is what the dispatch script
+itself uses (`NOVA="${DISPATCH_NOVA_IP:-100.x.x.x}"`). This is the most common error in the fleet's
+internal docs. Thirteen files still write the bare alias, and one of them puts it inside a runbook block
+meant for copy and paste, so a reader who follows it fails on the first command.
 
-### ETH — the Architect's box
+### ETH, the Architect's box [#eth--the-architects-box]
 
-A WSL2 Ubuntu 24.04 guest on the founder's Lenovo, tailnet `100.x.x.x`, unix user `kxdev`. WSL is
-capped by `.wslconfig` at 12 GB of memory, 4 GB of swap and 6 processors; inside the guest that reads as
-roughly 11 GiB of RAM. This box plans, files issues, and dispatches. It does not host any service the
-fleet depends on.
+ETH is a WSL2 Ubuntu 24.04 guest on the founder's Lenovo, at tailnet `100.x.x.x`, with unix user `kxdev`.
+`.wslconfig` caps WSL at 12 GB of memory, 4 GB of swap and 6 processors. Inside the guest that shows as
+about 11 GiB of RAM. This box plans, files issues and dispatches. It hosts no service the fleet depends
+on.
 
-### utopiamodels — a host that is not a machine
+### utopiamodels, a host that is not a machine [#utopiamodels--a-host-that-is-not-a-machine]
 
-This tailnet node is an application that joined the tailnet using `tsnet` — an LLM gateway, not a
-computer. It appears in the node list beside real hardware, serves on port 80, and has no shell. Worth
-knowing before you try to SSH to it.
+This tailnet node is an application that joined the tailnet with `tsnet`. It is an LLM gateway, not a
+computer. It appears in the node list next to real hardware, serves on port 80, and has no shell. Know
+this before you try to SSH to it.
 
 ## Agents
 
-**Who the agents are is generated, not written.** The table below is read out of the fleet registry on
-every request. It used to be typed here, and it was wrong in the way that matters most: it called the
-DMV-portfolio master `dmv`, a retired alias for the agent the registry records as **`dust`**. That name
-has never been a unix account on any box — `id -u dust` returns `1001`, and `id -u dmv` still returns
-*no such user* — so every `sudo -u dmv` command this site published failed for every reader who copied
-one, and no page can catch that about itself.
+**The site generates the list of agents from the registry instead of writing it by hand.** The table
+below is read from the fleet registry on every request. It used to be typed here, and it was wrong in the
+way that matters most. It called the DMV-portfolio master `dmv`, a retired alias for the agent the
+registry records as **`dust`**. That alias has never been a unix account on any box. `id -u dust` returns
+`1001`, and `id -u dmv` still returns *no such user*. Every `sudo -u dmv` command this site published
+failed for every reader who copied one, and no page can catch that error in itself.
 
 <Generated id="fleet-accounts" />
 
-Each agent has its own credentials, its own `~/.claude` brain directory (each one a version-controlled
-repo of its own), and its own GitHub identity. They are peers. There is no supervisor process.
+Each agent has its own credentials, its own `~/.claude` brain directory (each one is its own
+version-controlled repo), and its own GitHub identity. The agents are peers. No supervisor process
+exists.
 
-The **binary** is deliberately not in that table. `/usr/bin/claude` is where it resolves on novaserver
-and nowhere else — on the Architect's WSL box it resolves elsewhere — so "every agent runs the same
-binary at the same path" is a claim about one box wearing the clothes of a claim about the fleet. The
-command that settles it for a given account is `sudo -u <account> -H command -v claude`, run on the box
-that account lives on.
+The table deliberately leaves out the **binary**. `/usr/bin/claude` is where it resolves on novaserver
+and nowhere else. On the Architect's WSL box it resolves to a different path. So "every agent runs the
+same binary at the same path" is true of one box and false as a claim about the fleet. To settle it for
+a given account, run `sudo -u <account> -H command -v claude` on the box where that account lives.
 
 ### Existence is not liveness
 
-**The registry's own check for an agent is `getent passwd <name>`, and that check passes on an agent that
+**The registry checks an agent with `getent passwd <name>`, and that check passes on an agent that
 cannot execute a single turn.** This is the most important distinction on this page.
 
-A master can hold a valid unix account, a present credential file, a clean systemd state, working `gh`
-auth, and still be unable to run — because entitlement lives with the account at the provider, not on the
-box. When that happens the agent looks *busier* than a healthy one: transient units keep starting, keep
-dying in seconds, and keep announcing themselves.
+A master can have a valid unix account, a credential file, a clean systemd state and working `gh` auth,
+and still be unable to run. The provider decides entitlement for the account, and nothing on the box
+records it. When an agent has no entitlement, it looks *busier* than a healthy one. Transient units keep
+starting, keep dying within seconds, and keep posting their start messages.
 
-Measured 2026-08-16: **three of the four masters could actually run**, and the fourth reported
-`{"exhausted": true, "resetsAt": null}` in its own state file. A `resetsAt` of `null` is the important
-half — it means the provider named no recovery time, so no timer brings that agent back. The dispatch
-scheduler correctly excluded it and said so in its own log line every five minutes.
+On 2026-08-16, a measurement found **three of the four masters able to run**. The fourth reported
+`{"exhausted": true, "resetsAt": null}` in its own state file. The `null` in `resetsAt` is the important
+part. It means the provider gave no recovery time, so no timer brings that agent back. The dispatch
+scheduler correctly left it out and said so in its log line every five minutes.
 
-The current per-agent answer is derived from each agent's own measured entitlement — a recorded refusal,
-never `getent` — and a real `claude -p` turn, run as that agent on its box, settles it definitively.
+The current answer for each agent comes from that agent's own measured entitlement, meaning a recorded
+refusal and never `getent`. A real `claude -p` turn, run as that agent on its box, settles it for
+certain.
 
-### There is one backend, and choosing between backends was deleted
+### There is one backend, and the code that chose between backends was deleted [#there-is-one-backend-and-choosing-between-backends-was-deleted]
 
-`dispatch.sh` passes a **literal** backend name into every run — `--setenv=TASK_BACKEND=claude`. There is
-no lookup, no registry read and no per-master resolution: the function that once chose between providers
-was deleted along with the alternate provider it chose between.
+`dispatch.sh` passes a **literal** backend name into every run, `--setenv=TASK_BACKEND=claude`. It does
+no lookup, reads no registry and resolves nothing per master. The function that once chose between
+providers was deleted along with the second provider.
 
-This page said the opposite for a while, and the wrong version was the more flattering one — a fleet that
-resolves each agent's provider at runtime sounds more capable than one that hardcodes a single name. It is
-worth stating the plain version instead, because the plain version is what a reader would find in the
-script.
+This page said the opposite for a while, and the wrong version sounded better. A fleet that resolves each
+agent's provider at runtime sounds more capable than one that hardcodes a single name. The plain version
+is stated here because it is what a reader would find in the script.
 
-The variable itself survives for a different job. It is the fleet's *"am I inside a dispatched run"*
-signal, which is what every board-keyed gate exempts on. A flag whose original purpose was deleted can be
-worth keeping for the second job it accidentally does — provided somebody writes down which job it is now
-doing.
+The variable still exists for a different job. It is the fleet's *"am I inside a dispatched run"*
+signal, and every board-keyed gate uses it to decide when to exempt a run. A flag whose first purpose was
+deleted can be worth keeping for a second job it took on by accident, as long as someone writes down what
+that job is.
 
 ## The dispatch runtime
 
-Two scripts and systemd. That is the entire agent runtime — no scheduler daemon, no queue, no watchdog.
-The overview is below; the guards, their exit codes and the race that only a file lock can close are on
-[The dispatch runtime](/docs/operating/dispatch-runtime).
+The whole agent runtime is two scripts and systemd. There is no scheduler daemon, no queue and no
+watchdog. This section is the overview. The guards, their exit codes and the race that only a file lock
+can close are on [The dispatch runtime](/docs/operating/dispatch-runtime).
 
 | Script | What it does |
 | --- | --- |
-| `_infra/scripts/dispatch.sh <master> <issue#> [repo]` | The Architect hands a master its issue **by starting the run** |
-| `_infra/scripts/task-runner.sh <issue#> [repo]` | The run itself, on the master's own box |
+| `_infra/scripts/dispatch.sh <master> <issue#> [repo]` | The Architect gives a master its issue **by starting the run** |
+| `_infra/scripts/task-runner.sh <issue#> [repo]` | Runs the task itself, on the master's own box |
 
-What one dispatch actually does, in order:
+One dispatch does these steps, in order.
 
-1. Launch under the one backend the fleet has — a literal, not a lookup (see above).
-2. `agent` runs locally; the novaserver masters are reached with one `ssh nova@<tailnet-ip>` plus
+1. It launches under the fleet's one backend, which is a literal and not a lookup (see above).
+2. `agent` runs locally. Dispatch reaches the novaserver masters with one `ssh nova@<tailnet-ip>` plus
    `sudo -u <master>`.
-3. **Pre-flight refuses a quota-dark master.** A dispatch into an agent that is already dark burns the
-   run and charges the issue an attempt for it. The check fails *open* — an unreadable state file, a
-   missing file, or a reset time that has already passed all mean "not dark", because a false block stops
-   the fleet and that is worse than a wasted run.
-4. **Pre-flight refuses a second run for an issue that is already running.** One issue, one run. The
-   guard lives in the entry point both the scheduler and a hand-typed dispatch share, because a guard in
-   only one consumer cannot see the other path.
-5. **Pre-flight syncs the master's clones**: fetch, stash anything dirty, checkout main, hard-reset to
-   `origin/main` for every repo in the run's repo list.
-6. Launch a **detached transient unit** — `systemd-run --user --unit=task-<issue>-<n> --collect` — so the
-   run survives the SSH connection dropping and the laptop going to sleep.
-7. `task-runner.sh` self-updates once, re-checks that the issue is *still work*, posts **▶ started**
-   before anything that can fail, runs `claude -p` under a turn cap, and on exit its trap posts
-   **✔ / ✘ / ⚠ / ⛔** plus the pull-request link.
+3. **Pre-flight refuses a master that is out of quota.** A dispatch to an agent that cannot run wastes
+   the run and charges the issue an attempt for it. The check fails *open*. An unreadable state file, a
+   missing file, or a reset time that has already passed all count as "can run". A false block stops the
+   fleet, and that is worse than a wasted run.
+4. **Pre-flight refuses a second run for an issue that is already running.** Each issue gets one run.
+   The guard is in the entry point that both the scheduler and a hand-typed dispatch use, because a guard
+   in only one of them cannot see the other path.
+5. **Pre-flight syncs the master's clones.** For every repo in the run's repo list it fetches, stashes
+   anything uncommitted, checks out main and hard-resets to `origin/main`.
+6. It launches a **detached transient unit** with `systemd-run --user --unit=task-<issue>-<n> --collect`,
+   so the run keeps going if the SSH connection drops or the laptop goes to sleep.
+7. `task-runner.sh` updates itself once and checks again that the issue is *still work*. It posts
+   **▶ started** before anything that can fail, then runs `claude -p` under a turn cap. On exit, its trap
+   posts **✔ / ✘ / ⚠ / ⛔** and the pull-request link.
 
-The cap in that last step is the kind of number that goes stale the moment someone tunes it, so it is
-read rather than written:
+Someone may tune the cap in that last step at any time, so a written number would go stale. The page
+reads it from the source instead:
 
 <Generated id="run-turn-cap" />
 
 ### The last-moment disposal re-check
 
 An issue can stop being work while its run is starting, and every gate that asks about it runs too early.
-Measured on one real case: the pre-flight read the issue at 14:36:01 and it was open and correct; the
-issue was labelled a throwaway at 14:36:03 and closed at 14:36:05; systemd started the unit at 14:36:12;
-▶ was posted at 14:36:15. A master then spent a full session on board residue.
+One real case shows the timing. The pre-flight read the issue at 14:36:01, and it was open and correct.
+Someone labelled the issue a throwaway at 14:36:03 and closed it at 14:36:05. systemd started the unit at
+14:36:12, and the runner posted ▶ at 14:36:15. A master then spent a full session on leftover board
+items.
 
-The fix asks the same two questions from **inside** the run, immediately before ▶ — the genuine point of
-no return. Only two signals count: the issue is CLOSED, or it carries the throwaway-fixture label.
-Anything else is a judgement a human may legitimately be overriding at the command line.
+The fix asks the same two questions from **inside** the run, right before ▶, which is the real point of
+no return. Only two signals count. Either the issue is CLOSED, or it has the throwaway-fixture label. Any
+other signal is a judgement that a human may be overriding at the command line on purpose.
 
 ### The sweeper
 
-The thing that carries a chain of work forward is **not a service and not a cron job**, which means every
-probe that goes looking for a `sweeper.service` falsely reports it missing. It rides as the second
-`ExecStart` line of a systemd drop-in on one master's `reconcile-board.service`, fired by
-`reconcile-board.timer` every five minutes:
+The sweeper moves a chain of work forward. It is **not a service and not a cron job**, so every probe
+that looks for a `sweeper.service` wrongly reports it missing. It runs as the second `ExecStart` line of
+a systemd drop-in on one master's `reconcile-board.service`, which `reconcile-board.timer` fires every
+five minutes:
 
 ```text
 /home/nova/.config/systemd/user/reconcile-board.service.d/10-sweep-dispatch.conf
@@ -343,91 +346,94 @@ probe that goes looking for a `sweeper.service` falsely reports it missing. It r
   -/usr/bin/bash %h/.claude/ops/mute-agent-notifications.sh --apply
 ```
 
-Its own log line is the best one-line health summary the fleet produces. One real line, read out of
-`~nova/.claude/logs/sweep-dispatch.log` and emitted 2026-09-04T08:48:34Z — quoted as a sample of the
-shape, not as a current reading:
+The sweeper's log line is the best one-line health summary the fleet produces. Here is one real line,
+read from `~nova/.claude/logs/sweep-dispatch.log` and written at 2026-09-04T08:48:34Z. It is a sample of
+the format, not a current reading.
 
 ```text
 sweep: 39 open · 0 dispatchable · in-flight 3 (win=2 nova=0 cloud=1 dust=0 )
 ```
 
-A refused master adds a trailing segment naming who and why — `· rate-limited: (exhausted nova)` —
-which is absent above because on that pass every master was clear.
+When the sweeper refuses a master, it adds a trailing segment that names the master and the reason,
+such as `· rate-limited: (exhausted nova)`. The sample has no such segment because every master was clear
+on that pass.
 
-Read that carefully, because it is a lesson in reading your own instrumentation. A large open count
-against zero dispatchable looks like a capacity failure and is not one — it is a **routing** failure.
-Issues with no lane, or on a lane no sweeper reaches, are structurally undispatchable no matter how idle
-the fleet is. The sweeper had been printing the cause every five minutes while investigations looked for
-a broken mechanism.
+This line teaches you to read your own logs carefully. A large open count against zero dispatchable looks
+like a capacity failure, but it is a **routing** failure. Issues with no lane, or on a lane that no
+sweeper reaches, can never be dispatched, however idle the fleet is. The sweeper printed the cause every
+five minutes while people investigated a mechanism they assumed was broken.
 
 ## Services on the box
 
-The first two groups below run on novaserver and stay up between agent runs; the third is state the box
-depends on and does not host. The dispatch runtime is the part with no resident process; the *box* has
+The first two groups below run on novaserver and stay up between agent runs. The third group is state
+the box depends on but does not host. The dispatch runtime has no resident process, but the *box* has
 plenty.
 
-**System units:** `tailscaled` · `cloudflared` (the tunnel that publishes selected local services to the
-public web) · `ttyd` plus one read-only browser viewport per master on ports 7810–7813 · `ollama` on
-11434, serving small local models · `occ-redirect` on 3939, a small Python responder that 301s a legacy
-hostname to the apex · `grafana-server` on 3000 · `prometheus` on 9090 with node-exporter on 9100 · two
-self-hosted GitHub Actions runners, a full lane and a light lane.
+**System units.** `tailscaled`. `cloudflared`, the tunnel that publishes selected local services to the
+public web. `ttyd`, plus one read-only browser viewport per master on ports 7810 to 7813. `ollama` on
+11434, serving small local models. `occ-redirect` on 3939, a small Python responder that sends a 301 from
+a legacy hostname to the apex. `grafana-server` on 3000. `prometheus` on 9090, with node-exporter on 9100.
+Two self-hosted GitHub Actions runners, one for a full lane and one for a light lane.
 
-**Docker:** **Infisical** — backend, database and redis — which is the fleet's only secret store, and a
-full **SigNoz** observability stack (ClickHouse, a Postgres metastore, keeper, ingester).
+**Docker.** **Infisical** runs here (backend, database and redis), and it is the fleet's only secret
+store. A full **SigNoz** observability stack runs here too, with ClickHouse, a Postgres metastore, keeper
+and ingester.
 
-**Managed Postgres, off the box:** two hosted databases hold state that nothing here can reconstruct, so
-they belong in this list even though no process for them runs on novaserver. **Neon** — the `utopia-auth`
-project, Postgres 17 in `aws-us-east-1`, holding the product's auth and user rows; a nightly
-`pg_dump -Fc | gzip` through the direct unpooled endpoint copies it to cold object storage at 35-day
-retention, because Neon's free point-in-time recovery reaches back only about six hours. The same Neon
-organisation holds three other projects that are not fleet infrastructure, and conflating them with this
-one is the easy mistake. **Supabase** — the `peptide-shop` project in `us-east-1`, which holds the
-database, auth, and the order and payment records behind `dmvresearch.shop`; those rows are the
-irreplaceable asset, and they are dumped nightly to the same bucket by two independent jobs, one a
-`pg_dump` and one a row-level export through the REST API.
+**Managed Postgres, off the box.** Two hosted databases hold state that nothing here can rebuild, so
+they belong in this list even though no process for them runs on novaserver.
 
-**Scheduling is single-homed.** One master's user manager carries essentially every scheduled timer in
-the fleet (measured 2026-09-04 with `systemctl --user list-timers --all` under each master account: 37
-timers on nova against 4 on win and 3 each on cloud and dust). The
-consequential ones publish the command center's feeds, re-render it and check it, sync creative assets,
-watch token health, refresh the tailnet snapshot, guard the disk hourly, and self-heal the default route
-every sixty seconds.
+The first is **Neon**, the `utopia-auth` project, Postgres 17 in `aws-us-east-1`. It holds the product's
+auth and user rows. Every night a `pg_dump -Fc | gzip` job copies it through the direct unpooled
+endpoint to cold object storage, with 35-day retention. The nightly copy exists because Neon's free point-in-time
+recovery only reaches back about six hours. The same Neon organisation holds three other projects that are not fleet
+infrastructure, and it is easy to confuse them with this one.
 
-**Cron is a second, parallel scheduling layer**, and it is easy to miss. Masters carry crontab entries
-for monitors, self-reports and usage feeds that have no systemd timer at all. An audit that reads only
-`systemctl --user list-timers` under-reports every master's real cadence.
+The second is **Supabase**, the `peptide-shop` project in `us-east-1`. It holds the database, auth, and
+the order and payment records behind `dmvresearch.shop`. Those rows cannot be replaced. Two independent
+jobs dump them nightly to the same bucket, one with `pg_dump` and one with a row-level export through the
+REST API.
 
-**A dead timer never fails, so `systemctl --failed` reports clean.** The box has held an *enabled* timer
+**Scheduling runs on one master.** One master's user manager carries almost every scheduled timer in
+the fleet. A count on 2026-09-04 with `systemctl --user list-timers --all` under each master account found
+37 timers on nova, 4 on win and 3 each on cloud and dust. The important ones publish the command
+center's feeds, re-render it and check it, sync creative assets, watch token health, refresh the tailnet
+snapshot, guard the disk hourly, and repair the default route every sixty seconds.
+
+**Cron is a second scheduling layer that runs in parallel**, and it is easy to miss. Masters have
+crontab entries for monitors, self-reports and usage feeds that have no systemd timer at all. An audit
+that reads only `systemctl --user list-timers` undercounts how often every master really runs jobs.
+
+**A dead timer never fails, so `systemctl --failed` reports clean.** The box has had an *enabled* timer
 whose service unit was `not-found`, and dormant timers that had not fired in a week, while every failure
-query returned empty. Absence of failure is not presence of function.
+query came back empty. No failures does not mean the thing works.
 
 ## Secrets
 
-**Infisical is the only secret store**, self-hosted in Docker on novaserver. There is no local vault, no
-`.env` checked in anywhere, and no second store.
+**Infisical is the only secret store.** It is self-hosted in Docker on novaserver. There is no local
+vault, no `.env` checked in anywhere and no second store.
 
 | Operation | Command |
 | --- | --- |
 | Read | `bash ~/.claude/scripts/infisical-get.sh <project> <KEY> [env]` |
 | List every key in a project | `bash ~/.claude/scripts/infisical-get.sh --keys <project> prod /` |
-| Write | pipe the value on **stdin** to `infisical-set.sh <project> <KEY> [env]` |
+| Write | pipe the value on stdin to `infisical-set.sh <project> <KEY> [env]` |
 
-Projects are scoped by domain: fleet infrastructure, the product, per-portfolio research, and
-engineering. Writing a value as a command-line argument is rejected by a guard, because an argv secret
-lands in shell history and in the process table.
+Projects are split by domain into fleet infrastructure, the product, per-portfolio research and
+engineering. A guard rejects any value passed as a command-line argument, because a secret in argv lands
+in shell history and in the process table.
 
-A second file — a credential registry — carries each credential's *meaning*: which account it belongs to,
-what scopes it has, what it can do and what it explicitly cannot. Reading that registry before declaring
-a credential missing is a standing rule, because the fleet's recurring failure mode is not a missing
-credential but a grep for the wrong key name.
+A second file, the credential registry, records what each credential *means*. It lists which account the
+credential belongs to, what scopes it has, what it can do and what it explicitly cannot. A standing rule
+says to read that registry before you call a credential missing. The rule exists because the fleet's usual failure is not a
+missing credential. It is a grep for the wrong key name.
 
-Two absolute rules:
+Two rules have no exceptions.
 
-- **Never print a secret, or the presence of one, to any display sink.** Capture into a variable and
-  check its length.
-- **Never write a secret into a tracked file.** This is the fleet's single hard stop — the one thing that
-  is not fix-forward, not advisory, and not overridable. A secret scanner runs on every pull request; it
-  is the only check whose result is treated as binding.
+- **Never print a secret, or the fact that one exists, to anything that displays output.** Capture it
+  into a variable and check its length.
+- **Never write a secret into a tracked file.** This is the fleet's one hard stop. It is the only rule
+  you cannot fix forward, treat as advisory or override. A secret scanner runs on every pull request, and
+  it is the only check whose result the fleet treats as binding.
 
-Publishing the *mechanics* of all of this, as this page does, is in scope and deliberate. Publishing a
-value never is.
+This page publishes the *mechanics* of all of this on purpose, and that is in scope. It never publishes a
+value.

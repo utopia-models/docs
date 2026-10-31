@@ -1,7 +1,7 @@
 ---
 title: The dispatch runtime
-description: Two shell scripts and systemd are the entire agent runtime. No daemon, no queue, no watchdog — starting a run is the assignment, and the close-out comment is the only liveness there is.
-updated: 2026-09-28
+description: Two shell scripts and systemd make up the entire agent runtime. There is no daemon, queue or watchdog. Starting a run is the assignment, and the close-out comment is the only sign that a run is alive.
+updated: 2026-10-31
 ---
 
 <Status value="stable" />
@@ -149,119 +149,119 @@ FINISH
 Every file created, with its path; the one property you changed and how I will see that it holds. The fleet's own runbook for watching runs is at https://docs.utopiamodels.ai/docs/operating/operations.md if I want the operational half.
 ```
 
-Sourced from the fleet's own component document for `dispatch-runtime`. Called stable because both halves
-are in git, both are bound by assertions that re-check on every pull request, and four test harnesses
-exercise the parts that are easy to break silently.
+This page comes from the fleet's own component document for `dispatch-runtime`. It is marked stable
+because both halves are in git, assertions re-check both of them on every pull request, and four test
+harnesses exercise the parts that can break without anyone noticing.
 
-`dispatch.sh` **starts** a run. `task-runner.sh` **is** the run. That is the whole runtime.
+`dispatch.sh` starts a run, and `task-runner.sh` is the run. That is the whole runtime.
 
-There is no daemon, no queue, no watchdog, and nothing resident between runs. Two consequences follow, and
-they are the reason the design is worth copying:
+There is no daemon, no queue, no watchdog, and nothing running between runs. That has two consequences,
+and they are why the design is worth copying:
 
-- **Starting a run is the assignment.** There is no separate step where an agent is told what to work on,
-  so there is no state that can disagree with what is actually executing.
+- **Starting a run is the assignment.** No separate step tells an agent what to work on, so no stored
+  state can disagree with what is actually executing.
 - **Liveness is the close-out comment.** The run posts on its own issue when it starts and again when it
-  exits. Nothing else reports health, because nothing else is running to report it.
+  exits. Nothing else reports health, because nothing else is running.
 
-Stop these two scripts and the fleet does not degrade — it stops, because nothing else in the organization
-can begin a unit of work.
+If you stop these two scripts, the fleet does not slow down. It stops, because nothing else in the
+organization can begin a unit of work.
 
-The one thing it deliberately is **not** is a scheduler. Choosing *which* issue and *which* agent belongs
-to the sweeper, described on [Operations](/docs/operating/operations); a human at the command line calls
-in through exactly the same door. The runtime never picks work.
+The runtime is deliberately not a scheduler. The sweeper, described on
+[Operations](/docs/operating/operations), chooses *which* issue and *which* agent. A human at the command
+line calls the same entry point the sweeper does. The runtime never picks work.
 
 ## Three pre-flight guards, and every one of them fails open
 
 | Guard | Refuses when | Exit | Escape hatch |
 | --- | --- | --- | --- |
-| **Quota** | the agent's own state file says its entitlement is exhausted, with a reset time still ahead | `9` | `DISPATCH_IGNORE_QUOTA=1` |
-| **Duplicate, same agent** | a unit for this issue is already active on that box | `11` | `DISPATCH_ALLOW_DUPLICATE=1` |
-| **Fleet claim** | a lock-held probe finds a live run for this issue on **any** agent | `14` | — |
+| Quota | the agent's own state file says its entitlement is used up and the reset time has not arrived | `9` | `DISPATCH_IGNORE_QUOTA=1` |
+| Duplicate, same agent | a unit for this issue is already active on that box | `11` | `DISPATCH_ALLOW_DUPLICATE=1` |
+| Fleet claim | a probe that holds a lock finds a live run for this issue on any agent | `14` | none |
 
-**Failing open is the decision, not an oversight.** An unreadable file, an unreachable box, an unparseable
-JSON document and an untakeable lock all mean *proceed, and say so on stderr*. A false block stops the
-fleet, which is worse than a wasted run.
+The guards fail open on purpose. If a file cannot be read, a box cannot be reached, a JSON document cannot
+be parsed or a lock cannot be taken, the guard lets the run *proceed, and says so on stderr*. A false block
+stops the fleet, and that is worse than a wasted run.
 
-**None of the three writes a comment on the issue**, and they share one reason. The scheduler treats
-certain glyphs on an issue as terminal, so a marker posted by a *refusal* would permanently unqueue an
-issue whose only problem was transient. A guard that announces itself where the queue reads would be a
-guard that silently deletes work.
+None of the three guards writes a comment on the issue, for one shared reason. The scheduler treats certain
+glyphs on an issue as terminal. If a refusal posted a marker, it would permanently remove from the queue an
+issue whose only problem was temporary. A guard that posted where the queue reads would delete work without
+anyone noticing.
 
 ### Why only the third guard has no window
 
-The first two are read-then-act checks, and a read-then-act check has a gap. Measured on this fleet:
-**26–27 seconds** pass between reading the board and launching the unit, so two dispatchers reading in the
-same second both pass.
+The first two guards read a value and then act on it, and that kind of check has a gap. We measured it on
+this fleet. Between reading the board and launching the unit, 26 to 27 seconds pass, so two dispatchers
+that read in the same second both pass the check.
 
-A zero-entropy unit name closes that for one agent — systemd refuses a duplicate unit name in the kernel,
-which is a real mutex and not a convention. But a user service manager is **per user**, so the same unit
-name under two different accounts is two different names, and the kernel has no opinion about the pair.
+For a single agent, a fixed unit name with no random part closes that gap. Systemd refuses a duplicate unit
+name in the kernel, which makes it a real mutex and not a convention. But each user has a separate service
+manager, so the same unit name under two different accounts counts as two different names, and the kernel
+does not check the pair.
 
-The cross-agent case is covered by a single file lock on the shared box, held across the probe *and* the
-launch, because both dispatch paths — the scheduler running locally, and a hand dispatch arriving over SSH
-— execute the claim as the same unix user on the same machine. That is proven against real systemd, with a
-mutation control, by a committed test harness rather than by argument.
+For the cross-agent case, a single file lock on the shared box covers it. The lock is held across both the
+probe *and* the launch. Both dispatch paths run the claim as the same unix user on the same machine: the
+scheduler running locally, and a hand dispatch arriving over SSH. A committed test harness proves this
+against real systemd, with a mutation control.
 
-**The transferable part:** a name-uniqueness guarantee is only as wide as the namespace that enforces it.
-Check what your namespace actually is before treating a unique name as a lock.
+The lesson for other systems is that a unique name only guarantees uniqueness within the namespace that
+enforces it. Check what your namespace actually is before you treat a unique name as a lock.
 
 ### The last-moment disposal re-check
 
-An issue can stop being work while its run is starting. Every gate that asks about it from outside the run
-asks too early — the unit start, the self-update, the clone sync and the credential decrypts all come
-after that read. The fix asks the same two questions from **inside** the run, immediately before the
-started marker. The real case that produced it, with timestamps, is on
+An issue can stop being work while its run is starting. Every gate that checks the issue from outside the
+run checks too early, because the unit start, the self-update, the clone sync and the credential decrypts
+all happen after that check. The fix asks the same two questions from inside the run, just before it posts
+the started marker. The real case that led to this fix, with timestamps, is on
 [Architecture](/docs/structure/architecture).
 
 ## There is no backend selection
 
-The launcher passes a literal backend name into the transient unit. There is no lookup, no registry read,
-and no per-agent resolution: a function that once chose between providers was deleted along with the
-alternate provider it chose between.
+The launcher passes a literal backend name into the transient unit. It does no lookup, reads no registry
+and resolves nothing per agent. A function once chose between providers, and we deleted it along with the
+other provider.
 
-The environment variable survives for a different reason — it is the fleet's *"am I inside a dispatched
-run"* signal, which is what every board-keyed gate exempts on. Worth noting as a pattern: a flag whose
-original job was deleted can be worth keeping for the second job it accidentally does, provided you write
-down which job it is now doing.
+The environment variable still exists for a different reason. It is how the fleet tells that code is
+running *"inside a dispatched run"*, and every gate keyed on the board skips its check when it is set. This
+is a pattern worth noting. A flag whose original job was deleted can be worth keeping for a second job it
+happens to do, as long as you write down which job it does now.
 
 ## The run updates itself, then executes itself, exactly once
 
 `task-runner.sh` fast-forwards its own repository and then re-executes itself one time before doing
 anything else.
 
-**Never mutate a script a running bash is still reading.** Bash reads a script incrementally, by byte
-offset; rewriting it underneath a live interpreter resumes execution at an offset that now points into
-different text. Re-executing once, at a known safe point, is the whole fix.
+Never change a script while a running bash process is still reading it. Bash reads a script a piece at a
+time, by byte offset. If you rewrite the file under a live interpreter, it resumes at an offset that now
+points into different text. Re-executing once, at a known safe point, fixes this completely.
 
 ## Read the live state, do not recall it
 
-Every fact about a run in flight is off-git and changes by the minute, so this page states the command
-instead of the answer.
+Every fact about a run in progress lives outside git and changes by the minute, so this page gives the
+command instead of the answer.
 
 | You want | Run |
 | --- | --- |
 | Which agents are dark right now | `_infra/scripts/dispatch.sh --quota` for a table, `--quota-dark` for names |
-| Would this dispatch be refused? | `--preflight-quota <agent>` (0 or 9) · `--preflight-duplicate <agent> <issue#>` (0 or 11) |
+| Would this dispatch be refused? | `--preflight-quota <agent>` (0 or 9), or `--preflight-duplicate <agent> <issue#>` (0 or 11) |
 | What is live for one issue | `_infra/scripts/dispatch.sh --live-units <agent> <issue#>` |
 | Every run on this box, now | `systemctl --user list-units --state=active 'task-*'` |
 | What one run actually did | `journalctl --user -u task-<issue>.service -o cat` |
 
-A run leaves nothing resident between invocations, so there is no daemon to check. The transient unit
-while it lives, and the started and finished comments on the issue afterwards, are the only liveness the
-runtime has.
+A run leaves nothing running between invocations, so there is no daemon to check. While a run is alive,
+its transient unit shows it. Afterwards, the started and finished comments on the issue are the only record.
+Those are the only liveness signals the runtime has.
 
 ## What this runtime does not prove
 
-Published rather than smoothed over, because each one has cost this fleet a real run.
+We publish these instead of hiding them, because each one has cost this fleet a real run.
 
 - **A clean exit code is not a shipped artifact.** The finished marker says the process exited cleanly and
-  nothing more. The completion signal is a *merged* pull request whose body closes the issue.
+  nothing more. A run is complete when a pull request whose body closes the issue is *merged*.
 - **An armed auto-merge is not a merge.** A run that exits with its pull request still open has not
-  finished. Fifteen of them stacked up unnoticed once on exactly that confusion.
-- **The pre-flight clone sync stashes another agent's uncommitted work.** It hard-resets each clone to the
-  remote with a stash in front of it, so an interactive session's edits survive only as a stash entry
-  nobody is told about. Check the stash list before re-doing work that vanished mid-run.
-- **Transient units are outside the one registry check that actually executes.** Every run's unit is
-  created on the fly and collected on exit, so there is no installed unit file for the daily verifier to
-  prove. The two committed test harnesses are the substitute, and they run on pull requests rather than on
-  a timer.
+  finished. Fifteen of these once piled up without anyone noticing, all from this confusion.
+- **The pre-flight clone sync stashes another agent's uncommitted work.** It stashes and then hard-resets
+  each clone to the remote. An interactive session's edits survive only as a stash entry, and nobody is
+  told about it. Check the stash list before you redo work that vanished mid-run.
+- **Transient units fall outside the one registry check that actually runs.** Each run's unit is created on
+  the fly and removed on exit, so there is no installed unit file for the daily verifier to check. The two
+  committed test harnesses stand in for it, and they run on pull requests, not on a timer.
