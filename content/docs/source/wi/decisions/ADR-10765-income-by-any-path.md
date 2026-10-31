@@ -40,7 +40,13 @@ San Diego, other US metros and Egypt on-site/any-job are dropped. The Kratos sal
 income is additive. Interviews already in progress (Apex, Capital One, E-Space) continue as practice and possible
 offers. The fleet itself is in scope: upgrade and optimize it, focused on NET.
 
+The interview's batches 3–4 add: the blocker is untargeted outreach ("Not enough AI based outreach. Our pipeline
+and systems need to be more targeted."); audiences are remote hiring managers, small businesses needing AI
+automation, recruiters/staffing agencies and his own network; 15+ hours/week available; anything legit; first
+dollars as soon as possible.
+
 ### Consequences
 - `net/work/pipeline/criteria.json` and `net/README.md` § The criteria change to remote + NYC + DC (#10765).
 - Upwork (ronin), contracts and remote applications are one income funnel, not separate bets.
+- Outreach shifts from volume to targeted, person-addressed outreach across the four audiences.
 - Supersedes ADR-10103's geography (San Diego, Egypt any-job) and its job-only goal.
