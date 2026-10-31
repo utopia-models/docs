@@ -49,7 +49,7 @@ Search every skills directory from step 1, and the Claude Code plugin cache (~/.
 Find where I write prose that other people read: a blog or docs folder (*.md, *.mdx), drafts folders, README files I edit, email or post drafts. Use file modification times to pick my five most recent drafts, and list them with their paths and sizes. Skip generated files, vendored code and anything under node_modules.
 
 4. ASK ONLY WHAT YOU COULD NOT MEASURE
-Ask these with {{ASK}}, one at a time, each with your recommendation first and one line of why:
+Ask these with your harness's multiple-choice question tool (AskUserQuestion in Claude Code), one at a time, each with your recommendation first and one line of why:
 
   a. When should unslop run?
      Manual only: I type /unslop when I want it.
@@ -59,7 +59,7 @@ Ask these with {{ASK}}, one at a time, each with your recommendation first and o
      No.   [RECOMMENDED unless step 3 found a docs or blog folder that already has a lint step]
   c. Which draft should prompt 2 test on? Offer the five from step 3, the most recent first and recommended.
 
-If {{ASK}} is not available (a one-shot run such as `claude -p` or `codex exec`), do not ask. Pick the recommended answer for each, and make the first line of your output: "No interactive answers available, used the recommended option for each question."
+If no such tool is available, or this is a one-shot run such as `claude -p` or `codex exec`, do not ask. Pick the recommended answer for each, and make the first line of your output: "No interactive answers available, used the recommended option for each question."
 
 5. WRITE ~/UNSLOP-PLAN.md
 Sections: Harnesses (the table from step 1 with your evidence), Already installed (step 2), Install targets (the directories prompt 2 will write to, and why each one), Always-on (yes/no, and the exact file per harness), Linter (yes/no), Test draft (path). Then say: "Plan written to ~/UNSLOP-PLAN.md. Paste prompt 2." and stop.
@@ -88,7 +88,7 @@ Append this to each always-on file the plan names, creating the file only if the
 
   Before finishing any prose meant for another person to read (posts, docs, emails, messages, PR descriptions), apply the unslop skill as the last pass. Keep every number, link and code span exactly as it was.
 
-For Aider, which has no skills, add the installed SKILL.md path to `read:` in ~/.aider.conf.yml (or tell me to start aider with `--read <path>`). For a harness that ignores `disable-model-invocation` (Codex, Gemini CLI and OpenCode do not document it), this line is what makes unslop run as a last pass rather than whenever the model decides.
+For Aider, which has no skills, add the installed SKILL.md path to `read:` in ~/.aider.conf.yml (or tell me to start aider with `--read <path>`). For a harness that ignores `disable-model-invocation` (Codex, Gemini CLI and OpenCode do not document it), this line is what makes unslop a dependable last pass. The model may still apply the skill at other times.
 
 4. LINTER (only if the plan says yes)
 Write ~/bin/unslop-lint (or the scripts folder the plan names): a short script that reads a file and prints line-numbered warnings for rules 7 (the listed AI words), 13 (em dashes), 17 (title case headings), 18 (emoji in headings and bullets), 19 (curly quotes), 20 and 22 (chatbot and sycophantic phrases), 23 (the filler phrases) and 31 (utilize, leverage, facilitate, numerous, in the event that). It exits 0 always. Run it once on the test draft and show the output.
@@ -127,9 +127,10 @@ yourself afterwards, because a chat has no script to do it.
 
 ## What the prompts read
 
-- [The pinned SKILL.md](https://raw.githubusercontent.com/cursor/plugins/bc697d0a5a163cec979e362b601e36f5616083fd/pstack/skills/unslop/SKILL.md), 5,827 bytes at commit `bc697d0`. This is the only file installed.
+- [The pinned SKILL.md](https://raw.githubusercontent.com/cursor/plugins/bc697d0a5a163cec979e362b601e36f5616083fd/pstack/skills/unslop/SKILL.md), 5,827 bytes at commit `bc697d0`. This is the only skill file installed.
 - [The pstack LICENSE](https://raw.githubusercontent.com/cursor/plugins/bc697d0a5a163cec979e362b601e36f5616083fd/pstack/LICENSE), copied next to every install.
-- Your harness config, skills directories and drafts. Nothing leaves your machine except the two fetches above and this page.
+- [The same SKILL.md on main](https://raw.githubusercontent.com/cursor/plugins/main/pstack/skills/unslop/SKILL.md), fetched only to tell you whether upstream has changed since the pin.
+- Your harness config, skills directories and drafts. The prompts fetch nothing else. Your drafts and config go only to the model your agent already uses.
 
 ## Resources
 
@@ -149,14 +150,14 @@ you want all of pstack (about 60 skills), install it as a Claude Code plugin ins
 `/plugin marketplace add cursor/plugins`, then `/plugin install pstack@cursor-plugins`. Prompt 1 detects
 that and skips the separate copy.
 
-Boogs, Drumkit's first engineer, pointed us at it. Last checked against upstream: 2026-10-31.
+Last checked against upstream: 2026-10-31.
 
 ## Where this module is currently weakest
 
 The fact check in prompt 2 is done by the agent that wrote the rewrite. It extracts the numbers and
 links from both versions and compares them, which catches a changed figure or a dropped URL, but a
 model checking its own output is weaker than a script. If you publish the rewrite, compare the numbers
-and links yourself or with the linter from step 4.
+and links yourself. The linter from step 4 only checks wording and does not compare two files.
 
 The harness paths in prompt 1 were read from vendor docs on 2026-10-31. Codex, Gemini CLI and OpenCode
 do not document `disable-model-invocation`, so on those the skill may also run when the model decides
