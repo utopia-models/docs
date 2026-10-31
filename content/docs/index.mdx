@@ -236,7 +236,7 @@ print(d.get('generatedAt'), d.get('counts'), d.get('byLane'))
 
 It reads the live board, no auth and no jq required. It branches on `ok` because this endpoint degrades rather than failing: when its upstream read is refused it still returns valid JSON with `ok` false and an error string, and a fleet with no work and a fleet that cannot see its work are different claims. If the parser raises a JSON decode error instead, the endpoint returned HTML, which means an outage — treat it as unreachable.
 
-`https://utopiamodels.ai` is the command center itself, but it is a client-rendered app, so curl returns a loading skeleton. Use the endpoint above for state and ignore the root URL unless you have a browser tool.
+Use the endpoint above for state; the rest of that host is client-rendered.
 
 What you are looking for in step 1 is not features. It is the shape of the decisions: what that fleet deliberately does not have, and what each absence buys and costs. Their wiki argues that most agent infrastructure is supervision machinery whose only job is keeping a resident process honest, and that deleting the resident process deletes the machinery. Judge that argument on their evidence.
 
@@ -445,7 +445,7 @@ If I approved an edit to a file you did not create, name that file in the same l
 
 This finishes in one paste on a normal repo. If my repo is large enough that step 2 does not fit, stop after step 3, write the manifest to `docs/KB-PLAN.md`, and tell me to start a fresh session pointing at that file. A half-written knowledge base is worse than a manifest, because the half that exists reads as complete.
 
-For live context on the reference fleet as you work, its cockpit is at https://utopiamodels.ai, and its board state is one fetch away:
+For live context on the reference fleet as you work, its board state is one fetch away:
 
     curl -s https://utopiamodels.ai/v1/board | python3 -c "
     import json,sys
