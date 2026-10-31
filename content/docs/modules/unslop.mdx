@@ -1,0 +1,163 @@
+---
+title: "Module: cut AI tells from your writing with unslop"
+description: Two prompts that install the unslop skill (Lauren Tan, cursor/plugins pstack, MIT) in every coding agent you run, then prove it on one of your own drafts with every number and link unchanged.
+updated: 2026-10-31
+---
+
+unslop is one skill file. It lists 28 numbered patterns that make text read as machine-written (a list of overused words, em dashes,
+title case headings, chatbot sign-offs, forced groups of three) and tells the agent how to
+rewrite each one. Lauren Tan wrote it for Cursor's pstack plugin and published it under the MIT
+license. This module installs that one file, not all of pstack, and then runs it on something you wrote.
+
+Paste this into your coding agent. It fetches this page and runs both prompts itself:
+
+```text
+Read https://docs.utopiamodels.ai/docs/modules/unslop.md and run its two prompts in order, yourself.
+Measure my setup (harnesses, skill dirs, always-on files, where my writing lives) before asking me anything; ask only what you cannot measure.
+Install unslop (MIT, Lauren Tan, cursor/plugins pstack) everywhere my harnesses read skills, keeping its license notice.
+Prove it: run unslop on one of my own recent drafts, show the diff, and confirm every number and link survived.
+```
+
+```text title="prompt-1|Find where my writing comes from and which harnesses I run||Measures which coding agents are on this machine, where each reads skills and always-on instructions, and where your prose lives. Asks at most three questions. Writes one file, ~/UNSLOP-PLAN.md."
+PROMPT 1 of 2. Measure my setup and write ~/UNSLOP-PLAN.md. Install nothing in this step.
+
+RULES
+- Read only. The one file you write is ~/UNSLOP-PLAN.md.
+- Every claim about this machine carries the command that produced it and what it printed.
+- Never print a secret. If a file looks like a credential file, report its path and skip its contents.
+- If ~/UNSLOP-PLAN.md already exists, read it, say which sections are filled, and continue from the first empty one.
+
+1. WHICH HARNESSES ARE INSTALLED
+Check for each of these. For each, record: installed yes/no (the command and its output), the skills directories it reads, and its always-on instructions file.
+
+  harness       user skills dir                         project skills dir                 always-on file
+  Claude Code   ~/.claude/skills/                        .claude/skills/                    CLAUDE.md
+  Codex CLI     ~/.agents/skills/                        .agents/skills/                    AGENTS.md
+  Gemini CLI    ~/.gemini/skills/ or ~/.agents/skills/   .gemini/skills/ or .agents/skills/ GEMINI.md
+  OpenCode      ~/.config/opencode/skills/, also reads ~/.claude/skills/ and ~/.agents/skills/   AGENTS.md
+  Cursor        ~/.cursor/skills/, also reads ~/.agents/skills/ and ~/.claude/skills/            AGENTS.md, .cursor/rules/*.mdc
+  Aider         no skills support                        none                               a file loaded with --read
+
+These paths were read from each vendor's docs on 2026-10-31 (the links are under Resources on this page). If what you find on disk disagrees, trust the disk and the vendor's current docs, and say so.
+
+Two directories cover every harness above that reads skills: ~/.claude/skills/ (Claude Code, OpenCode, Cursor) and ~/.agents/skills/ (Codex, Gemini, OpenCode, Cursor). Plan the smallest set of directories that covers what is installed. Do not plan a copy in a directory nothing installed reads.
+
+2. IS UNSLOP ALREADY HERE
+Search every skills directory from step 1, and the Claude Code plugin cache (~/.claude/plugins/), for a SKILL.md whose frontmatter says "name: unslop". Also check for an installed pstack plugin (`claude plugin list` if Claude Code is installed). If pstack or unslop is already installed, record where, and plan no second copy for any harness that already reads it.
+
+3. WHERE MY WRITING LIVES
+Find where I write prose that other people read: a blog or docs folder (*.md, *.mdx), drafts folders, README files I edit, email or post drafts. Use file modification times to pick my five most recent drafts, and list them with their paths and sizes. Skip generated files, vendored code and anything under node_modules.
+
+4. ASK ONLY WHAT YOU COULD NOT MEASURE
+Ask these with {{ASK}}, one at a time, each with your recommendation first and one line of why:
+
+  a. When should unslop run?
+     Manual only: I type /unslop when I want it.
+     Last pass: an always-on instruction makes it the final pass on any prose meant for another person.   [RECOMMENDED if I have a blog, docs or outbound drafts]
+  b. Add an advisory linter for the mechanical rules (7, 13, 17, 18, 19, 20, 22, 23, 31)? It only warns, never blocks.
+     Yes, as a script I can run by hand.
+     No.   [RECOMMENDED unless step 3 found a docs or blog folder that already has a lint step]
+  c. Which draft should prompt 2 test on? Offer the five from step 3, the most recent first and recommended.
+
+If {{ASK}} is not available (a one-shot run such as `claude -p` or `codex exec`), do not ask. Pick the recommended answer for each, and make the first line of your output: "No interactive answers available, used the recommended option for each question."
+
+5. WRITE ~/UNSLOP-PLAN.md
+Sections: Harnesses (the table from step 1 with your evidence), Already installed (step 2), Install targets (the directories prompt 2 will write to, and why each one), Always-on (yes/no, and the exact file per harness), Linter (yes/no), Test draft (path). Then say: "Plan written to ~/UNSLOP-PLAN.md. Paste prompt 2." and stop.
+```
+
+```text title="prompt-2|Install unslop and prove it on my own draft||Installs the pinned unslop skill and its MIT license into the directories prompt 1 chose, adds the always-on line if you asked for it, then rewrites your test draft and checks that every number and link survived."
+PROMPT 2 of 2. Install unslop from ~/UNSLOP-PLAN.md and prove it on my draft.
+
+If ~/UNSLOP-PLAN.md does not exist, say "Run prompt 1 first" and stop.
+
+1. FETCH THE PINNED COPY
+Upstream is cursor/plugins, pstack, pinned at commit bc697d0a5a163cec979e362b601e36f5616083fd:
+
+  https://raw.githubusercontent.com/cursor/plugins/bc697d0a5a163cec979e362b601e36f5616083fd/pstack/skills/unslop/SKILL.md
+  https://raw.githubusercontent.com/cursor/plugins/bc697d0a5a163cec979e362b601e36f5616083fd/pstack/LICENSE
+
+The SKILL.md at that commit is 5,827 bytes. Check the size. If either fetch fails, say what you got and stop.
+
+Then check for a newer upstream: fetch the same SKILL.md path on the main branch and diff it against the pinned copy. Install the pinned copy either way. If they differ, show me the diff and tell me how to update: re-run this prompt with the new commit SHA in place of the pinned one.
+
+2. INSTALL
+For each install target in the plan, create <dir>/unslop/ and write SKILL.md (unchanged, byte for byte) and LICENSE beside it. Skip any target the plan marked as already covered by an installed pstack or unslop. Never edit SKILL.md. The MIT notice in LICENSE is the condition of the license, so it goes into every copy.
+
+3. ALWAYS-ON (only if the plan says yes)
+Append this to each always-on file the plan names, creating the file only if the plan says so:
+
+  Before finishing any prose meant for another person to read (posts, docs, emails, messages, PR descriptions), apply the unslop skill as the last pass. Keep every number, link and code span exactly as it was.
+
+For Aider, which has no skills, add the installed SKILL.md path to `read:` in ~/.aider.conf.yml (or tell me to start aider with `--read <path>`). For a harness that ignores `disable-model-invocation` (Codex, Gemini CLI and OpenCode do not document it), this line is what makes unslop run as a last pass rather than whenever the model decides.
+
+4. LINTER (only if the plan says yes)
+Write ~/bin/unslop-lint (or the scripts folder the plan names): a short script that reads a file and prints line-numbered warnings for rules 7 (the listed AI words), 13 (em dashes), 17 (title case headings), 18 (emoji in headings and bullets), 19 (curly quotes), 20 and 22 (chatbot and sycophantic phrases), 23 (the filler phrases) and 31 (utilize, leverage, facilitate, numerous, in the event that). It exits 0 always. Run it once on the test draft and show the output.
+
+5. VERIFY THE INSTALL
+For each harness in the plan, show that it can see the skill: in Claude Code, `/unslop` appears in the slash command list; elsewhere, list the skills directory and quote the harness's command for listing skills if it has one. Say which harnesses you confirmed and which you could only check on disk.
+
+6. PROVE IT ON MY DRAFT
+Read the test draft. Count the tells in it by unslop's rule numbers (a table: rule, count, one example each). Rewrite it by applying the skill. Write the rewrite beside the original as <name>.unslop.<ext>, never over it.
+
+Then check facts. Extract every number, URL, inline code span and fenced code block from both versions and compare them. If any differ, put the original value back in the rewrite and say which ones you restored. Show the before and after as a diff.
+
+Count the tells in the rewrite the same way.
+
+7. REPORT
+Say exactly this, with the numbers filled in:
+
+  "Unslop installed in N harnesses. Your draft went from X tells to Y."
+
+Then list what you installed and where, so I can remove it: each unslop/ directory, each always-on line, and the linter if you wrote one.
+```
+
+## No coding agent?
+
+If you use ChatGPT or Claude in the browser and no coding agent, you cannot install a skill, but you can
+give the chat the same rules. Open the
+[pinned SKILL.md](https://raw.githubusercontent.com/cursor/plugins/bc697d0a5a163cec979e362b601e36f5616083fd/pstack/skills/unslop/SKILL.md),
+copy everything below the line that ends the frontmatter (`---`), and paste it into one of these:
+
+- ChatGPT: Settings, Personalization, Custom instructions. Put a line above it: "When I ask you to unslop
+  something, apply these rules. unslop by Lauren Tan (cursor/plugins pstack), MIT."
+- Claude: create a Project and paste it into the project instructions with the same line above it.
+
+Then paste a draft and write "unslop this, and keep every number and link". Check the numbers and links
+yourself afterwards, because a chat has no script to do it.
+
+## What the prompts read
+
+- [The pinned SKILL.md](https://raw.githubusercontent.com/cursor/plugins/bc697d0a5a163cec979e362b601e36f5616083fd/pstack/skills/unslop/SKILL.md), 5,827 bytes at commit `bc697d0`. This is the only file installed.
+- [The pstack LICENSE](https://raw.githubusercontent.com/cursor/plugins/bc697d0a5a163cec979e362b601e36f5616083fd/pstack/LICENSE), copied next to every install.
+- Your harness config, skills directories and drafts. Nothing leaves your machine except the two fetches above and this page.
+
+## Resources
+
+- [Agent Skills specification](https://agentskills.io/specification), the SKILL.md format every harness here reads.
+- [Claude Code skills](https://code.claude.com/docs/en/skills) and [memory](https://code.claude.com/docs/en/memory)
+- [Codex skills](https://learn.chatgpt.com/docs/build-skills) and [AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
+- [Gemini CLI skills](https://geminicli.com/docs/cli/skills/) and [GEMINI.md](https://geminicli.com/docs/cli/gemini-md/)
+- [OpenCode skills](https://opencode.ai/docs/skills/) and [rules](https://opencode.ai/docs/rules/)
+- [Cursor skills](https://cursor.com/docs/context/skills) and [rules](https://cursor.com/docs/context/rules)
+- [Aider conventions files](https://aider.chat/docs/usage/conventions.html), for the `--read` fallback
+
+## Credit
+
+unslop is by Lauren Tan, part of [cursor/plugins pstack](https://github.com/cursor/plugins/tree/bc697d0a5a163cec979e362b601e36f5616083fd/pstack/skills/unslop),
+released under the MIT license. Copyright (c) 2026 Lauren Tan. This page only installs and runs it. If
+you want all of pstack (about 60 skills), install it as a Claude Code plugin instead:
+`/plugin marketplace add cursor/plugins`, then `/plugin install pstack@cursor-plugins`. Prompt 1 detects
+that and skips the separate copy.
+
+Boogs, Drumkit's first engineer, pointed us at it. Last checked against upstream: 2026-10-31.
+
+## Where this module is currently weakest
+
+The fact check in prompt 2 is done by the agent that wrote the rewrite. It extracts the numbers and
+links from both versions and compares them, which catches a changed figure or a dropped URL, but a
+model checking its own output is weaker than a script. If you publish the rewrite, compare the numbers
+and links yourself or with the linter from step 4.
+
+The harness paths in prompt 1 were read from vendor docs on 2026-10-31. Codex, Gemini CLI and OpenCode
+do not document `disable-model-invocation`, so on those the skill may also run when the model decides
+it applies, not only when you ask. The always-on line is what makes it a dependable last pass there.

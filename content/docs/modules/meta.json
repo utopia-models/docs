@@ -2,6 +2,7 @@
   "title": "Modules",
   "pages": [
     "workflows",
-    "self-hosted-fleet"
+    "self-hosted-fleet",
+    "unslop"
   ]
 }
