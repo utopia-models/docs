@@ -1,7 +1,7 @@
 ---
 title: "agent-architect — the one agent that plans, files and dispatches, and never executes"
 description: "Mirrored from the fleet knowledge base: wi/components/agent-architect.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/agent-architect.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -14,6 +14,7 @@ adrs: [4063, 6924, 7148]
 owns:
   - _infra/scripts/file-issue.sh
   - _infra/scripts/chain-collision-check.sh
+  - _infra/scripts/ask-agent.sh
 ```
 
 # agent-architect — the one agent that plans, files and dispatches, and never executes
@@ -77,6 +78,15 @@ list is a hardcoded string on novaserver; the Architect (unix user `architect` o
 OCC excludes it from the dispatchable set by KEY (`agentKey !== "agent"`) rather than by class — so
 both tests hold whichever class value it carries. Consequences worth stating plainly: a dispatch it
 never starts is invisible.
+
+**Tyler talks only to the Architect; `ask-agent.sh` is how it talks to the rest** (knowledge#10776).
+`bash _infra/scripts/ask-agent.sh <scout|peaky|ronin|wingman|atlas> "<msg>"` prints the agent's reply
+(default wait 600 s, `ASK_AGENT_TIMEOUT`; exit 3 on a timeout prints the ref, and `ask-agent.sh <agent> --wait <ref>` picks
+it back up). An agent with a live persistent session (scout, peaky) gets the message pasted into that session — the
+conversation Tyler sees over Remote Control — and the reply is read from its transcript once an `end_turn` stamped
+after the paste lands. One without (ronin, wingman, atlas) is asked by `claude -p` run as the agent in its home, with
+its registry role appended, and every ask resumes the one conversation in `~/.local/state/ask-agent/session.id`.
+It becomes the agent through `sudo -n -u <agent>`, or `ssh nova@localhost` + sudo from a box user without sudo.
 
 **Watching a running dispatch is the failure, not the diligence.** Verification moved off the
 Architect and onto the master's own acceptance criteria plus the auto-filed VERIFY task. Polling a run
