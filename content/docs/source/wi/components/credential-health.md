@@ -75,7 +75,7 @@ shell, via `ssh nova@…` + `sudo -n -u`; an agent probing itself runs in its ow
 rule — `axes.is_master` agents on nova@ (`05fc1756…`), every other agent on tyler@ (`62f6acd0…`), `service_users`
 with no login. A 401 on an expired access token whose refresh token exists is not graded DEAD yet: the probe starts
 one fresh `claude` as that agent (which refreshes on start) and re-probes, and grades DEAD only if that fails
-(knowledge#10686). Each dead or off-rule agent gets ONE open issue titled `[login-detector] <agent>: …` (found by
+(knowledge#10686). An HTTP 429 is a live login, not a dead one: the token authenticated and named its seat before the quota refused, so it is graded on its seat like a 200 (detail `rate-limited, login live`) — DEAD is any other non-200 (knowledge#10872). Each dead or off-rule agent gets ONE open issue titled `[login-detector] <agent>: …` (found by
 that title on the live board, so nothing is stored), lane = `agent` (the Architect runs the login runbook;
 masters never stage a login — Tyler, 2026-10-25, knowledge#10215), parented under
 the lowest standing-hygiene Feature with room (GitHub caps a parent at 100 sub-issues). An agent that grades
