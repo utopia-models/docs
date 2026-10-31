@@ -1,6 +1,6 @@
 ---
 title: The dispatch runtime
-description: Three shell scripts and systemd make up the entire agent runtime. There is no daemon, queue or watchdog. Starting a run is the assignment, and the close-out comment is the only sign that a run is alive.
+description: Three shell scripts and systemd make up the entire agent runtime. There is no daemon or watchdog, and the board is the only queue. Starting a run is the assignment, and the close-out comment is the only sign that a run is alive.
 updated: 2026-10-31
 ---
 
@@ -163,7 +163,7 @@ and they are why the design is worth copying:
 - **Liveness is the close-out comment.** The run posts on its own issue when it starts and again when it
   exits. Nothing else reports health, because nothing else is running.
 
-If you stop these two scripts, the fleet does not slow down. It stops, because nothing else in the
+If you stop these scripts, the fleet does not slow down. It stops, because nothing else in the
 organization can begin a unit of work.
 
 The runtime is deliberately not a scheduler. The sweeper, described on
