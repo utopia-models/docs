@@ -1,0 +1,373 @@
+---
+title: Reference — How Claude Code Assembles Context
+description: What is in the model's context window at the start of a Claude Code turn, where each piece comes from, and what silently fails.
+updated: 2026-09-28
+---
+
+```text title="prompt-1|Map what my Claude Code actually loads, against this page|claude-code|Measures what Claude Code actually loads on this machine against this page and records every contradiction in CONTEXT-MAP.md. Changes nothing else."
+PROMPT 1 of 2 — learn how Claude Code assembles context by measuring it on THIS machine, against the reference page. Read only. You change nothing.
+
+HOW LONG THIS TAKES: a multi-step measurement (6 steps, a couple of questions, one map file written) — expect roughly 10–20 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+ASK EVERY QUESTION IN THIS PROMPT WITH {{ASK}}, each with a RECOMMENDED option first and one line of why. A question asked in prose has no options, so it carries no recommendation.
+
+I am a senior technical person. Do not explain what a context window is. Where my setup contradicts what I believe about it, say so with the evidence.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/CONTEXT-ASSEMBLY-LEARN-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included. Only if it does not exist, write it fresh as below.
+
+Long sessions compress their own history — and this page says exactly what survives: project CLAUDE.md, unscoped rules and auto memory are re-injected, the skill listing is NOT. Instructions pasted into chat are not on that list. Write this to ~/CONTEXT-ASSEMBLY-LEARN-CHECKLIST.md and work from the file:
+
+  # Context assembly — learn
+  ## Tasks
+  - [ ] 1. Fetch the reference and my version
+  - [ ] 2. Walk the load order on this machine
+  - [ ] 3. Split always-on from on-trigger, with a byte total
+  - [ ] 4. Check the five silent failures
+  - [ ] 5. Explain it back, and have me check you with /context
+  - [ ] 6. Write CONTEXT-MAP.md, and tell me to paste prompt 2
+
+  ## Rules
+  - Read only. I create this checklist and CONTEXT-MAP.md. Nothing else.
+  - I report that ~/.claude/.credentials.json exists and its mode. I never read it or print a value.
+  - Every claim about this machine carries the command that produced it.
+  - Where the page and this machine disagree, the machine wins and I record the contradiction.
+
+1 — FETCH
+
+  https://docs.utopiamodels.ai/docs/reference/context-assembly.md
+
+If the fetch fails, say what you got and stop. Then run `claude --version`. The page was measured against v2.1.251; if mine differs, say so — every claim below is then a claim to check, not a fact.
+
+Tick box 1.
+
+2 — THE LOAD ORDER, HERE
+
+Walk the four scopes the page names, broadest to most specific — managed policy (/etc/claude-code/CLAUDE.md on Linux/WSL, /Library/Application Support/ClaudeCode/CLAUDE.md on macOS), ~/.claude/CLAUDE.md, ./CLAUDE.md or ./.claude/CLAUDE.md, ./CLAUDE.local.md — plus every CLAUDE.md in each directory ABOVE my cwd. For each: exists or not, byte count, line count.
+
+Then resolve every @-import in those files, following up to four hops, relative paths against the file that contains them. The page is explicit: imports expand at launch and save nothing. Count them in the total.
+
+Then .claude/rules/*.md at user and project scope: which carry `paths:` frontmatter (load only when a matching file is read) and which do not (load at launch, like CLAUDE.md).
+
+Tick box 2.
+
+3 — ALWAYS-ON VERSUS ON-TRIGGER
+
+Split everything you found into two columns:
+
+  ALWAYS    system prompt · auto memory MEMORY.md (first 200 lines / 25 KB) · MCP tool NAMES · skill
+            DESCRIPTIONS · every CLAUDE.md in the walk · unscoped rules · everything they @-import
+  TRIGGER   full skill bodies · path-scoped rules · subdirectory CLAUDE.md below cwd (loads on a Read
+            there, never on a Write) · MCP schemas
+
+Give the ALWAYS column a total in bytes. Flag any CLAUDE.md over 200 lines (advisory) and any over 4 MiB (skipped ENTIRELY, with no error).
+
+Tick box 3.
+
+4 — THE FIVE SILENT FAILURES
+
+The page names five that produce zero error output. Check each here and answer present / absent / inconclusive, with the command:
+
+  a skill whose description names a TOPIC rather than an OCCASION — list every one
+  skill descriptions over 1,536 chars, and whether the listing overflows its budget — if it does, the least-used skills lose their descriptions and stop firing
+  malformed skill frontmatter — /skill-name still works, auto-invocation is dead
+  permissions, hooks or env written into ~/.claude.json, which is not a settings file and is never read for them
+  a repo that relies on permissions.allow while being run with -p or the SDK, where it is silently not applied but its hooks, env and .mcp.json still run
+
+Tick box 4.
+
+5 — EXPLAIN IT BACK
+
+In five short paragraphs, each tied to something you measured in steps 2–4 rather than to the page:
+
+  why CLAUDE.md files concatenate rather than override, and which of mine now sit together
+  why CLAUDE.md arrives as a user message and not in the system prompt, and what does modify the system prompt
+  what the next /compact will drop from this session that I would not expect
+  which of my skills would fire right now, and which exist and are inert
+  the one line in my always-on files costing the most for the least
+
+Then ask me with {{ASK}} to run /context in this session and paste its grid — RECOMMENDED: yes, because it is the only view of what ACTUALLY loaded, with the source each piece came from, and your walk is a reconstruction. Diff your map against it and name every mismatch.
+
+Tick box 5.
+
+6 — WRITE AND FINISH
+
+Write CONTEXT-MAP.md in the directory I launched you from, with exactly these headings, because prompt 2 reads them:
+
+  ## LOAD ORDER           every file, scope, bytes, lines, @-imports resolved
+  ## ALWAYS vs TRIGGER     the two columns and the always-on byte total
+  ## SILENT FAILURES       the five, each with its verdict and command
+  ## /CONTEXT DIFF         what /context showed that the walk missed, and the reverse
+  ## CONTRADICTIONS        where this machine disagrees with the page
+
+Then say exactly this:
+
+  "Context map complete. Paste prompt 2 from docs.utopiamodels.ai/docs/reference/context-assembly to fix what it found."
+
+Then stop.
+
+Tick box 6.
+```
+
+```text title="prompt-2|Fix my context setup, one confirmed change at a time|claude-code|Proposes every fix to your context setup from the map prompt 1 wrote, then applies each one you confirm, backing up any file first."
+PROMPT 2 of 2 — fix how my Claude Code setup assembles context, from the map prompt 1 wrote. Propose everything first. Write nothing I have not confirmed.
+
+HOW LONG THIS TAKES: a multi-step fix (one confirmed change at a time, a question per change) — expect roughly 10–30 minutes, depending on how many changes the map found across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+ASK EVERY QUESTION WITH {{ASK}}, one at a time, RECOMMENDED option first with one line of why. If I accept every recommendation without reading, I must end with a setup that loads less and fires more.
+
+READ THE MAP FIRST
+
+  ./CONTEXT-MAP.md
+
+If it is missing, stop and tell me to run prompt 1. Fixing a context you have not measured is guessing. Then re-fetch https://docs.utopiamodels.ai/docs/reference/context-assembly.md — the limits below are its numbers, not yours.
+
+CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/CONTEXT-ASSEMBLY-BUILD-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/CONTEXT-ASSEMBLY-BUILD-CHECKLIST.md — one task per change in the manifest, plus the rules below — and work from it. Tick as you go.
+
+  ## Rules
+  - Before editing ANY existing file I copy it to <file>.bak-context-assembly, and I never edit a file I did not create without a {{ASK}} yes.
+  - I never touch ~/.claude/.credentials.json, and I never commit .claude/settings.local.json, CLAUDE.local.md or anything under ~/.claude/.
+  - I paste REAL command output. I never write "verified" without the output above it.
+  - If a change does not do what I said it would, I say so, restore the .bak, and stop.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — nothing gets written until step 2, and there one confirmed change at a time.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — PROPOSE THE MANIFEST, THEN STOP
+
+From CONTEXT-MAP.md, build one list, ranked by bytes saved or skills revived per line changed. Draw only from what the map found. The kinds of change this page supports:
+
+  REWRITE a skill description from topic to occasion — "keywords users would naturally say" is the documented fix. Show old and new side by side.
+  TRIM a description over 1,536 chars, or retire a skill, when the listing overflows — a working skill can stop firing because others were added.
+  REPAIR malformed skill frontmatter.
+  MOVE permissions, hooks or env out of ~/.claude.json into ~/.claude/settings.json, where they are actually read.
+  SCOPE a rule with `paths:` frontmatter when it only matters for some files, so it stops loading every session.
+  SPLIT a CLAUDE.md over 200 lines: what is a behaviour stays; what is reference moves to a path-scoped rule or a file the pointer names. An @-import is NOT a saving — it expands at launch.
+  ADD one InstructionsLoaded hook that appends to a log which instruction file loaded, when and why — the documented way to see the walk rather than reconstruct it. Remember: stderr on exit 0 reaches the debug log only, never Claude.
+  Where a repo is run with -p or the SDK and relies on permissions.allow, name it — that allow is not applied there — and propose a deny in settings instead.
+
+For each: the file, the exact change, the bytes it moves out of ALWAYS, and the line of this page it rests on.
+
+Print the manifest and WAIT. Do not change a file. A manifest is one screen and I will see a wrong assumption in it; twenty edited files hide it for a week.
+
+Tick.
+
+2 — CONFIRM, ONE CHANGE AT A TIME
+
+Ask with {{ASK}} per change: [apply — RECOMMENDED] [skip] [change it]. Apply only what I accept, backing up first. Record each answer in ~/CONTEXT-ASSEMBLY-BUILD-CHECKLIST.md.
+
+Tick.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/CONTEXT-ASSEMBLY-BUILD-CHECKLIST.md` and move each `<file>.bak-context-assembly` back over its original (`mv <file>.bak-context-assembly <file>`) — nothing else on your system was touched."
+
+3 — PROVE IT
+
+Paste real output for each:
+
+  the always-on byte total before (from the map) and after, re-measured the same way
+  a sentence that SHOULD fire each rewritten skill → it fired; one that should NOT → it stayed quiet. A skill that fires on everything is as broken as one that fires on nothing, and only the negative test catches it.
+  if you added the InstructionsLoaded hook: `claude -p "reply ok"` from the project, then the log lines it wrote
+  ask me with {{ASK}} to run /context in a FRESH session and paste it — RECOMMENDED yes, because a hook or a CLAUDE.md edit takes effect on the next session, never the running one
+
+Tick.
+
+FINISH
+
+Every file changed with its .bak path, the before/after always-on total, both skill tests per rewritten skill, and what you proposed that I declined. Append a ## CHANGES section to CONTEXT-MAP.md so the next run starts from the new truth.
+
+Then say exactly this:
+
+  "Context setup fixed. Always-on went from [X] to [Y] bytes; [N] skills now fire that did not."
+
+Then stop.
+```
+
+This page is the ground truth behind every module prompt that says *"find the always-on instruction
+file this harness loads every session."* Every module on this wiki is written for Claude Code as its
+one harness, so it answers that for Claude Code, with real paths.
+
+**Researched 2026-08-30 against primary sources.** Every claim is marked CONFIRMED with the page or
+source file it came from, or UNCONFIRMED. Where a doc contradicts the shipped source, the source
+wins and the contradiction is recorded.
+
+**Read the marks.** A gap named is more useful than a plausible guess, because this file is used to
+write commands that must actually work.
+
+## Before you trust any of it: the doc tree moved in 2026
+
+Older guides point at URLs that now 404. If your agent fetches those, it gets nothing and says so.
+
+| Old location | 2026 location |
+| --- | --- |
+| `code.claude.com/docs/en/docs/claude-code/<page>` (404s) | `code.claude.com/docs/en/<page>` · index at `/docs/llms.txt` |
+
+---
+
+# Claude Code (CLI)
+
+Measured against **v2.1.251** on Linux/WSL2 in addition to the docs.
+
+## A. Context assembly
+
+**Load order, broadest to most specific** (CONFIRMED, `/docs/en/memory`):
+
+| Scope | Path |
+| --- | --- |
+| Managed policy | macOS `/Library/Application Support/ClaudeCode/CLAUDE.md` · Linux+WSL `/etc/claude-code/CLAUDE.md` · Windows `C:\Program Files\ClaudeCode\CLAUDE.md` |
+| User | `~/.claude/CLAUDE.md` |
+| Project | `./CLAUDE.md` or `./.claude/CLAUDE.md` |
+| Local | `./CLAUDE.local.md` |
+
+**These concatenate, they do not override** — "All discovered files are concatenated into context
+rather than overriding each other… ordered from the filesystem root down to your working directory."
+`CLAUDE.local.md` is appended after `CLAUDE.md` within each directory and is **not deprecated**
+(CONFIRMED — it is still documented as live).
+
+**CLAUDE.md is delivered as a user message after the system prompt**, not as part of it (CONFIRMED).
+Output styles are the thing that modifies the system prompt.
+
+**Upward walk, lazy downward.** It loads from cwd "and every directory above it." Subdirectory files
+load only **when Claude reads a file in that directory with the Read tool** — not at launch, and
+**not when writing or creating files there** (CONFIRMED, `/docs/en/debug-your-config`).
+
+**@-imports:** `@path/to/import`, max **four hops**, relative paths resolve against the file
+containing the import, `@~/.claude/foo.md` works. Imports expand **at launch** — they do not save
+context.
+
+**`.claude/rules/*.md`** (2026 mechanism): without `paths:` frontmatter they load at launch at the
+same priority as `.claude/CLAUDE.md`, user rules before project rules. With `paths:` they load only
+when a matching file is read. Brace-expansion budget is 1,000 patterns / 4 MiB; over-budget patterns
+are used unexpanded and **match nothing**.
+
+**Always vs on-trigger** (CONFIRMED, `/docs/en/context-window` — token counts are the doc's own):
+system prompt (~4,200) · auto memory `MEMORY.md` (~680) · environment info (~280) · **MCP tool names
+only** (~120, schemas deferred) · **skill descriptions only** · user then project CLAUDE.md. Full
+skill bodies load only on use, and once loaded **stay in the conversation across later turns**.
+
+**Documented limits:**
+
+| Limit | Value |
+| --- | --- |
+| CLAUDE.md hard limit | **4 MiB — a larger file is skipped entirely** |
+| CLAUDE.md advisory | under 200 lines |
+| Auto memory `MEMORY.md` | first 200 lines or 25 KB |
+| Skill description in listing | truncated at 1,536 chars |
+| Skill listing budget | 1% of context window, fallback 8,000 chars |
+| MCP tool description | 2 KB each |
+| Number of skills | **no documented cap** — the budget is the constraint |
+
+**Compaction.** Re-injected from disk: project CLAUDE.md, unscoped rules, auto memory, the plan.
+Files read come back for **up to five** files. Invoked skill bodies return at 5,000 tokens each,
+25,000 total. Hook-added context is summarized away. **The skill listing is the exception nobody
+expects: it is not re-injected after `/compact`, so afterwards Claude can auto-invoke only skills it
+already used this session** (CONFIRMED). "Microcompact" appears in no page fetched — UNCONFIRMED.
+
+**Showing what is loaded:** `/context [all]` is the answer — a colored grid breaking out system
+prompt, MCP tools, subagents *with the source each loaded from*, memory files and skills. `/memory`
+lists *locations* (including files that do not exist yet), not what loaded. `/status` shows active
+settings sources. `/doctor` is now a bundled skill, not a screen.
+
+## B. I/O surface
+
+**Permission modes** (CONFIRMED against the binary): `default` (alias `manual`) · `acceptEdits` ·
+`plan` · `auto` · `dontAsk` · `bypassPermissions`. Evaluation is **deny → ask → allow, first match
+wins; specificity does not reorder it**, so a broad `Bash(aws *)` deny beats a narrow
+`Bash(aws s3 ls)` allow.
+
+Two syntax traps worth memorizing: `Bash(ls *)` with a space does **not** match `lsof`, while
+`Bash(ls*)` does. And in Read/Edit rules `/path` is **relative to the settings source**, not the
+filesystem root — `//path` is the absolute form.
+
+**Sandboxing exists** on macOS (Seatbelt), Linux and WSL2 (bubblewrap); native Windows and WSL1 are
+unsupported. Default write is cwd plus `--add-dir`; **default read is the entire computer** except
+denied paths, which still allows `~/.aws/credentials` and `~/.ssh/`.
+
+**MCP scopes:** `local` (default, in `~/.claude.json`) · `project` (**`.mcp.json` at the repo root**)
+· `user`. Transports http / sse (deprecated) / stdio / ws. Project servers require a **one-time
+approval** per machine.
+
+**Subagents:** `.claude/agents/` and `~/.claude/agents/`, each with **its own context window**. Note
+the inversion — for skills, personal overrides project; for subagents, **project outranks user**.
+Built-in Explore and Plan **skip CLAUDE.md and git status**; custom subagents load it normally.
+
+**Hooks: 33 events** (CONFIRMED, `/docs/en/hooks`), including `InstructionsLoaded`, which fires when
+a CLAUDE.md or rules file loads and is the documented way to "log exactly which instruction files are
+loaded, when they load, and why." Exit `2` is an absolute block that overrides JSON and cannot be
+overridden even by `permissionDecision: allow`; **stderr on exit 0 goes to the debug log only, never
+to Claude**. `PreToolUse` fires before any permission check **in every mode including
+`bypassPermissions`** — but a hook `allow` cannot loosen a settings deny.
+
+**Headless:** `claude -p`, `--output-format text|json|stream-json`, `--json-schema` for structured
+output, exit 0 / non-zero / **143 on SIGTERM**. `--bare` skips discovery of hooks, skills, commands,
+subagents, plugins, MCP and CLAUDE.md, and never reads the keychain; it "will become the default for
+`-p` in a future release." SDK packages are `@anthropic-ai/claude-agent-sdk` and `claude-agent-sdk`
+— **not** `@anthropic-ai/claude-code`.
+
+## C. State on disk
+
+Verified directly on a live install as well as in the docs.
+
+```
+~/.claude/CLAUDE.md                              user memory
+~/.claude/settings.json                          permissions, hooks, env, model
+~/.claude/settings.local.json                    written BY Claude Code on "don't ask again"
+~/.claude/.credentials.json                      mode 0600 — Linux/WSL/Windows (macOS uses Keychain)
+~/.claude/projects/<munged-cwd>/<uuid>.jsonl     full transcript: every message, tool call, result
+~/.claude/projects/<project>/memory/MEMORY.md    auto memory, keyed by GIT REPO (worktrees share it)
+~/.claude/history.jsonl                          every prompt ever typed, with timestamps
+~/.claude/{skills,agents,plugins,shell-snapshots,file-history,state}/
+~/.claude.json                                   MCP servers, trust decisions, OAuth account — NOT settings
+```
+
+`~/.claude/todos/`, `statsig/` and `logs/` are **legacy and no longer written** — tooling that reads
+them is reading a vestige. `CLAUDE_CONFIG_DIR` relocates all of it.
+
+**Never commit:** `.claude/settings.local.json`, `CLAUDE.local.md`, `.credentials.json`, anything
+under `~/.claude/`. Note the sharp edge: Claude Code adds `settings.local.json` to your **global** git
+excludes, not the repo's `.gitignore` — a hand-created file is your problem. And transcripts are
+**not encrypted at rest**: if a tool reads a `.env`, that value is now in the session `.jsonl`.
+
+## D. The most common silent misconfiguration
+
+**A skill whose description names a topic rather than an occasion never fires.** It appears in
+`/skills`, is loaded, listed, and inert, with zero error output. The fix per the docs is to include
+"keywords users would naturally say."
+
+Four more that fail just as quietly:
+
+1. **Skill descriptions are silently truncated — or dropped.** When the listing overflows its 1%
+   budget, Claude Code "drops descriptions starting with the skills you invoke least." **A skill that
+   worked can stop working purely because you added other skills.**
+2. **Malformed skill frontmatter loads the body with empty metadata** — `/skill-name` still works,
+   auto-invocation is dead.
+3. **`~/.claude.json` is not a settings file.** `permissions`, `hooks` and `env` put there are simply
+   never read.
+4. **In `-p` and the SDK the trust gate fails open in the wrong direction**: the repo's
+   `permissions.allow` is silently not applied, while its hooks, `env`, and `.mcp.json` servers all
+   run.
+
+## What this page does not establish
+
+Named explicitly, because a gap is more useful than a guess:
+
+- Whether Claude Code's CLAUDE.md walk stops at the repo root or continues to `/`; "microcompact"
+  appears in no current doc.

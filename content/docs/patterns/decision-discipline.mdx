@@ -1,0 +1,367 @@
+---
+title: Module — Decision discipline
+description: Two prompts. Your agent measures where your decisions live and which ones are silently dead, asks only what it cannot measure, then builds records, a supersession check, and a gate that stops the next session re-proposing what you already rejected.
+updated: 2026-09-28
+---
+
+```text title="prompt-1|Find where my decisions live, and interview me|claude-code|Surveys this machine for every decision, supersession, deletion and limit, interviews you one question at a time, and writes four files. Builds nothing."
+PROMPT 1 of 2 — find where my decisions live and which of them are silently dead, ask me what you cannot measure, and write four files. You are not building anything in this step.
+
+HOW LONG THIS TAKES: a multi-step survey and interview (8 steps, 5–10 questions, 4 files written) — expect roughly 20–40 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+ASK EVERY QUESTION IN THIS PROMPT WITH {{ASK}}. The folder question, the tier confirmation, and every interview question. Not prose in the conversation.
+
+That is not a formatting preference. A question asked in prose has no options, so it carries no RECOMMENDED option — and the recommended option is the entire mechanism by which someone who reads nothing still ends up with a working system. Asking in prose removes that silently, and the conversation looks fine while it happens.
+
+I am a senior technical person. Do not explain what a decision record is, do not reassure me, and do not walk me through basics. Where I am wrong about my own setup, say so with the evidence.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/DECISION-DISCIPLINE-INTERVIEW-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Long sessions compress their own history and instructions pasted into chat get dropped when that happens. Files do not. Write this to ~/DECISION-DISCIPLINE-INTERVIEW-CHECKLIST.md and work from that file rather than from this message:
+
+  # Decision discipline — interview
+  ## Tasks
+  - [ ] 1. Survey this machine
+  - [ ] 2. Find every decision, supersession, deletion and limit
+  - [ ] 3. Score three dimensions, derive a tier, fetch the tier's interview template
+  - [ ] 4. Ask where the output goes
+  - [ ] 5. Show the tier as a one-step nudge
+  - [ ] 6. Interview — one question at a time
+  - [ ] 7. Write the four files
+  - [ ] 8. Report, and tell me to paste prompt 2
+
+  ## Rules
+  - Read only. I create this checklist, the output folder, and four files in it.
+  - I never modify anything I did not create.
+  - I report that a credential file exists and where, and never print a value. Whether I read one at all is my scope answer below.
+  - Every claim about this machine carries the command that produced it.
+  - I tick each box as I finish it, not at the end.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — nothing is written but this checklist, the folder I confirm in step 4 and the four files in step 7, and those record what you found; none of them changes my setup.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — SURVEY
+
+Fetch and run: https://docs.utopiamodels.ai/kit/survey.md
+
+If that fetch fails, say what you got and stop. Everything below is calibrated on it.
+
+Record what each command actually printed, with the command beside it. Where a check is inconclusive, write inconclusive rather than what is usually true.
+
+Tick box 1.
+
+2 — FIND THE DECISIONS
+
+The survey found where my work lives. Run these against every work root it found — each git repository, and the notes directory my config points at, if any. Never assume a command exists; check first.
+
+A work root is one I OPERATE: a repository this account commits to, or one whose config Claude Code loads. A tree this account can merely READ — another user's home, a mounted drive, a clone another profile or agent works in — is read-only reference. Record what you find there in DECISION-MAP.md, mark it as someone else's, and never count it as mine.
+
+  Where records already live:
+
+    find <root> -maxdepth 5 -type d \( -iname decisions -o -iname adr -o -iname adrs -o -iname decision-records \) -not -path '*/node_modules/*'
+    grep -rliE '^(status)\s*:\s*(proposed|accepted|superseded|deprecated|rejected|killed)' --include='*.md' <root>
+
+  Supersessions, and whether both ends agree:
+
+    grep -rniE '^(supersedes|superseded[- ]by)\s*:' --include='*.md' <root>
+
+  For every pair, open both files. A new record that says it supersedes an old one, where the old one still reads as accepted, is a silently dead decision — the most expensive finding this step can make, because it is still being cited as live.
+
+  Decisions written as rules in always-on files. Read every instructions file the survey found and quote each line that records a CHOICE ("use X, not Y", "we do not use Z") rather than a behaviour.
+
+  What was killed, per repository:
+
+    git -C <repo> log --diff-filter=D --name-only --format='--- %h %ad %s' --date=short | head -120
+    git -C <repo> log --oneline -i --grep='revert' | head -20
+
+  A directory or subsystem deleted with no record naming it is a thing a fresh session will rebuild without knowing it was tried.
+
+  Limits, per repository:
+
+    grep -rnEi '(timeout|retries|retry|max_?[a-z_]*|concurrency|parallel|limit|cap|batch_?size|ttl)\W{0,3}[:=]\s*[0-9]+' <repo> --include='*.yml' --include='*.yaml' --include='*.json' --include='*.toml' --include='*.env' --include='*.ts' --include='*.js' --include='*.py' --include='*.sh' --include='*.go' -l
+
+  Open the hits. For each number, is there a measurement beside it — a comment, a record, a benchmark — or was it picked?
+
+If I have no repository and no notes at all, say so, record it, and move on. That is a real state, not a failure of this step.
+
+Tick box 2.
+
+3 — CLASSIFY
+
+Emit these markers with QUOTED EVIDENCE, into fixed fields. Not a reasoning paragraph — each marker is a description, never a judgement. "instructions_file_present: yes, ~/.claude/CLAUDE.md, 7744 B" not "the config is good."
+
+🔴 THE MARKERS DESCRIBE THE CLAUDE CODE SETUP THIS SESSION RUNS IN — the files it loads, the skills and hooks it has, the runs it started. Nothing from a read-only reference tree sets a marker, however sophisticated it looks. A readable fleet that is not mine does not make me orchestrated.
+
+  instructions_file_present            path and byte count
+  instructions_file_names_commands     quote a build/test/deploy command from it
+  skill_count_total                    how many exist
+  skill_count_that_would_fire          descriptions naming an occasion, not a topic
+  hooks_present                        which events
+  mcp_configured                       how many
+  mcp_authenticated                    how many have a live auth artifact
+  knowledge_dir_referenced_by_config   a notes directory the config actually points at
+  config_in_version_control            is any of this in git
+  queue_present                        a tracker with a status field used as a work queue
+  unattended_run_evidence              anything that ran to completion without a human starting it
+  multi_machine                        more than one box involved
+
+Then score three dimensions independently. Do not add the markers up — counting makes every signal interchangeable.
+
+  PERSISTENCE    does anything survive a session ending?
+  ACTIVATION     does what persists actually fire?
+  COORDINATION   does anything run without a human in the loop?
+
+Then apply the gates, which are necessary conditions rather than points. Apply them BEFORE you pick a tier, and never recommend a tier they rule out:
+
+  no instructions file            → cannot be above tier 1, whatever else is present
+  no skill that would fire        → cannot be above tier 2
+  no unattended run evidence      → cannot be tier 4
+
+  1 BARE          Claude Code works. Nothing configured survives a session ending
+  2 CONFIGURED    an instructions file exists. Things persist; nothing coordinates them
+  3 ORGANIZED     skills fire, tools connected, notes that are read rather than re-explained
+  4 ORCHESTRATED  either more than one agent runs at once, or a deliberate context protocol
+
+If tier 4, split it on ONE question — how many agents run at once? — not on how advanced it looks:
+
+  queue_present + unattended_run_evidence                        → 4-dispatch  (engineers the RUN)
+  knowledge_dir_referenced_by_config + high skill count, no queue → 4-context  (engineers the READ)
+
+🔴 UNDER-CLASSIFY AT A BOUNDARY. Deliberately, by one tier. Over-classification fails SILENTLY — material referencing infrastructure I do not have gets me stuck without telling you. Under-classification fails LOUDLY, and I will correct it.
+
+Then fetch your tier's interview template:
+
+  https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/<tier>-interview.md
+
+where <tier> is one of: 1-bare · 2-configured · 3-organized · 4-dispatch · 4-context
+
+Tick box 3.
+
+4 — ASK WHERE THE OUTPUT GOES
+
+Ask with {{ASK}}. One question, three options, the first one RECOMMENDED:
+
+  A dedicated folder — <somewhere I already keep work>/patterns/decision-discipline/   [RECOMMENDED]
+      Every later module gets its own subfolder beside it. This holds the record of THIS session,
+      not my decision records — prompt 2 puts those beside the work they bind.
+
+  <the convention you detected, if I have one>
+      Mirror what I already do. Say that is what you are doing.
+
+  Somewhere else — I will type it
+
+If I have an obvious convention for notes, make THAT the recommended option instead and say why.
+
+Then create the folder and say where it is.
+
+Tick box 4.
+
+5 — SHOW THE TIER AS A NUDGE, NOT A QUESTION
+
+Ask with {{ASK}}, with the tier you derived as the RECOMMENDED option. State it, give the evidence, and make the adjustment one click:
+
+  You're at CONFIGURED. An instructions file with four lines that are really decisions, no records
+  directory, nothing marks a replaced choice dead.
+  [right]  [further along ↑]  [take it slower ↓]
+
+Never ask how experienced I am. Self-report is what the classification exists to replace.
+
+🔴 A TIER IS RIGOR OF PRACTICE, NOT LEVEL OF ACHIEVEMENT. Someone at CONFIGURED by choice is correctly classified, not behind.
+
+Tick box 5.
+
+6 — INTERVIEW
+
+Run the questions from the template you fetched, and follow its asking rules over anything you would otherwise do.
+
+  ASK WITH {{ASK}}, EVERY TIME, INCLUDING QUESTION ONE.
+
+  EVERY QUESTION CARRIES A RECOMMENDATION, first, labelled, with one line of why. Build it from what step 2 found — "I found 0003 still reads accepted after 0007 replaced it. Mark it superseded? [RECOMMENDED]" — never from nothing.
+
+  ONE QUESTION AT A TIME. FIVE TO SEVEN, hard ceiling ten. STOP EARLY when you can write the files.
+
+  Where step 2 already answered a template question, assert the answer and skip it.
+
+Tick box 6.
+
+7 — WRITE THE FOUR FILES
+
+In the folder I confirmed, with exactly the headings the template's WRITE THESE FOUR FILES section names. Prompt 2 reads them.
+
+  DECISION-MAP.md   where decisions live · every record with its status · every supersession and
+                    whether both ends agree · killed and unrecorded · limits and their measurements ·
+                    always-on files with byte counts and the TOTAL · where the records should go
+  INTERVIEW.md      what you asked and what I said, each marked MEASURED or STATED
+  TIER.md           the tier, all twelve markers with evidence, three dimension scores, what moves each up
+  DECISIONS.md      every recommendation you made, whether I accepted it, and what I chose instead
+
+Tick box 7.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/DECISION-DISCIPLINE-INTERVIEW-CHECKLIST.md` and `<the folder I confirmed>/` (e.g. `~/dev/patterns/decision-discipline/`) — nothing else on your system was touched."
+
+8 — FINISH
+
+Tell me the folder, the four files, my tier with its three dimension scores, and the three findings that most change what should be built — a silently dead decision outranks everything else.
+
+Then say exactly this:
+
+  "Interview complete. Paste prompt 2 from docs.utopiamodels.ai/docs/patterns/decision-discipline and I will build it."
+
+Then stop. Do not build anything — that is prompt 2, and it reads these files.
+
+Tick box 8.
+```
+
+```text title="prompt-2|Build the records, the check, and the gate|claude-code|Builds the decision records, the supersession check and the gate from the four files prompt 1 wrote, and nothing it did not propose. Asks before touching a file it did not create."
+PROMPT 2 of 2 — build decision discipline into my setup. From the four files prompt 1 wrote, not from a template.
+
+HOW LONG THIS TAKES: a multi-step build (5 steps, a question per repair and per choice, then four tests) — expect roughly 15–30 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+READ THE FOUR FILES FIRST
+
+  <folder>/DECISION-MAP.md   where decisions live, what is silently dead, what loads always
+  <folder>/TIER.md           the tier, twelve markers, three dimension scores
+  <folder>/INTERVIEW.md      what I said, marked measured or stated
+  <folder>/DECISIONS.md      what has already been settled
+
+If any is missing, stop and say which.
+
+Then fetch four files, and follow the execution template over anything you would otherwise do:
+
+  https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/<tier>-execution.md
+  https://docs.utopiamodels.ai/kit/patterns/decision-discipline/TEMPLATE.md
+  https://docs.utopiamodels.ai/kit/patterns/decision-discipline/check-supersession.py
+  https://docs.utopiamodels.ai/kit/workflows/gates.md
+
+If a fetch fails, say what you got and stop.
+
+CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/DECISION-DISCIPLINE-BUILD-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/DECISION-DISCIPLINE-BUILD-CHECKLIST.md — one task per thing you will create, plus the four below — and work from it. Tick as you go, not at the end.
+
+  ## Rules
+  - I build what I proposed and was accepted. Nothing else.
+  - I never modify anything I did not create without asking first — that includes my instructions file.
+  - A question DECISIONS.md already settled is not asked again. I state the settled answer and the entry that settled it.
+  - I copy TEMPLATE.md and check-supersession.py verbatim. I do not paraphrase them.
+  - I paste REAL command output. I never write "verified" without the output above it.
+  - If something does not work, I say so and stop.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — every step below still proposes before it writes, and nothing is built that I did not accept.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — WHERE THE RECORDS GO
+
+If DECISIONS.md already settled where the records go, create them there and say which entry settled it — do not ask again. Otherwise ask with {{ASK}}: the directory DECISION-MAP.md recommended is the RECOMMENDED option, with its one line of why; an existing records directory, if step 2 found one, is reused rather than duplicated. Create it, copy TEMPLATE.md into it, and install check-supersession.py beside it or where my other scripts live.
+
+Tick.
+
+2 — REPAIR, THEN BACKFILL
+
+Every silently dead decision DECISION-MAP.md found in a tree I operate: ask with {{ASK}} whether to mark it superseded, RECOMMENDED yes, one question per pair. One found in a read-only reference tree is left untouched and stays recorded in DECISION-MAP.md — do not ask. Then write the one to three records the interview surfaced — the re-proposed decision first, and a kill record for anything deleted that I said might come back. Run the checker against the real directory and paste its output.
+
+Tick.
+
+3 — THE GATE
+
+One gate. Rank the mechanisms against what DECISION-MAP.md shows my Claude Code setup has, exactly one RECOMMENDED, one line of why each, and ask with {{ASK}}. The execution template says what this tier's gate is and what it must not be.
+
+🔴 THE POINTER IS THREE LINES OR FEWER. It says where the records are and when to read them. The same instruction obeyed at 97% in isolation falls to 2% combined with five others — every line taxes every other line.
+
+🔴 THE BAR: if I accept every recommendation without reading, I end with a working system.
+
+Tick.
+
+4 — WHAT MY TIER ADDS
+
+Build what the execution template lists, where INTERVIEW.md showed appetite for it. Where it did not, say so and leave it.
+
+Tick.
+
+5 — PROVE IT — FOUR TESTS
+
+Run the four tests the execution template names — the gate firing, the gate staying quiet, the checker failing a one-sided supersession, the checker passing the repaired one — and paste each output. A gate that fires on everything is as broken as one that fires on nothing, and only the negative test catches it.
+
+Then: every path in DECISION-MAP.md resolves, and the always-on total matches what Claude Code loads now.
+
+Tick.
+
+FINISH
+
+Every file created with its path. The four test outputs. The always-on byte total before and after.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/DECISION-DISCIPLINE-BUILD-CHECKLIST.md` and <the records directory, check-supersession.py and the gate, each by path>, and remove the pointer lines added to my always-on file — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+Append to DECISIONS.md: what you recommended, what I chose, and what you did not build.
+
+Then say exactly the sentence the execution template ends with, filled in, and stop.
+```
+
+## Files the prompts fetch
+
+- [`kit/survey.md`](https://docs.utopiamodels.ai/kit/survey.md)
+- [`kit/workflows/gates.md`](https://docs.utopiamodels.ai/kit/workflows/gates.md)
+- [`kit/patterns/decision-discipline/TEMPLATE.md`](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/TEMPLATE.md)
+- [`kit/patterns/decision-discipline/check-supersession.py`](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/check-supersession.py)
+
+| tier | | |
+|---|---|---|
+| **1 · BARE** | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/1-bare-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/1-bare-execution.md) |
+| **2 · CONFIGURED** | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/2-configured-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/2-configured-execution.md) |
+| **3 · ORGANIZED** | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/3-organized-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/3-organized-execution.md) |
+| **4 · dispatch** | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-dispatch-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-dispatch-execution.md) |
+| **4 · context** | [interview](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-context-interview.md) | [execution](https://docs.utopiamodels.ai/kit/patterns/decision-discipline/tiers/4-context-execution.md) |
+
+## Where this module is currently weakest
+
+- **The interview it hands out failed the exact way it exists to catch.** Live dogfooding of prompt-1 —
+  the same eight-step survey-and-interview shape it still ships — got two of eight steps done before a
+  session timeout, with no way to continue except starting over. The duration line prompt-1 now carries
+  and its RESUMING checklist-recovery step exist because that run happened, not because someone
+  anticipated it.
+- **`check-supersession.py` checks one directory per invocation, and this fleet's own decisions do not
+  live in one directory.** `find . -type d -iname decisions` against `knowledge` — the repository this
+  fleet records its own decisions in — returns 54 separate folders: one per portfolio, one for org-wide
+  machinery, and one per piece of work filed under `work/specs/<issue>/decisions/`. The checker's default
+  argument is a single flat `decisions/` folder, read non-recursively; pointing it at any one of the 54
+  proves that folder's own links are whole and says nothing about a record in a different folder that
+  claims to supersede one here.
+
+The second is the sharper failure. A resume mechanism that breaks loudly — a timeout, an obvious restart
+— teaches the person watching it happen. A supersession checker that prints "ok" after reading one folder
+out of fifty-four teaches the opposite lesson, silently, which is exactly the failure this module exists
+to prevent.

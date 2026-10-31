@@ -1,0 +1,701 @@
+---
+title: The Utopia fleet
+description: One Ubuntu box, five AI agents, a GitHub board as the queue and git as the state.
+_note: title/description drive the tab, OG image and llms.txt line. `app/docs/layout.tsx` hides the H1+lede on this page (Tyler, 2026-08-30) so it opens on the first heading.
+updated: 2026-10-30
+---
+
+## Who wrote this, and what to read in two minutes
+
+I'm [Tyler Youk](https://tyleryouk.com), a software engineer. This site documents the agent fleet I
+designed and run: one Ubuntu server, Claude Code agents running as separate unix users, a GitHub project
+board as the only work queue, and git as the state. I write the specs and the process it runs on and
+direct the agents that implement the code.
+
+If you are a person, read these three things first:
+
+1. [The dispatch runtime](/docs/operating/dispatch-runtime): how one issue becomes one systemd unit, and
+   the measured 26–27 second race that a per-user unit name could not close across users.
+2. [`utopia-models/dispatch-runtime`](https://github.com/utopia-models/dispatch-runtime): that dispatch
+   layer as a public repo, with the race test and its mutation control.
+3. [What the numbers say](#what-the-numbers-say): the measurements, each with its date and denominator.
+
+Contact: [dev@tyleryouk.com](mailto:dev@tyleryouk.com) · [Resume (PDF)](/resume.pdf)
+
+## Point your agent at this fleet
+
+This site is written for agents as much as for people. Every page is also served as raw markdown at the
+same path with `.md` appended — [`/docs/structure/architecture.md`](/docs/structure/architecture.md) — and
+[`/llms.txt`](/llms.txt) indexes all of them. The whole corpus in one fetch is
+[`/llms-full.txt`](/llms-full.txt) — about 430 KB when measured on 2026-10-30, and growing as pages are
+added (`curl -s https://docs.utopiamodels.ai/llms-full.txt | wc -c` is today's size). An agent should start at
+[Start here for agents](/docs/agents), which says how to poll [`/feed.json`](/feed.json) for what changed.
+
+Five meta prompts follow, each run to completion in the harness it names. Two make an agent
+understand this fleet, one turns it on **your** setup, and two build you a fleet of your own. Pick a
+harness and hit copy.
+
+<HarnessToggle />
+
+```text title="prompt-1|Understand this fleet|desktop|Reads the wiki in three passes and hands back a briefing that sorts every claim into measured and asserted. Finishes in one paste."
+You are reading a public wiki that documents a real, running AI agent fleet — one Ubuntu server, a GitHub project board as the only work queue, and no orchestration layer between the agents. I want you to understand it well enough to argue with it.
+
+Work in three passes. Do not summarize until the third.
+
+Pass 1 — orient, in one fetch.
+
+Fetch https://docs.utopiamodels.ai/llms.txt
+
+It lists every page on the site with a one-line description. Read the paths out of it rather than taking any list of pages from me — the site can add a page, and an index you read is current where a list I typed is not.
+
+If that fetch fails or returns something that is not a plain-text index, fetch https://docs.utopiamodels.ai/llms-full.txt instead. That is the whole documentation corpus in one plain-text file. If it succeeds, read it and skip Pass 2 — it carries every documentation page in full. If both fail, tell me what you got and stop; the rest of this depends on them, and guessing at URLs wastes your fetches on 404s.
+
+Pass 2 — read the corpus.
+
+Every path on that site is also served as raw markdown: append ".md" to any path the index listed — same content, no navigation chrome. Fetch the .md form of every path it listed.
+
+Fetch all of them before you form a view. The pages disagree in places, and a view formed from three of them is a view of the disagreement rather than of the system.
+
+If a fetch under /docs/ returns an empty body, that is a 404 and the path is wrong rather than the site being down; re-read the index and use the path it lists. A wrong path outside /docs/ returns a rendered error page instead, so prefer the paths the index gave you.
+
+Then take one live reading, last.
+
+Everything on the site was written by a human at some point in the past and may have rotted since. The fleet's board is not: https://utopiamodels.ai/v1/board is JSON, needs no auth, and is generated at the moment you request it. Read it as the correction to whatever the static pages told you about the work in flight.
+
+Read its `ok` field before anything else. When its upstream read is refused it still returns valid JSON with `ok` false and an error string. That is the endpoint reporting its own failure, not a failed fetch on your end — and a fleet with no work and a fleet that cannot see its work are different claims.
+
+The pages also count agents in more than one way, because the registry lists several classes of agent and only one of those classes does dispatched work. Work out which class a count refers to before you repeat any number back to me, including any number in this prompt.
+
+Pass 3 — brief me.
+
+Before you write anything, sort every substantive claim you collected into two piles.
+
+Measured: the page gives a command, a status code, a file path, a count, or a dated probe — something a reader could run to make the claim false. Several of these are checkable against the board you read last, so check them.
+
+Asserted: the page states it as fact with nothing behind it.
+
+Sort explicitly. An argument backed by a number you can check is a different object from the same argument backed by conviction.
+
+Then write:
+
+1. The shape of the system, in one paragraph. Hosts, agents, how a unit of work gets from an idea to a merged pull request, and what schedules it. Name the mechanisms rather than describing them abstractly — if work passes through a queue, say what the queue is.
+
+2. The three design decisions that most define this fleet, and the price of each. A decision with no cost attached has not been understood, so if you cannot name what a choice gives up, say so and treat it as a gap in the documentation rather than as a free lunch.
+
+3. What this fleet deliberately does not have. It has removed things on purpose — a message bus, a resident supervisor loop, a database of record, various gates. For each absence, say what it pays and what it buys, and distinguish an absence the documentation argues for from one it merely mentions.
+
+4. The gap between the documented system and the live one. Where the static pages and the live board disagree, the board wins. Say what is currently degraded, what the documentation would have led you to believe instead, and whether the documentation is stale or the state is temporary. This section is why you took a live reading, so do not skip it because the static pages read cleanly.
+
+5. The two or three claims you would want evidence for before believing them, and what evidence would settle each.
+
+6. The one thing you did not expect.
+
+Skip the throat-clearing and the recap of what you just did. If a page contradicts another page, quote both and say which you believe. If you think a decision on that site is wrong, say so and why — an agreeable summary of someone else's architecture is worth less to me than a specific objection.
+
+This fleet has a live cockpit at https://utopiamodels.ai. Open it yourself rather than fetching it; it renders client-side, so a fetch returns an empty shell. Its board endpoint, above, is the part you can fetch.
+```
+
+```text title="prompt-2|Understand this fleet|claude-code,opencode,codex,cursor,gemini|Fans subagents across the wiki, checks the prose against the live board, and reports the drift. Finishes in one paste."
+You are going to read the public documentation of a real, running AI agent fleet and report what it actually is. Two public surfaces, no auth on either:
+
+- https://docs.utopiamodels.ai — the wiki, the written argument for how the fleet is built
+- https://utopiamodels.ai — the OCC, its live cockpit, and the counterpart that either confirms the prose or contradicts it
+
+Do not edit, create, or delete any file on my machine. This is a read-and-report task from start to finish.
+
+## Step 1 — establish you can reach it, and derive the reading list
+
+Run this first:
+
+    curl -s https://docs.utopiamodels.ai/llms.txt | head -3
+
+You should get a line reading `# The fleet` followed by a bulleted entry for `/docs`. If you get empty output or a non-zero exit, curl is not reaching the host from this machine. Try `python3 -c "import urllib.request; r=urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20); print(r.status, len(r.read()))"`, which should print `200 1506`, or fall back to wget, or use whatever web-fetch tool you have. Tell me which one worked before continuing, because everything below depends on it.
+
+Now derive the page list rather than trusting one I typed:
+
+    curl -s https://docs.utopiamodels.ai/llms.txt | grep -oE '\(/[a-z/-]+\)' | tr -d '()' | sed 's|^|https://docs.utopiamodels.ai|;s|$|.md|'
+
+That emits one URL per documentation page. Deriving them from the index means this instruction survives the site adding a page, so use the output rather than a list from memory.
+
+Every path on this wiki has a raw markdown twin at the same path with `.md` appended. Fetch those, not the rendered HTML. A `.md` path under `/docs/` that does not exist returns a zero-byte 404, so a wrong guess there costs you nothing and puts no error page into your context.
+
+## Step 2 — read the pages in parallel
+
+Dispatch subagents, one per URL, running concurrently. Sequential fetching wastes the main advantage you have here.
+
+Give each subagent the same reporting contract, because the synthesis depends on comparing like with like:
+
+1. The claims the page makes, as claims, not as a summary of its prose.
+2. Which of those claims are backed by something checkable — a command written out, a status code, a file path, a dated measurement — and which are asserted with nothing behind them. Quote the evidence where it exists.
+3. Any statement that contradicts another page, or that contradicts itself.
+4. Numbers, verbatim, with their units and their dates.
+
+Use the URLs as the pipeline emitted them rather than reconstructing paths by hand.
+
+If you would rather spend one fetch than one per page, `curl -s https://docs.utopiamodels.ai/llms-full.txt` returns every page concatenated in a single plain-text file.
+
+## Step 3 — check the prose against the live board
+
+The wiki argues that this fleet publishes measurements rather than descriptions. Test that claim rather than accepting it.
+
+Board state, from the OCC rather than the wiki — the highest-signal line available to you:
+
+    curl -s https://utopiamodels.ai/v1/board | python3 -c "
+    import json,sys
+    d=json.load(sys.stdin)
+    if not d.get('ok'):
+        print('board unavailable:', d.get('error') or 'unknown'); sys.exit(0)
+    print('generated:', d.get('generatedAt'))
+    print('counts:', d.get('counts'), 'lanes:', d.get('byLane'), 'items:', len(d.get('items') or []))
+    "
+
+This is the only public JSON endpoint on the OCC and needs no jq, since you may not have it. If `python3` is missing, `curl -s https://utopiamodels.ai/v1/board | head -c 400` shows you the same fields by eye.
+
+Read the `ok` field before anything else, because it separates three outcomes that look similar and mean different things.
+
+A JSON decode error means the endpoint returned HTML rather than JSON. Treat that as unreachable, not as an empty board.
+
+A response where `ok` is false and `error` carries a message is the endpoint telling you its upstream read failed. A value like `github graphql 403` means the OCC could not read the board from GitHub at all, so the item list is empty for that reason and no other. Re-run it a few seconds later. This endpoint does flip between healthy and refused, so a second attempt is worth making — but if the same error persists, report it as what you measured, with the error string quoted and the number of attempts you made. Do not record it as an empty board, and do not describe the fleet's work queue from the wiki's account of it when this endpoint could not confirm a single item.
+
+A response where `ok` is true, `generatedAt` is present and the item list is populated is the healthy shape. Only then are the counts worth quoting.
+
+The parser uses `.get()` throughout for exactly this reason: indexing directly into the counts crashes on the unhealthy shapes, and a traceback tells you less than the error string does.
+
+One caution on the OCC. `https://utopiamodels.ai` is a client-rendered application, so fetching the root with curl gives you the shell and a few loading strings rather than the live sections. Use `/v1/board` for data. If you have a browser tool the rendered page is worth a look; if you do not, say you could not see it.
+
+## Step 3b — find the ceiling on what you can prove
+
+The pages name facts a public page cannot establish, each paired with the command that would settle it and the box that command runs on — `ssh nova@<tailnet-ip> '<cmd>'`, never a bare alias. Collect them. Those commands reach private infrastructure, so you cannot run them, and that is the point of collecting them: they draw the line between what you have verified and what you are taking on trust.
+
+The sharpest example is the architecture page's. Whether an agent account exists and whether that agent can complete a turn are different questions, and the pages refuse to source the second from the first. Carry that distinction into your synthesis. Where you can only confirm that something exists, say so, rather than reporting it as working.
+
+## Step 4 — synthesize, in your own voice
+
+Not a page-by-page summary. I can read the pages. Give me:
+
+- The architecture in one paragraph, at the level of what runs where and what carries state between runs.
+- How one unit of work travels from an idea to a merged pull request, naming every mechanism it passes through. Where the pages leave a gap in that chain, name the gap rather than bridging it with a plausible guess.
+- What this fleet deliberately does not have. For each absence, what it buys and what it costs. The decisions page argues these were chosen rather than missing; say whether you find the argument carried by evidence.
+- Where claims are measured versus asserted. Give me the two or three you would want evidence for before believing them, and say what evidence would settle each.
+- Any disagreement you found between pages, or between a page and what you measured in step 3. Report it plainly. A wiki that publishes its own drift is making a claim, and disagreements you find are the test of it. If the board endpoint returned an error rather than data, say so in its own line, quote the error, and state which parts of your synthesis you could not check against it.
+- The one thing you did not expect.
+
+Where a number you measured differs from a number a page states, give both and note the gap.
+```
+
+```text title="prompt-3|Understand this fleet, then plan your integration|claude-code,opencode,codex,cursor,gemini|Measures your own repo, config and automation, then ranks what is worth taking and what it would delete. Reads only; writes nothing. Finishes in one paste."
+You are going to study a real, running AI agent fleet, then compare it against my setup and tell me what is worth taking. Read this whole prompt before you start.
+
+HOW LONG THIS TAKES: a large read-only study (3 steps: every page of the wiki, six areas of your setup, then a synthesis; no questions, no files written) — expect roughly 6–20 minutes in one turn, more on a large repo; measured at about 6 minutes against an empty repo. Running headless with a timeout? Budget for that, or start with prompt-2 first. Cut off partway? Paste this prompt again — it writes nothing, so a rerun starts clean with nothing to undo.
+
+## What you will do, in order
+
+1. Read the public wiki of another fleet. No writes.
+2. Fan subagents across my repo and my agent configuration to measure what I actually have. Read-only.
+3. Write one ranked integration plan to the terminal.
+
+You will not create, edit, move, or delete any file of mine at any point in this session, including config, dotfiles, and anything under `.claude/`. If you conclude a change is worth making, describe it and stop. I will make it myself or tell you to. The reason is that a plan I can read and reject costs me two minutes; a change you made while I was reading costs me a bisect.
+
+Work through step 1 and step 2 in parallel — they touch nothing in common.
+
+## Step 1 — read the other fleet
+
+Start here, because it tells you what exists rather than making you guess:
+
+~~~
+curl -s https://docs.utopiamodels.ai/llms.txt | head -3
+~~~
+
+That is a public wiki, no auth, CORS open, no user-agent needed. If curl is missing or the output is empty, fall back to `python3 -c "import urllib.request;print(urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20).read().decode())"`, or wget, or your own fetch tool. If all of those fail the machine has no outbound network and you should say so and go straight to step 2 — the comparison is weaker but the audit of my setup still stands on its own.
+
+Derive the page list from the index rather than hardcoding it, so this prompt does not rot as the wiki grows:
+
+~~~
+curl -s https://docs.utopiamodels.ai/llms.txt | grep -oE '\(/[a-z/-]+\)' | tr -d '()' \
+  | sed 's|^|https://docs.utopiamodels.ai|;s|$|.md|'
+~~~
+
+That emits one URL per page. Every rendered page has a raw markdown twin at the same path with `.md` appended; fetch those, not the HTML. A wrong `.md` path under `/docs/` returns a zero-byte 404, so a mistake costs you nothing and puts no HTML error page into your context.
+
+Dispatch one subagent per URL, running concurrently. Give each the same brief: return the claims its page makes, which of those claims are backed by a command or a dated measurement rather than asserted, and any claim that contradicts another page.
+
+One command worth running yourself rather than delegating, because it is the fastest evidence that any of this is real:
+
+~~~
+curl -s https://utopiamodels.ai/v1/board | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+if not d.get('ok'):
+    print('board unavailable:', d.get('error') or 'unknown'); sys.exit(0)
+print(d.get('generatedAt'), d.get('counts'), d.get('byLane'))
+"
+~~~
+
+It reads the live board, no auth and no jq required. It branches on `ok` because this endpoint degrades rather than failing: when its upstream read is refused it still returns valid JSON with `ok` false and an error string, and a fleet with no work and a fleet that cannot see its work are different claims. If the parser raises a JSON decode error instead, the endpoint returned HTML, which means an outage — treat it as unreachable.
+
+`https://utopiamodels.ai` is the command center itself, but it is a client-rendered app, so curl returns a loading skeleton. Use the endpoint above for state and ignore the root URL unless you have a browser tool.
+
+What you are looking for in step 1 is not features. It is the shape of the decisions: what that fleet deliberately does not have, and what each absence buys and costs. Their wiki argues that most agent infrastructure is supervision machinery whose only job is keeping a resident process honest, and that deleting the resident process deletes the machinery. Judge that argument on their evidence.
+
+## Step 2 — measure my setup
+
+Dispatch subagents in parallel, one per area below. Each one reports what it measured, with the command or the file path that produced the number. A subagent that reports an impression instead of a measurement should be sent back. Each subagent is read-only and writes no files, the same constraint that binds you.
+
+Commands below suppress their own error output, so a thing that does not exist on my machine yields nothing on stdout and a non-zero exit status. Read the empty output as a finding; do not read the exit code as a tool failure and retry.
+
+**Instruction surface.** How much prose is loaded into every session before I type anything.
+
+~~~
+find . -maxdepth 4 -name 'CLAUDE.md' -not -path '*/node_modules/*' -exec wc -c {} +
+ls -la ~/.claude/ 2>/dev/null
+find ~/.claude/rules ~/.claude/skills ~/.claude/agents -maxdepth 2 2>/dev/null | head -50
+~~~
+
+Report total auto-loaded bytes. This is charged on every turn of every session.
+
+**Automation that runs without me.**
+
+~~~
+python3 - <<'PY'
+import json,os
+p=os.path.expanduser('~/.claude/settings.json')
+if not os.path.exists(p):
+    print('ABSENT: no ~/.claude/settings.json'); raise SystemExit
+try:
+    h=json.load(open(p)).get('hooks',{})
+    print(json.dumps(h,indent=1)[:3000] if h else 'PRESENT, NO HOOKS CONFIGURED')
+except Exception as e:
+    print('MALFORMED:',e)
+PY
+ls .claude/settings.json .claude/settings.local.json .mcp.json 2>/dev/null
+ls .github/workflows/ 2>/dev/null
+~~~
+
+For each hook and each workflow, report what triggers it, and whether it blocks or merely warns. A blocking check that fires on a convention rather than on an invariant is a finding. The settings reader prints which case it hit, because an absent config and a corrupt one are different findings and they otherwise produce the same silence.
+
+**What is actually maintained.** Documentation rots silently; churn tells you which files are alive.
+
+~~~
+git log --since='90 days ago' --name-only --pretty=format: -- '*.md' | grep -v '^$' | sort | uniq -c | sort -rn | head -20
+git ls-files '*.md' | wc -l
+~~~
+
+A markdown file with zero commits in ninety days that is nonetheless auto-loaded into every session is dead weight being paid for continuously.
+
+**How work is tracked.** Count the places a task can live: issue tracker, a TODO file, a plan file, a project board, comments. Run `git ls-files | grep -iE 'todo|backlog|roadmap|tasks?\.md'` for file-based trackers. For a hosted one, run `gh issue list --limit 5` if `command -v gh` finds it and it is authenticated; if it is missing, run `git remote -v` and report that the tracker could not be inspected from this machine rather than concluding there is none. Two trackers cannot both be true, and the failure is silent — one of them just stops being read.
+
+**How agent work reaches the repo today.** Whether anything runs without me starting it, and whether it supervises itself.
+
+~~~
+crontab -l 2>/dev/null; ls ~/.config/systemd/user/*.service 2>/dev/null
+ps -eo comm= | grep -iE 'claude|agent|watch|daemon' | sort -u
+~~~
+
+A resident process is the expensive kind of infrastructure, because most of what surrounds it exists only to keep it honest.
+
+**Where state lives.** Any tracked file that caches a fact another system owns.
+
+~~~
+git ls-files | grep -iE '(generated|snapshot|manifest|cache|index|state|status)\.(json|ya?ml|md)$'
+~~~
+
+Each hit is a place that can silently disagree with reality, and the disagreement is never announced.
+
+## Step 3 — the plan
+
+Write it to the terminal. No files.
+
+Rank every recommendation by leverage, highest first. For each one, five lines:
+
+- **The change** — stated concretely enough that I could do it without asking you a follow-up question.
+- **The evidence** — the measurement from step 2 that makes this worth doing on my setup specifically, not in general.
+- **What it deletes** — the file, the hook, the workflow, the tracker, the process that stops existing. If a recommendation adds without deleting, say so plainly, because that is the expensive kind.
+- **The cost** — what this makes harder, slower, or riskier. Every one of these has a cost and a recommendation without one is unfinished.
+- **How I would know it worked** — a command I can run, with the output that means success.
+
+Order them so an early item unblocks later ones, and say which item is a prerequisite for which.
+
+Weight deletions above additions. A fleet that runs on a GitHub board, systemd, and git is not impressive because of what it built; it is fast because of what it refused to build, and every mechanism it did not add is one it never has to keep honest. Apply the same standard to my setup. If the honest answer for a section is that my current approach is better than theirs, say that and move on — I am not looking for a migration, I am looking for the delta that is worth paying for.
+
+Two things to call out explicitly, because they are where this kind of comparison usually goes wrong:
+
+Name any pattern of theirs that only works because of something they have and I do not — a dedicated server, several agent accounts, a monorepo, a particular org plan tier. Their dispatch model puts a run on a separate box under a separate account; if I have one machine and one account, the mechanism does not transfer even though the principle behind it might. Say which half transfers.
+
+Separate what their documentation claims from what their live endpoints show. Where those two disagree, the disagreement is the more useful lesson, and their own wiki publishes several of them rather than hiding them.
+
+Close with the single highest-leverage change I could make this week, in one sentence, and the command that would tell me it worked.
+
+## If you run out of room
+
+This is a large task: every page of theirs, six areas of mine, then a synthesis. If you are running low on context before step 3, stop fanning out and write the plan from what you have — say at the top which areas you did not get to and what command would cover them next time. A ranked plan over partial evidence, with the gaps named, is worth more to me than a complete audit you had no room to conclude.
+```
+
+```text title="prompt-4|Scaffold a knowledge base|claude-code,opencode,codex,cursor,gemini|Builds the four documentation patterns this fleet runs on into your repo, after showing you the manifest and waiting for a yes. Finishes in one paste."
+Scaffold me a knowledge base — one that an AI agent working in my repo actually reads, on the patterns of a real running fleet documented at https://docs.utopiamodels.ai. You will write files into my repo. Read this whole prompt before your first write.
+
+## What you are going to do, before you do it
+
+1. Learn the pattern from the reference wiki (read-only, external).
+2. Read my repo and derive what my knowledge base should contain, from my code and my history.
+3. Show me a one-screen file manifest and wait for my go-ahead — asked with {{ASK}}, not in prose.
+4. Write the files, populated from my context.
+5. Run the checks below and paste the real output.
+
+Nothing in step 4 happens before I answer step 3.
+
+## Step 1 — learn the pattern
+
+Run this to get the reference index and derive every page it lists as raw markdown:
+
+    curl -s https://docs.utopiamodels.ai/llms.txt | grep -oE '\(/[a-z/-]+\)' | tr -d '()' \
+      | sed 's|^|https://docs.utopiamodels.ai|;s|$|.md|'
+
+That emits one URL per page. Dispatch subagents to fetch them in parallel — one page each. Fetch the `.md` twins, not the rendered HTML. If `curl` is missing, substitute:
+
+    python3 -c "import urllib.request;print(urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20).read().decode())"
+
+If the whole host is unreachable from my machine, say so in one line and continue from the patterns described in this prompt — they are stated below in enough detail to build from without the wiki.
+
+Two pages matter most for this job: the work page (how work and its briefs are structured) and the decisions page (how decisions are recorded, superseded and killed). A missing `.md` path under `/docs/` returns a zero-byte 404, so a wrong guess costs you nothing and pollutes nothing.
+
+## The four patterns you are implementing
+
+**Portfolio-first.** Knowledge is organised by the thing it is about, not by document type. A folder per portfolio — per product, per service, per business line — each holding its own `CLAUDE.md`, its specs, and its decisions. A top-level `docs/architecture/` next to a top-level `docs/runbooks/` splits every subject in half and guarantees that reading one gives you a partial answer. Subject folders keep a subject whole.
+
+**Doctrine that auto-loads.** A small set of behavioral files that the agent harness reads at the start of every session, with no one remembering to point at them. In Claude Code that is `CLAUDE.md` at the repo root plus one per portfolio directory. The discipline is size, because this text is prepended to every session forever: a rule earns a place only if it changes what the agent does on most turns. Everything rarer goes in a reference file read on demand. The reference fleet caps the always-loaded set a worker agent sees at 30,000 bytes, and the script that generates that set refuses to emit one which breaches the cap — a ceiling something enforces, rather than an intention.
+
+**Decision records with a lifecycle.** A record states what was chosen, what it replaced, why, and what it cost. Once accepted it is immutable — you do not edit an accepted record to reflect a change of mind. You write a new record that supersedes it, and you edit the old record's `Superseded-by` header in the same commit that adds the new one. A record that was silently invalidated is worse than no record, because it reads as current and is not. And a decision is not reopened by disagreement; it is reopened by new information, named in the superseding record.
+
+The test for when to skip a record is the part that is learned expensively. The reference corpus reached 93 records with 86 of them written in a single month, which is a corpus nobody reads and therefore a corpus that stops being consulted before a decision — the exact failure it exists to prevent. Write a record only when one of these is true: the choice is expensive to reverse, or a future reader will otherwise re-litigate it. If neither holds, the reasoning belongs in the pull request body or the work item, and no record is written. Put that test at the top of the decision template so it is read before each one is written, not after the corpus is already unreadable.
+
+**One tracker.** Whatever holds work state — an issue tracker, a board, a `plan.md` of checkboxes — there is exactly one, and the knowledge base points at it rather than mirroring it. Point at the tracker; store the durable why here.
+
+## Before step 2 — ask me the scope
+
+Before step 2, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Hold my answer for the rest of this prompt. It governs the SURVEY and PROPOSE steps only — nothing is written until I answer the manifest question in step 3.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+## Step 2 — read my repo, and populate from my context
+
+Dispatch subagents to run these in parallel and report what they measured, with the command behind each finding. Five of these read git history. If this is not a git repository, say so in one line, skip them, and derive portfolios and decisions from the file tree and any existing design docs instead — you will have fewer records, which is the correct outcome rather than a reason to invent them.
+
+    ls -la && cat README* 2>/dev/null | head -40
+    git log --oneline -30
+    git log --format='%s' -400 | cut -c1-40 | sort | uniq -c | sort -rn | head -20
+    find . -not -path '*/node_modules/*' -not -path '*/.git/*' \
+      \( -name 'CLAUDE.md' -o -name '.cursorrules' -o -name 'AGENTS.md' -o -name '*.mdc' \) | head -30
+    find . -maxdepth 3 -type d \( -name 'docs' -o -name 'doc' \) -not -path '*/node_modules/*'
+    git log --format='%H %s' -300 | grep -iE 'revert|instead of|replaced|migrat|switch' | head -30
+
+The last one is the highest-value command in this list. Reverts and "replaced X with Y" messages are where decisions already happened without being recorded, and they are the only source of decision records that will be true rather than invented. Cite the commit hash this command printed. If you did not read a hash for a decision, that decision is not evidenced and does not become a record. Also read whatever design docs, ADRs, RFCs or pinned issues already exist — a knowledge base that ignores them creates a second tracker on day one.
+
+Derive my portfolios from what the repo actually contains: top-level packages, deployable services, distinct product surfaces. If the repo is a single service, there is one portfolio and the structure is flatter — say that rather than inventing three folders to fill a template.
+
+Do not write generic content. Every file you produce names my paths, my commands, my services. A file that would read identically in someone else's repo is a file that buys nothing and costs tokens on every session that loads it, so cut it.
+
+## Step 3 — show me the manifest, then stop
+
+Print a table: each file path, one line on what it holds, and whether it is auto-loaded doctrine or read-on-demand reference. Under it, name in one line each: my portfolios as you derived them, my one tracker, and the two or three decisions you found in my git history that are worth recording. Then ask me to confirm or correct with {{ASK}}, and wait. Options, not an open question: "write it as listed" first and marked RECOMMENDED, then the ways I am likely to want it changed. A question asked in prose carries no options and therefore no recommendation, and the recommendation is what lets me accept the default and still end up with something durable. Flag anything you would overwrite; prefer a suffixed new file over clobbering something I wrote.
+
+If no answer can reach me at all — a one-shot non-interactive run such as `claude -p`, a scripted or CI invocation, or the question coming back immediately with no real answer — do not wait and do not re-ask. Take the RECOMMENDED option: write it exactly as listed, with no changes, with one restriction — overwrite nothing that already exists; every file the manifest flagged as an overwrite is written as the suffixed new file instead. Say so plainly in a line near the top of your output, directly under the scope line if there is one: "No interactive manifest answer available — wrote the manifest exactly as listed, overwriting nothing (flagged files written as suffixed copies). Review with `git status --short`; nothing was committed." Everything after step 3 then runs as if I had said go.
+
+## Step 4 — write it
+
+The shape, adjusted to what you actually found:
+
+- `CLAUDE.md` at the root — what this repo is, how to run and test it, the tracker, and a pointer to the portfolio files. Kept under about 4 KB, because it loads every session.
+- `<portfolio>/CLAUDE.md` per portfolio — what it owns, how to run it, its boundaries, its gotchas.
+- `docs/decisions/TEMPLATE.md` — the skip test first, then Status / Date / Context / Decision / Consequences / Superseded-by. Superseded-by present and empty on a new record, so the field exists to fill.
+- `docs/decisions/NNN-*.md` — the records you derived from my history, written as the decisions they were, with the commit hash as evidence. Two or three real ones beat ten invented ones.
+- `docs/reference/` — the read-on-demand tail. Things true but rarely needed.
+
+Write dates as concrete ISO dates, not "today". Write paths and commands literally — "the deploy script" is not a path and helps nobody.
+
+## Step 5 — check it, and paste the real output
+
+    find . -maxdepth 2 -name 'CLAUDE.md' -not -path '*/node_modules/*' -exec wc -c {} +
+    ls -R docs/decisions docs/reference 2>/dev/null
+    grep -rn 'Superseded-by' docs/decisions/ | head
+    git status --short
+
+The first is the one that matters: it is the token bill on every future session. One line means one portfolio, which is a valid result — the number to read is the byte count, not the row count. If the root `CLAUDE.md` is over roughly 6 KB, cut it rather than defending it, and move what you cut into `docs/reference/`. Then grade yourself out loud on one question per file: does this change what an agent working here does? Name the files where the answer was no and delete them.
+
+Do not commit. Leave everything staged as working-tree changes so I can read the diff.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `docs/decisions/`, `docs/reference/` and each new `CLAUDE.md` this prompt created (`git status --short` lists every one, since nothing was committed) — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+## If you run out of room
+
+This finishes in one paste on a normal repo. If my repo is large enough that step 2 does not fit, stop after step 3, write the manifest to `docs/KB-PLAN.md`, and tell me to start a fresh session pointing at that file. A half-written knowledge base is worse than a manifest, because the half that exists reads as complete.
+
+For live context on the reference fleet as you work, its cockpit is at https://utopiamodels.ai, and its board state is one fetch away:
+
+    curl -s https://utopiamodels.ai/v1/board | python3 -c "
+    import json,sys
+    d=json.load(sys.stdin)
+    print(d.get('generatedAt'), d.get('counts')) if d.get('ok') else print('board unavailable:', d.get('error'))
+    "
+```
+
+```text title="prompt-5|Scaffold the full fleet|claude-code,opencode,codex,cursor,gemini|Builds the dispatch scripts, the board wiring and whatever accounts it can reach, then hands you an ordered checklist for the parts only you can do. Does not finish in one paste."
+You are going to build me a working agent fleet, modelled on a real one that is running and publicly documented. A fleet here means: several agents that execute work unattended on a machine that is always on, a single queue they draw from, and a record of what happened that survives every process exiting.
+
+HOW LONG THIS TAKES: a long multi-step build (scripts, board wiring, accounts, verification) that does not finish in one paste — expect roughly 45–90 minutes of agent work across several turns, plus the checklist it hands you. Running headless with a timeout? Budget for that, or start with a shorter prompt first.
+
+Part of the job cannot be finished in this session, and knowing which part changes the order you do the rest in.
+
+## What you can finish today, and what you cannot
+
+Everything that lives in a repository — the scripts, the runner, the queue client, the agent definitions, the install steps, the docs — you can write and test in this session.
+
+What you cannot do is anything that needs me: creating accounts, paying for subscriptions, putting an SSH key on a machine I own, deciding which machine stays on. You will hand me a checklist for those at the end. Do not try to work around them, do not stub them with fake credentials, and do not report the fleet as running when the parts that make it run are still on my checklist.
+
+## Step 1 — Study the reference fleet
+
+The fleet is documented at https://docs.utopiamodels.ai and its live cockpit is at https://utopiamodels.ai. Start with the index:
+
+    curl -s https://docs.utopiamodels.ai/llms.txt | head -3
+
+You should see `# The fleet` and a bulleted list. If that command prints nothing or exits non-zero, the site is unreachable from this machine; try `python3 -c "import urllib.request;print(urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20).read().decode())"` or `wget -qO- https://docs.utopiamodels.ai/llms.txt` before concluding it is down.
+
+Derive the page list from the index rather than hardcoding URLs, so this stays correct as the wiki grows:
+
+    curl -s https://docs.utopiamodels.ai/llms.txt | grep -oE '\(/[a-z/-]+\)' | tr -d '()' | sed 's|^|https://docs.utopiamodels.ai|;s|$|.md|'
+
+That emits one URL per page. Every documentation path has a raw markdown twin at the same path plus `.md`, a fraction of the size of the rendered page with the same prose. A mistyped `.md` path under `/docs/` returns an empty 404 rather than an HTML error page, so a wrong guess costs you nothing.
+
+Dispatch subagents to read those pages in parallel. The three that matter most for building are the architecture page (hosts, agents, the dispatch runtime), the work page (how a unit of work travels from filed to merged), and the operations page (the runbooks, including the literal dispatch and scheduler commands).
+
+Carry one distinction from the architecture page into everything you scaffold: an agent's account existing is not the same claim as that agent being able to take a turn, and conflating them is how a fleet looks healthy while shipping nothing. The reference fleet has run with an agent whose entitlement was revoked and that no timer would bring back, and it publishes that rather than hiding it.
+
+For the queue shape, one fetch gives you real board state without needing `jq`:
+
+    curl -s https://utopiamodels.ai/v1/board | python3 -c "
+    import json,sys
+    d=json.load(sys.stdin)
+    if not d.get('ok'):
+        print('board unavailable:', d.get('error') or 'unknown'); sys.exit(0)
+    print('open:', len(d.get('items') or []), '· lanes:', d.get('byLane'), '· status:', d.get('byStatus'))
+    "
+
+A healthy response prints one line of counts keyed by lane and by status. This endpoint reads a project board at request time and stores nothing, so it degrades rather than fails: when the upstream read is refused it still returns valid JSON with `ok` false and an error string. That is why the command branches on `ok` before reading anything else — an intermittent refusal would otherwise render as an empty board, and a fleet with no work and a fleet that cannot see its work are different claims. Build that same distinction into the status command you write in step 3. If the parser raises a JSON decode error instead, the endpoint served HTML, which means an outage; treat it as unreachable.
+
+Note the lane keys. In that fleet a lane names which machine runs the work, not what kind of work it is — routing by subject matter idles healthy agents behind a busy one. Work on a lane no scheduler reaches is undispatchable no matter how idle the fleet is, so a large open count against zero dispatchable looks like a capacity problem and is actually a routing one. Carry that meaning across.
+
+## Before step 2 — ask me the scope
+
+Before step 2, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Hold my answer for the rest of this prompt. It governs the SURVEY and PROPOSE steps only — nothing is written until I answer the plan in step 3.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+## Step 2 — Learn my machine before you write anything
+
+Run these and tell me the answers, because they decide which variant of the scaffold you build:
+
+    uname -s; command -v git gh claude docker python3 2>/dev/null
+    gh auth status >/dev/null 2>&1 && echo "gh: authenticated" || echo "gh: not authenticated"
+    systemctl --user show-environment >/dev/null 2>&1 && echo "systemd user scope: usable" || echo "systemd user scope: unavailable"
+
+The systemd answer is the fork that matters. The reference fleet starts each run as a transient systemd unit, which gives it process isolation, a log, and a failure hook for free. If that check says unavailable — macOS, a container, a machine without a user session bus — build the launchd variant on macOS or a supervised loop elsewhere, and say plainly in the docs you write which variant this is and what it gives up. Do not emit systemd units onto a machine that cannot run them.
+
+Also look at what I already have, with subagents in parallel: my repository layout, any `CLAUDE.md` or `.claude/` directories, how I currently run agents if I do, and where my notes and docs live. Have each subagent report what it measured and the path or command behind it. If I already have a queue — a project board, a tracker, a task list — plan to use it rather than adding a second one. Two queues cannot both be authoritative, and the reference fleet's entire design rests on there being exactly one.
+
+## Step 3 — Tell me the plan, then build
+
+Before writing a single file, tell me: which directory you will create, every file you will add, anything existing you would change or delete, and the one-line reason for each. Wait for me to answer. After that you have my go-ahead for the whole list and should build it without checking in again.
+
+If no answer can reach me at all — a one-shot non-interactive run such as `claude -p`, a scripted or CI invocation, or the question coming back immediately with no real answer — do not wait and do not re-ask. Build the plan exactly as you listed it, with one restriction: create files only inside the new directory you named, and change or delete nothing that already existed. Anything existing you proposed to change or delete is not done — list it under a "Held back — needs my yes" heading in the README with the one-line reason, so I can approve it later. Say so plainly in a line near the top of your output, directly under the scope line if there is one: "No interactive plan answer available — built the plan as listed inside `<the directory>/` only; the changes to existing files are held back in the README." Everything after this point then runs as if I had said go.
+
+Build these pieces:
+
+A **dispatch script** that takes an agent name and a work item id, and starts a run. Starting the run is the assignment — there is no separate "assign" step and no state file recording who owns what, because a file recording that would drift from reality within a day. Before launching, it should refuse to start a second run for a work item that already has one live, and refuse an agent whose account is known to be blocked. Both refusals exit non-zero and print why.
+
+A **runner** that is what actually executes on the agent's side. It should update itself from the repository first, re-check that the work item is still open before doing anything expensive, post a start marker before the first thing that can fail, run the agent, and post a terminal marker with a link to whatever it produced from an exit trap so the marker gets posted even on a crash. Make the terminal marker derive from real evidence — a merged change, a created artifact — rather than from the exit code. A run that exits zero having produced nothing should say so.
+
+A **scheduler** that periodically reads the queue and starts runs for anything unstarted. Give it explicit caps on concurrent runs per agent and fleet-wide, and write the measurement that justifies each number in a comment beside it. A cap chosen out of caution silently becomes the system's capacity and never announces itself. Give it a kill switch that needs no code edit — the presence of a file the scheduler checks before each cycle is enough, and it should be stoppable without editing or redeploying anything.
+
+A **queue client** over whatever tracker step 2 found. If it is GitHub, `gh issue list --json` is enough and you should not add a library. What a fleet needs from a queue is small: list open items with their lane and status, read one, comment on one, close one.
+
+**Agent definitions** — one directory or file per agent, holding its instructions and what it is allowed to touch. Keep the count low to start. Two agents exercise every mechanism a fleet has; ten agents just multiply anything you got wrong.
+
+A **status command** that answers "what is this fleet doing right now" by reading the queue and the process table live, computing nothing from a stored file. Have it print, for each agent, existence and ability-to-run as two separate columns.
+
+A **README** stating what runs where, the literal command for each operation, and which machine each command must be run from. A command that works from one machine and silently fails from another is the most common defect in this class of system.
+
+Now verify what can be verified without my accounts. Run the dispatch script against a fake work item and show me it refuses cleanly. Run the scheduler with its caps set to zero and show me it explains why it started nothing. Run the status command and show me the output. Syntax-check every shell script you wrote — `bash -n` on each — and show me it passes. Do not tell me the fleet works; show me the commands and their output, and be explicit that these prove the scripts run, not that the fleet ships work, which cannot be true until my checklist is done.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `<the directory you named in step 3>/` — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+## Step 4 — What I have to do myself, and what each unlocks
+
+End with this as a section, written into the README as well as told to me. For each item: what to do, roughly how long, and what stops being broken once it is done. Cover at least these, adjusted to what step 2 found:
+
+- **An always-on machine.** Nothing about this design works on a laptop that sleeps, because the scheduler has to fire on a timer whether or not I am at the keyboard. Until this exists, runs only happen when I start them by hand. Tell me the cheapest thing that would work given what I already own.
+- **An account per agent, each with its own subscription.** Agents run in parallel only because they draw on separate quotas; sharing one account across several agents means one busy agent stalls the rest. Until this is done, the fleet is one agent with extra directories.
+- **SSH access from wherever I dispatch to the machine that runs.** Until this is done, dispatch works locally and not remotely.
+- **The queue itself** — the project board or tracker, with the fields your queue client reads. Name the exact fields and their allowed values. Until this exists the scheduler has nothing to read.
+- **Credential storage.** Name what you chose and what I have to create. Until this is done, secrets live in files where they should not be, and no agent should be started.
+- **A failure notification path**, so a run that fails at 3am is visible without me looking. Until this is done, silence and success look identical.
+
+Order that list so the earliest items unblock the later ones, and mark which ones I can skip to get a reduced fleet running today. Close with the single highest-leverage item, in one sentence.
+```
+
+<HarnessNote />
+
+## How to read this
+
+This wiki is organized **by layer and by question**, never one page per component. That is not a style
+preference — it is the fix for a measured failure. The fleet's internal reference corpus has 65 files,
+one per component, and a reader asking *"can this agent run?"* lands in a page that is 100% about a
+healthy agent. Organizing by artifact hides drift; organizing by the question a reader arrives with does
+not.
+
+<Cards>
+  <Card title="Architecture" href="/docs/structure/architecture">
+    Hosts, agents, the dispatch runtime, the services, and how secrets work.
+  </Card>
+  <Card title="Operations" href="/docs/operating/operations">
+    Runbooks. Every command is executable exactly as written, and names the box it runs on.
+  </Card>
+  <Card title="Surfaces" href="/docs/structure/surfaces">
+    Every hostname the fleet owns, each with an explicit class — LIVE, RETIRED-BY-DECISION, or BROKEN.
+  </Card>
+  <Card title="How work flows" href="/docs/operating/work">
+    The board, lanes, the five-step plan lifecycle, specs, and why no gate can stop a merge.
+  </Card>
+  <Card title="Decisions" href="/docs/structure/decisions">
+    What was built, killed, and why — so nobody rebuilds it.
+  </Card>
+  <Card title="Workflows" href="/docs/modules/workflows">
+    Your agent measures your setup, then builds workflows and a gate that fires without you remembering it.
+  </Card>
+  <Card title="Decision discipline" href="/docs/patterns/decision-discipline">
+    Records, a supersession check, and a gate that stops the next session re-proposing what you rejected.
+  </Card>
+  <Card title="Dispatched agents on a Linux server" href="/docs/ai-infrastructure-upgrades/dispatch">
+    Study a fleet that runs, design yours against your machine, build it, and dispatch one real task.
+  </Card>
+  <Card title="How Claude Code assembles context" href="/docs/reference/context-assembly">
+    What is in the context window at the start of a turn, where each piece comes from, and what silently fails.
+  </Card>
+</Cards>
+
+## The four rules this wiki is written under
+
+Every page here obeys four rules. They exist because a full audit of the fleet's own documentation on
+**2026-08-16** found sixteen places where a doc caused a reader to take a wrong action.
+
+1. **Every command names its box.** A command that runs on one machine and fails on another is not a
+   runbook. You will always see `ssh nova@<tailnet-ip> '<cmd>'`, never a bare alias. On **2026-08-16**
+   the fleet's component registry held seventy-three rows, seventy-two of them carrying a self-check
+   safe to run from anywhere; run from the wrong box, twenty-six of those seventy-two failed, and all
+   twenty-six passed from the right one. Nothing in that registry records which box a command belongs
+   to.
+2. **RETIRED-BY-DECISION, BROKEN and LIVE are three different states.** A hostname returning 404 because
+   someone deliberately retired it and a hostname returning 404 by accident look identical in a status
+   column. Collapsing them once cost a P0 incident: a master was dispatched to "restore" a surface that
+   had been switched off on purpose.
+3. **An existence claim is not a liveness claim.** `getent passwd nova` succeeds on an agent that cannot
+   execute a single turn. Every "is it alive" statement on this site exercises the artifact — a real
+   `claude -p` probe for an agent, an HTTP status code for a surface, `Result=success` for a systemd
+   unit.
+4. **Generate the volatile, write the durable.** Disk usage, uptime, node liveness and issue counts all
+   drift within days of being written down. **No prose page on this site states one.** A volatile fact
+   on these pages is either generated from the knowledge base at request time, or replaced by the
+   command that measures it — which is what licenses the rest to be durable prose.
+
+## The six-node tailnet
+
+The entire fleet lives on one Tailscale tailnet, `<tailnet>.ts.net`. Six nodes, and only three of them
+are machines in the ordinary sense.
+
+| Node | Tailnet IP | What it is |
+| --- | --- | --- |
+| **novaserver** | `100.x.x.x` | **The fleet's box.** An HP EliteDesk running Ubuntu 24.04. Hosts all four masters, the personal agent, the only secret store, and every scheduled timer |
+| **ETH** (WSL guest) | `100.x.x.x` | The Architect's box — a WSL2 Ubuntu guest on the founder's Lenovo. Plans, files, dispatches |
+| **utopiamodels** | `100.x.x.x` | **Not a machine.** A `tsnet` application node — an LLM gateway that joins the tailnet as if it were a host |
+| ETH (Windows) | `100.x.x.x` | The Windows host underneath the WSL guest |
+| a laptop | `100.x.x.x` | A second workstation, running one agent |
+| a phone | `100.x.x.x` | A mobile device on the tailnet — an endpoint, not a host |
+
+Which of those are online right now is a volatile fact and therefore is not stated here. The one
+command that answers it is `ssh nova@<tailnet-ip> 'tailscale status'` — a page off the tailnet cannot
+read the tailnet, and saying so is worth more than a dot that might be a day old.
+
+## The dispatch loop
+
+This is the entire runtime. Two shell scripts, both readable end to end, and systemd.
+
+```text title="The dispatch loop"
+Architect (ETH)                          novaserver
+  │                                          │
+  │ dispatch.sh <master> <issue#>            │
+  ├──── ssh nova@<tailnet-ip> ──────────────►│ systemd-run --user
+  │                                          │   task-<issue>.service  (transient)
+  │                                          │     └─ claude -p, under a turn cap
+  │  ◄──── ▶ comment on the issue ───────────┤        read from the script itself
+  │  ◄──── ✔/✘ + PR link on exit ────────────┤
+  │                                          │ OnFailure= fleet-notify@ → files a board issue
+```
+
+**Starting the run IS the assignment.** There is no acceptance step, no claim, no lock file. Liveness is
+the close-out comment the run posts on its own issue — if a run dies, the trap still fires and says so,
+and if the whole unit fails, systemd's `OnFailure=` files a board issue about it. Silence is the only
+failure mode this design cannot produce.
+
+## What the numbers say
+
+Measured **2026-08-16**, on the live fleet:
+
+- **~157 distinct dispatch runs in 24 hours** across the four masters, of which **2 failed** — and both
+  failures triggered the `OnFailure` path that files a board issue, so the failure-announcement
+  machinery is proven, not assumed.
+- **745 issues closed in the preceding 7 days.**
+- **3 of 4 masters could actually run** — not four. One is entitlement-revoked with no recovery timer,
+  and one survives only because it resolves to a different model provider at dispatch time.
+- **14 places claim to be a source of truth**, not the five the fleet's own documentation implies.
+- **Zero failed systemd units** in any of the five service contexts on the server.
+
+Those are point-in-time measurements, and they are dated for exactly that reason. For the current
+state, read the fleet's cockpit at [utopiamodels.ai](https://utopiamodels.ai).
+
+## The honest framing
+
+The fleet is real, busy, and structurally sound: a two-script runtime with no daemon to babysit, a
+command center that provably does not drift because it stores nothing, complete failure-announcement
+coverage (measured 2026-08-16: every transient run unit on every master carried the `OnFailure` hook),
+and a converged doctrine payload across every box.
+
+What it is **not** is the four-master, one-list, one-tracker system its own documentation used to
+describe. It is three working masters, fourteen sources of truth, four parallel work trackers, and a
+self-check mechanism that, at the time of the audit, had never been executed by anything.
+
+The second description is the more impressive one, because it is checkable. This wiki publishes the
+second.

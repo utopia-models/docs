@@ -1,0 +1,23 @@
+slug: 3-organized
+name: ORGANIZED
+situation: >-
+  Skills fire. Tools are connected. There is somewhere the agent reads rather than being told. What is
+  missing is anything that runs without you.
+questions:
+  - What do you still start by hand every time, that has no judgement in it?
+  - Which of your connected tools has never actually been used?
+  - What would you want to happen while you are not at the keyboard?
+  - Where does the output go when a session finishes, and does anything read it afterwards?
+  - What is the last thing you fixed that you had already fixed before?
+objection:
+  q: My setup already works. What does unattended execution buy me?
+  a: >-
+    Nothing, if everything you do needs judgement. The question is whether anything in your week is
+    recurring, bounded, and verifiable — because those are the tasks whose cost is entirely in your
+    starting them. If there are none, this tier is where you should stay, and that is a real answer
+    rather than a failure to progress.
+gates:
+  - name: one task that runs end to end without you starting it
+    why: it is the difference between a good setup and a system
+  - name: a record of what ran, and what changed as a result
+    why: a run nobody can audit is a run you will not trust twice

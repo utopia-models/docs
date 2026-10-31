@@ -1,0 +1,54 @@
+# Minimal CI — typecheck + build on every PR (knowledge#8127, spec:
+# utopia-models/knowledge net/work/specs/docs-wiki-minimal-ci/spec.md).
+# Deliberately NOT a test suite: Tyler declined one for maintenance cost. Typecheck + build, plus the
+# `updated:` date check on PRs (knowledge#10739).
+# Advisory: a red check is visible on the PR but cannot hard-block a merge on this plan tier.
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # knowledge#10739 — an edited docs page must carry a bumped `updated:` date. PRs only: on a push to
+  # main there is no base to compare against that the PR did not already check.
+  updated-date:
+    if: github.event_name == 'pull_request'
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: bash scripts/check-updated.sh "${{ github.event.pull_request.base.sha }}"
+
+  typecheck:
+    # Org self-hosted runner on novaserver ($0 Actions minutes — hosted minutes froze the fleet, #1320).
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      # Per-job pnpm dest: the self-hosted runners share one user, and the default ~/setup-pnpm races
+      # between parallel jobs (knowledge#4288).
+      - uses: pnpm/action-setup@v4
+        with: { version: 11, dest: "${{ runner.temp }}/setup-pnpm-${{ github.run_id }}-${{ github.job }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm types:check
+
+  build:
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11, dest: "${{ runner.temp }}/setup-pnpm-${{ github.run_id }}-${{ github.job }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build

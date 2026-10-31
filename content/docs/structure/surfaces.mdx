@@ -1,0 +1,261 @@
+---
+title: Surfaces
+description: Every hostname the fleet owns or references, each with an explicit class — LIVE, RETIRED-BY-DECISION or BROKEN. A status code on its own is not a state.
+updated: 2026-10-30
+---
+
+```text title="prompt-1|Learn why a status code is not a state|claude-code|Reads this page, explains the three classes and why a status code is evidence rather than a state, then quizzes you. Writes only its checklist."
+PROMPT 1 of 2 — learn what the Surfaces page teaches: the three classes, why a status code is evidence rather than a state, and the three rules that keep a hostname table honest. You read and explain. You write one checklist file and nothing else.
+
+I run my own agents and public surfaces. Skip basics.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+Write ~/SURFACES-LEARN-CHECKLIST.md and work from it:
+
+  # Surfaces — learn
+  - [ ] 1. Fetch the page
+  - [ ] 2. The three classes, and NEVER-EXISTED
+  - [ ] 3. The rows where a bare code lies
+  - [ ] 4. The three rules
+  - [ ] 5. Quiz me, then tell me to paste prompt 2
+
+  ## Rules
+  - Read only. The checklist is the one file I write.
+  - Every claim quotes the page sentence it came from.
+
+1 — FETCH
+
+    curl -s https://docs.utopiamodels.ai/docs/structure/surfaces.md
+
+If that fails, say what came back and stop.
+
+2 — THE CLASSES
+
+Define LIVE, RETIRED-BY-DECISION and BROKEN, and why BROKEN is the only one that is a bug. Then tell the story the RETIRED-BY-DECISION class was born from: an auto-loaded doc still described a retired host as live, a master was dispatched to "restore" it, and the P0 was self-inflicted. Explain why "unclassified is broken" — the row with a plausible explanation and no decision record.
+
+Add NEVER-EXISTED: a name cited in docs that never resolved. A citation is not a surface.
+
+3 — WHERE A BARE CODE LIES
+
+Walk through the rows the page uses to prove a status code is not a state:
+  - the docs host that read 307, then 301, then 200 while its class changed twice — a check reading only the first code calls it healthy, broken and healthy again
+  - the object-storage host: `/` is 404, a real object is 200, and there is no index — not a fault
+  - the admin UI that answers `200` with `redirects=0` and is completely gated, because it renders its login in page
+
+4 — THE THREE RULES
+
+  1. No registry row means no check, and no check means nobody notices the day it breaks.
+  2. Neither a 200 nor redirects=0 proves a page is public. Report redirects and the final URL, and read the body.
+  3. Which edge served it matters: `cf-ray` = Cloudflare, `x-vercel-id` = Vercel, both = Cloudflare in front of a Vercel origin.
+
+5 — QUIZ AND FINISH
+
+Ask me three questions with {{ASK}}, one at a time, four options each, exactly one correct. At least one must present a status line and ask what class it supports. Quote the settling sentence after each.
+
+If `AskUserQuestion` is unavailable in this session, ask the same questions as plain numbered text in one message instead.
+
+Then say exactly this:
+
+  "Surfaces learned. Paste prompt 2 and I will classify every hostname you own."
+
+Then stop.
+```
+
+```text title="prompt-2|Classify every hostname I own, with evidence|claude-code|Probes every hostname you own or cite with GET and HEAD only, and classifies each with dated evidence. Writes the table only after you confirm."
+PROMPT 2 of 2 — build a classified surfaces table for MY hostnames: every name I own or cite, each with a class (LIVE · RETIRED-BY-DECISION · BROKEN · NEVER-EXISTED) and the evidence behind it. Probing is read-only; the table file is written only after I confirm where it goes.
+
+HOW LONG THIS TAKES: a multi-step audit (5 steps, about 6 questions, one probe per hostname, writes only what you approve) — expect roughly 10–25 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+    curl -s https://docs.utopiamodels.ai/docs/structure/surfaces.md
+
+Read it first if prompt 1 did not run in this session.
+
+ASK EVERY QUESTION WITH {{ASK}}, with a RECOMMENDED option first and one line of why.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/SURFACES-INTEGRATE-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/SURFACES-INTEGRATE-CHECKLIST.md and work from it:
+
+  # Surfaces — integrate
+  - [ ] 1. Collect every hostname I own or cite
+  - [ ] 2. Probe each one properly
+  - [ ] 3. Classify, and find the decisions that are missing
+  - [ ] 4. Write the table where I choose
+  - [ ] 5. Propose the re-measure
+
+  ## Rules
+  - Only GET/HEAD requests. No logins, no form posts, no changes to DNS or deploy config.
+  - Every row carries the date it was measured.
+  - A host I cannot reach from here is UNREACHABLE-FROM-HERE, never BROKEN.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — nothing gets written until step 4 (the table, where I choose) and step 5 (the script, if I choose it).
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — COLLECT
+
+Hostnames come from three places, and the third is where NEVER-EXISTED rows come from:
+  - what I own: ask me for my domains with {{ASK}} (RECOMMENDED option: "read them from my DNS/registrar config if it is in a repo here"), or read them from deploy configs (vercel.json, wrangler.toml, cloudflared config, Caddyfile, nginx)
+  - what my infrastructure publishes: tunnel ingress rules, reverse-proxy configs
+  - what my own docs and agent instructions CITE:
+      grep -rhoE '[a-z0-9.-]+\.(com|ai|io|dev|app|shop|net|org)' --include='*.md' . | sort -u
+
+2 — PROBE, PROPERLY
+
+For each name, record all of this, not just a code:
+
+    dig +short <host>
+    curl -sS -o /dev/null -m 15 -L -w '%{http_code} redirects=%{num_redirects} final=%{url_effective}\n' https://<host>/
+    curl -sSI -m 15 https://<host>/ | grep -iE '^(server|cf-ray|x-vercel-id|location):'
+
+And for any 200, read the first part of the body: is it the real page, or a login form rendered in page? A 200 with redirects=0 that renders a sign-in is GATED, not public.
+
+For object storage, a 404 at `/` is not evidence of anything — probe one real object path if one is cited anywhere.
+
+3 — CLASSIFY
+
+  LIVE                  intended to serve, and serving
+  RETIRED-BY-DECISION   not serving, AND a decision says so — name where that decision is written
+  BROKEN                not serving, and nothing says it was intended
+  NEVER-EXISTED         cited somewhere, never resolved (NXDOMAIN, or delegated with no record)
+
+The rule that does the work: if a host is not serving and you cannot point to a written decision, it is BROKEN, however plausible the explanation. List every row that would be RETIRED if someone wrote the decision down — that list is the finding.
+
+Also list every LIVE host that nothing monitors. No row means no check.
+
+4 — WRITE THE TABLE
+
+Ask with {{ASK}} where it goes (RECOMMENDED: beside my other infrastructure docs, as SURFACES.md). Columns: hostname · class · what it is · evidence with date · edge (Cloudflare / Vercel / both / origin). Do not publish internal addresses in it if the file is public — use placeholders for anything that identifies private infrastructure.
+
+5 — PROPOSE THE RE-MEASURE
+
+A dated table decays. Propose ONE way to re-measure it — a script that re-runs step 2 and diffs the classes, run by hand or on a schedule I already have. Ask with {{ASK}}: write the script (RECOMMENDED) / just the table. Write only what I choose, then run it once and paste the real output.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/SURFACES-INTEGRATE-CHECKLIST.md`, `<the folder I chose>/SURFACES.md` and <the re-measure script, if you wrote one> — nothing else on your system was touched."
+
+Finish with: counts per class, every BROKEN row, every would-be-RETIRED row missing its decision, and every unmonitored LIVE host.
+```
+
+**A status code is not a state.** Two hostnames returning an identical `404` can mean completely
+different things: one was switched off on purpose and is behaving correctly, the other is an accident
+nobody has noticed. Collapsing that distinction into a single "404" cell once cost this fleet a P0
+incident — a master was dispatched to "restore" a surface that had been deliberately retired ten days
+earlier, and it did exactly as it was told.
+
+So every row below carries a **class**, and the class is the durable fact. The status code is evidence
+for the class, not a substitute for it.
+
+| Class | Meaning |
+| --- | --- |
+| **LIVE** | Intended to serve, and serving. |
+| **RETIRED-BY-DECISION** | Not serving, **and that is correct.** A human decided to switch it off, and the decision is sourced. Do not "fix" one of these. |
+| **BROKEN** | Not serving, and nothing says that was intended. This is the only class that is a bug. |
+
+A fourth label, **NEVER-EXISTED**, is used at the bottom of the page for names that appear in the fleet's
+own documents but have never resolved in DNS. They are not surfaces; they are citations of surfaces that
+were never built.
+
+Hostnames, addresses and object paths that identify private infrastructure — the secret-store UI,
+tunnel origins, the object-storage bucket — are shown as placeholders in angle brackets (`<tunnel-host>`).
+Each row keeps its class, its evidence and its lesson; only the identifying value is withheld.
+
+All codes below were measured by the run that wrote this page, **2026-08-16**, from the fleet's own box. They are
+evidence with a date on them, not a live reading — for a current code, `curl -sI` the host yourself.
+
+A dated table decays, so a row here is a claim to re-measure, not a reading to trust. Two rows have gone
+stale that way. `creatives.utopiamodels.ai`
+was recorded as `200` until the **5am** domain landed and the migration redirect fired — stale because
+the world moved, not because it was measured wrong, which is the failure a re-measure catches and a
+careful first reading cannot. And `docs.utopiamodels.ai` — this host — has now changed root shape
+twice: a `307` to `/docs` when this page was written, then a `301` off the host entirely while it was
+retired, and today a plain `200` (see its row below).
+
+## LIVE
+
+| Hostname | Class | What it is | Basis (measured 2026-08-16) |
+| --- | --- | --- | --- |
+| `utopiamodels.ai` | **LIVE** | **The Org Command Center** — the fleet's cockpit, and the surface the founder actually watches | `200`. Unique in the fleet for being both Cloudflare-fronted and Vercel-origin: `cf-ray` and `x-vercel-id` are both present |
+| `www.utopiamodels.ai` | **LIVE** | Apex alias | `200` |
+| `docs.utopiamodels.ai` | **LIVE** | **This wiki** | `200` at `/`, no redirect in the chain (re-measured 2026-09-04). It has not always read that way, and the history is the point: `307` at `/` → `200` at `/docs` when this page was written 2026-08-16, then `301` to `school.utopiamodels.ai` on every path from 2026-08-30 while the host was retired by decision, then un-retired 2026-09-04 with the root rewritten rather than redirected — so `/` now serves the docs index itself. A check that reads only the first code would have called this surface healthy, broken and healthy again without the class ever changing |
+| `dmvresearch.shop` | **LIVE** | The DMV Research storefront — real catalog, real prices, real revenue | `200` |
+| `www.dmvresearch.shop` | **LIVE** | Storefront alias | `301` to the apex |
+| `dev.dmvresearch.shop` | **LIVE** | The storefront's preview host | `200` |
+| `dmvclothes.shop` | **LIVE** | DMV ad-bridge surface | `200` |
+| `dmvresearch.io` | **LIVE** | DMV ad-bridge surface | `200` |
+| `rawphones.com` | **LIVE** | **The RAW brand surface** — the phone brand's public front | `200`, served via a path rewrite (`x-matched-path: /raw/index.html`) off a shared Vercel project |
+| `www.rawphones.com` | **LIVE** | Brand alias | `308` to the apex |
+| `nothing.utopiamodels.ai` | **LIVE** | The RAW design "rip" — a full reconstruction of a competitor's site, used as a design reference | `200`, and by a wide margin the heaviest page the fleet serves |
+| `raw1.utopiamodels.ai` | **LIVE** | RAW design variant | `200` |
+| `raw2.utopiamodels.ai` | **LIVE** | RAW design variant | `200` |
+| `raw3.utopiamodels.ai` | **LIVE** | RAW design variant | `200` |
+| `os.utopiamodels.ai` | **LIVE** | The RTOS concept page | `200` |
+| `hack.utopiamodels.ai` | **LIVE** | The RAW investor deck | `200` |
+| `community.utopiamodels.ai` | **LIVE** | Community surface, Cloudflare-served rather than Vercel | `200` |
+| `creatives.utopiamodels.ai` | **GONE** | The **5am** agency's creative showcase. **Plural** — the singular name is a different, dead thing | No DNS record, re-measured 2026-10-30 — and the agency domain it used to `301` to resolves to nothing either, since 5am was frozen. Kept as a row so a reader who finds the name elsewhere learns it is gone rather than guessing |
+| `<secret-store-ui-host>` | **LIVE** | A friendly admin UI over the secret store, published through the Cloudflare tunnel to a local port on the fleet's box | `200`, `redirects=0` — and gated all the same. It renders a server-side Google SSO allow-list of exactly three accounts in page instead of redirecting to one, so the usual "`redirects=0` means ungated" reading is exactly backwards here. See rule 2 at the foot of this page |
+| `<data-replica-host>` | **LIVE** | A data-replica surface, paired with the two always-on services on one master's box | `200`. Has **no registry row and no doc** — a live public host on the company domain that nothing can notice going down |
+| `org.utopiamodels.ai` | **LIVE** | A legacy name, deliberately redirecting | `301` → `https://utopiamodels.ai/`, `redirects=1`. Matches the `occ-redirect` responder on the fleet's box |
+| `<object-storage-host>` | **LIVE** | Object storage for showcase media | **A bare code lies here.** `/` returns `404` and so does a directory path, but a real object returns `200` — verified against a real object path (`<object-storage-host>/<prefix>/<object>.png`). There is no index; that is not a fault |
+
+## RETIRED-BY-DECISION
+
+| Hostname | Class | Basis |
+| --- | --- | --- |
+| `raw.utopiamodels.ai` | **RETIRED-BY-DECISION** | `404 DEPLOYMENT_NOT_FOUND`, measured 2026-08-16. Retired by the founder on **2026-08-06**. This is the row that earned this class its existence: an auto-loaded doctrine file went on describing it as a live surface, a master read that and was dispatched to restore it, and the resulting P0 was entirely self-inflicted. **Do not fix this. It is off on purpose.** |
+
+## BROKEN
+
+| Hostname | Class | Basis |
+| --- | --- | --- |
+| `<tunnel-host>` | **BROKEN** | `530` — Cloudflare error 1033, tunnel origin unreachable. A `530` is never deliberate at the edge. There is a plausible explanation (a cost teardown named in one govcon spec) but **no decision record and no registry row**, so by this page's own rules it cannot be called retired. Unclassified is broken |
+| `creative.utopiamodels.ai` | **BROKEN** | `404 DEPLOYMENT_NOT_FOUND`. The **singular** of the live plural `creatives.`. Either an unrecorded retirement or a name nobody ever claimed — nothing in any registry says which, and that ambiguity is the finding |
+| `booking.tyleryouk.com` | **BROKEN** | `404 DEPLOYMENT_NOT_FOUND` — while an agent's durable memory still carries a whole entry describing a working partnership flow at this address |
+
+## NEVER-EXISTED
+
+These names are referenced in the fleet's own documents and have **never resolved**. A citation is not a
+surface: each of these exists only as a string in a markdown file.
+
+| Hostname | Class | Basis (measured 2026-08-16) |
+| --- | --- | --- |
+| `rawnothing.utopiamodels.ai` | **NEVER-EXISTED** | `NXDOMAIN` |
+| `hack-creatives.utopiamodels.ai` | **NEVER-EXISTED** | `NXDOMAIN` |
+| `research.dmvresearch.shop` | **NEVER-EXISTED** | `NXDOMAIN` |
+| `bridge.dmvresearch.shop` | **NEVER-EXISTED** | `NXDOMAIN` |
+| `health.tyleryouk.com` | **NEVER-EXISTED** | `NXDOMAIN` |
+| `send.tyleryouk.com` | **NEVER-EXISTED** | `NOERROR`, but no A record — the name is delegated and answers nothing |
+
+## How this table is kept honest
+
+Three rules, learned the expensive way:
+
+1. **A hostname with no registry row cannot be monitored, so it cannot be noticed.** Several of the LIVE
+   rows above have no entry in the fleet's component registry — including one serving on the company's
+   own domain. No row means no check, and no check means the day it breaks is the day someone happens to
+   look.
+2. **A 200 does not prove a page is public — and neither does `redirects=0`.** An SSO gate redirects to
+   a login page that itself returns `200`, so a check has to report `redirects=` and the final URL, not
+   the status code alone. The converse is the trap this page shipped with: an app that renders its login
+   **in page** answers `200` with `redirects=0` and is completely gated. The secret-store admin UI,
+   two tables up, is exactly that — and a stranger's agent reading this rule correctly concluded from
+   `200 redirects=0` that our secret store was open to the world. A status line only ever supports the
+   claim "something answered". Read the body.
+3. **Which edge served it matters.** `cf-ray` means Cloudflare; `x-vercel-id` means Vercel; both together
+   means Cloudflare in front of a Vercel origin. A doc that says a hostname "does not touch the tunnel"
+   is a claim about routing, and routing is checkable in one `curl -sI`.

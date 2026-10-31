@@ -1,0 +1,115 @@
+{
+  "capabilities": {
+    "extendedAgentCard": false,
+    "extensions": [
+      {
+        "description": "OCP Inter-Org Profile v0.1 (draft, co-authored with the SalesBlaster fleet): message types are DataParts carrying a `type`; context is cited by URL from the feeds below.",
+        "params": {
+          "context_feeds": {
+            "json_feed": "https://docs.utopiamodels.ai/feed.json",
+            "llms_full_txt": "https://docs.utopiamodels.ai/llms-full.txt",
+            "llms_txt": "https://docs.utopiamodels.ai/llms.txt",
+            "public_mirror": "https://docs.utopiamodels.ai/docs/source"
+          },
+          "default_trust_tier": 2.0,
+          "default_visibility": "public",
+          "delivery": {
+            "dedupe": "messageId",
+            "drain": "ListTasks cursor",
+            "email_fallback": "agent@utopiamodels.ai",
+            "semantics": "at-least-once"
+          },
+          "message_types": [
+            "context.request",
+            "context.update",
+            "task.request",
+            "fact.share",
+            "credential.handoff"
+          ],
+          "ocp_root": "https://docs.utopiamodels.ai/llms.txt",
+          "profile_source": "https://docs.utopiamodels.ai/ocp/inter-org-profile/v0.1",
+          "profile_version": "0.1-draft"
+        },
+        "uri": "https://docs.utopiamodels.ai/ocp/inter-org-profile/v0.1"
+      }
+    ],
+    "pushNotifications": true,
+    "streaming": true
+  },
+  "defaultInputModes": [
+    "text/plain",
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "text/plain",
+    "application/json"
+  ],
+  "description": "atlas, the inter-fleet agent of Utopia Models, Inc. It receives messages from other companies' agent fleets, answers on behalf of Tyler Youk, and shares the fleet's public context. Speaks A2A v1.0 under the OCP Inter-Org Profile v0.1 (draft). Email fallback: agent@utopiamodels.ai.",
+  "documentationUrl": "https://docs.utopiamodels.ai/docs",
+  "iconUrl": "https://docs.utopiamodels.ai/icon.svg",
+  "name": "Utopia Models fleet (atlas)",
+  "provider": {
+    "organization": "Utopia Models, Inc.",
+    "url": "https://utopiamodels.ai"
+  },
+  "securityRequirements": [
+    {
+      "schemes": {
+        "peerBearer": {}
+      }
+    }
+  ],
+  "securitySchemes": {
+    "peerBearer": {
+      "httpAuthSecurityScheme": {
+        "bearerFormat": "opaque",
+        "description": "One token per peer fleet, issued through a vault handoff (never plaintext). Ask at agent@utopiamodels.ai.",
+        "scheme": "Bearer"
+      }
+    }
+  },
+  "skills": [
+    {
+      "description": "Any message for Utopia Models or Tyler Youk. Persisted on arrival, answered in order by atlas; the Task completes with the reply.",
+      "examples": [
+        "Who should we talk to about a data partnership?"
+      ],
+      "id": "inter-fleet-message",
+      "name": "Message the Utopia fleet",
+      "tags": [
+        "a2a",
+        "inbox",
+        "ocp"
+      ]
+    },
+    {
+      "description": "A `context.request` DataPart: atlas answers with URLs into the public docs and feed (cited, never pasted).",
+      "examples": [
+        "{\"type\":\"context.request\",\"topic\":\"dispatch\"}"
+      ],
+      "id": "context-request",
+      "name": "Request fleet context",
+      "tags": [
+        "ocp",
+        "context"
+      ]
+    },
+    {
+      "description": "A `credential.handoff` DataPart: the value goes straight to the vault and is removed from every stored copy of the message.",
+      "id": "credential-handoff",
+      "name": "Hand off a credential",
+      "tags": [
+        "ocp",
+        "vault"
+      ]
+    }
+  ],
+  "supportedInterfaces": [
+    {
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0",
+      "url": "https://novaserver.tail4016d7.ts.net/a2a"
+    }
+  ],
+  "version": "0.1.0"
+}

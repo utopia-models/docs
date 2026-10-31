@@ -1,0 +1,36 @@
+slug: 1-bare
+name: BARE
+situation: >-
+  Claude Code is installed and works. Nothing survives a session ending, so every decision made in a
+  conversation dies with it and the next session proposes the rejected option again, fluently.
+questions:
+  - What did you decide in the last month that you would not want to decide again from scratch?
+  - What has the agent proposed twice that you had already turned down?
+  - Where does the work live that those decisions bind — a repo, a folder, somewhere else?
+  - What have you built and then abandoned that a fresh session might build again?
+  - Is there a number in your setup — a timeout, a retry count, a limit — you chose without measuring?
+objection:
+  q: I work alone. Who is a decision record for?
+  a: >-
+    The next session. An agent opens every session with no memory of why you rejected the approach it
+    is about to suggest, and it will suggest it well. A record is the only way yesterday's reasoning
+    reaches today's session. Without one you pay for the same decision in every conversation that
+    touches it, and it never looks like a cost because it arrives as a reasonable suggestion.
+gates:
+  - name: an instructions file Claude Code loads at session start
+    why: without it nothing, including a pointer to the records, reaches the next session
+  - name: one records directory beside the work
+    why: a decision written in chat is gone when the chat is
+builds:
+  - name: an instructions file holding only the three-line pointer, at the scope the interview settled — user-level if it settled none
+    why: it is the one thing this machine will carry into the next session, so it must stay tiny
+  - name: a records directory beside the work, with the template copied in
+    why: one flat directory, where the listing is the index
+  - name: the supersession checker, installed and run by hand once
+    why: there is no hook infrastructure here yet, so prove the check works rather than wire it
+  - name: the one to three records the interview surfaced
+    why: an empty directory teaches the agent nothing; the re-proposed decision goes in first
+mechanism: >-
+  The pointer in the instructions file is the gate at this tier, and say plainly that it is advisory.
+  Claude Code has hooks, but do not build one yet — a hook guarding a directory that holds three
+  records is machinery ahead of need, and it is the first thing a bare setup abandons.

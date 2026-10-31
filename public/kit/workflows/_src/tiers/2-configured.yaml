@@ -1,0 +1,23 @@
+slug: 2-configured
+name: CONFIGURED
+situation: >-
+  An instructions file exists, and perhaps a skill or two. Things persist. Nothing coordinates them,
+  and some of what you have almost certainly never fires.
+questions:
+  - Which of the skills or rules on this machine do you believe actually fire? I read the descriptions and can tell you which ones would.
+  - What is in your instructions file that you no longer remember writing?
+  - What do you still re-explain despite having written it down somewhere?
+  - What did you set up, once, and never use?
+  - When something annoys you about how the agent works, what do you currently do about it?
+objection:
+  q: I already have a CLAUDE.md. What is missing?
+  a: >-
+    Probably nothing in the file — the gap is usually that it holds facts rather than behaviour, and
+    that the skills beside it never fire. A description naming a topic instead of an occasion is
+    invisible to the model: it exists, it costs nothing, and it does nothing. The owner almost always
+    believes it works.
+gates:
+  - name: every skill description names an occasion, not a topic
+    why: a skill that never fires is a file, not a capability
+  - name: a place facts live that is separate from the file holding behaviour
+    why: mixing them means the behaviour file grows until it stops being read

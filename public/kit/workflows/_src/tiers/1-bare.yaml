@@ -1,0 +1,23 @@
+slug: 1-bare
+name: BARE
+situation: >-
+  Claude Code is installed and works. Nothing you configure survives a session ending, because there is
+  nothing configured yet.
+questions:
+  - What are you using the agent for most this week? Not in general — this week.
+  - What did you have to explain to it twice?
+  - Where does the work live that you would want it to know about — a repo, a folder, somewhere else?
+  - When you close a session and open a new one, what do you find yourself typing again?
+  - Is there anything on this machine it must never touch?
+objection:
+  q: Why bother configuring anything? It works fine.
+  a: >-
+    It does work fine, for the length of one session. The cost is invisible because it arrives as
+    re-typing rather than as an error: every session you re-establish what you are working on, which
+    project, and how you want things done. One file removes that permanently, and it is the only
+    thing in this module that pays back on day one.
+gates:
+  - name: an instructions file Claude Code loads at session start
+    why: nothing else can persist until something does
+  - name: one workflow, written down
+    why: a workflow you have to remember is not a workflow

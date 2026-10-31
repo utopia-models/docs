@@ -1,0 +1,422 @@
+---
+title: Module — Create workflows for utilizing docs.utopiamodels.ai
+description: Two prompts. Your agent works out what your setup actually is, asks only what it cannot measure, then builds workflows and a gate that fires without you remembering it exists.
+updated: 2026-09-28
+---
+
+```text title="prompt-1|Work out what my setup is, and interview me|claude-code|Surveys this machine, scores it into a tier, interviews you one question at a time, and writes the files you accept from a manifest. Builds nothing."
+PROMPT 1 of 2 — work out what my setup actually is, ask me what you cannot measure, and write four files. You are not building anything in this step.
+
+HOW LONG THIS TAKES: a multi-step survey and interview (8 steps, 5–10 questions, up to 4 files written) — expect roughly 20–40 minutes across several turns. The quick tier read in step 0 is closer to 5–10. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+ASK EVERY QUESTION IN THIS PROMPT WITH {{ASK}}. The depth question, the folder question, the tier confirmation, every interview question, and the per-file write confirmation. Not prose in the conversation.
+
+That is not a formatting preference. A question asked in prose has no options, so it carries no RECOMMENDED option — and the recommended option is the entire mechanism by which someone who reads nothing still ends up with a working system. Asking in prose removes that silently, and the conversation looks fine while it happens.
+
+I am a senior technical person. Do not explain what an AI agent is, do not reassure me, and do not walk me through basics. Where I am wrong about my own setup, say so with the evidence.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/SCHOOL-01-INTERVIEW-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Long sessions compress their own history and instructions pasted into chat get dropped when that happens. Files do not. Write this to ~/SCHOOL-01-INTERVIEW-CHECKLIST.md and work from that file rather than from this message:
+
+  # School module 01 — interview
+  ## Tasks
+  - [ ] 0. Ask: full interview, or a quick tier read first
+  - [ ] 1. Survey this machine
+  - [ ] 2. Score three dimensions, derive a tier, fetch the tier's interview template
+  - [ ] 3. Ask where the output goes
+  - [ ] 4. Show the tier as a one-step nudge
+  - [ ] 5. Interview — one question at a time
+  - [ ] 6. Show the manifest, then write each file I accept
+  - [ ] 7. Report, and tell me to paste prompt 2
+
+  ## Rules
+  - Read only. I create this checklist, the output folder, and at most four files in it — only the ones I accept.
+  - I never modify anything I did not create.
+  - I report that a credential file exists and where, and never print a value. Whether I read one at all is my scope answer below.
+  - Every claim about this machine carries the command that produced it.
+  - I tick each box as I finish it, not at the end.
+
+0 — HOW DEEP
+
+Ask with {{ASK}}. One question, two options, the first one RECOMMENDED:
+
+  Full — survey, tier, a 5-10 question interview, four files   [RECOMMENDED]
+      Prompt 2 builds from those four files, so this is the path that ends in working workflows.
+
+  Quick tier read — survey and classify only, no interview, nothing written but this checklist
+      For a look before committing. You get your tier, its evidence, and what would move it up,
+      in the terminal. The full interview stays one answer away at the end.
+
+If I pick QUICK: run 1 and 2, show the tier exactly as 4 describes it, then tell me the three findings that most change what should be built. Then ask with {{ASK}}:
+
+  Continue into the full interview   [RECOMMENDED]
+      Picks up at 3 — the survey and tier already done are reused, not re-run.
+
+  Stop here
+      Say plainly that prompt 2 cannot run yet: it reads four files this path did not write.
+
+On STOP, mark boxes 3, 5, 6 and 7 as skipped (not ticked) in the checklist and stop. Do not write anything else.
+
+Tick box 0.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — nothing is written but this checklist, the folder I confirm in step 3 and the files I accept one by one in step 6, and those record what you found; none of them changes my setup.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — SURVEY
+
+Fetch and run: https://docs.utopiamodels.ai/kit/survey.md
+
+If that fetch fails, say what you got and stop. Everything below is calibrated on it.
+
+Record what each command actually printed, with the command beside it. Where a check is inconclusive, write inconclusive rather than what is usually true.
+
+Two things in there decide more than the rest, and both are commonly wrong on a machine that looks fine:
+
+  PATH in three shapes — login, non-interactive, minimal. A tool present in the first and absent in the third is why a job works when I type it and fails when something else starts it.
+
+  Skills and rules whose descriptions name a TOPIC rather than an OCCASION. Those never fire. They exist, they cost nothing, and their owner usually believes they work. Find mine and name them — that list is often the most useful thing in this whole step.
+
+Tick box 1.
+
+2 — CLASSIFY
+
+Emit these markers with QUOTED EVIDENCE, into fixed fields. Not a reasoning paragraph — each marker is a description, never a judgement. "instructions_file_present: yes, ~/.claude/CLAUDE.md, 7744 B" not "the config is good."
+
+  instructions_file_present            path and byte count
+  instructions_file_names_commands     quote a build/test/deploy command from it
+  skill_count_total                    how many exist
+  skill_count_that_would_fire          descriptions naming an occasion, not a topic
+  hooks_present                        which events
+  mcp_configured                       how many
+  mcp_authenticated                    how many have a live auth artifact
+  knowledge_dir_referenced_by_config   a notes directory the config actually points at
+  config_in_version_control            is any of this in git
+  queue_present                        a tracker with a status field used as a work queue
+  unattended_run_evidence              anything that ran to completion without a human starting it
+  multi_machine                        more than one box involved
+
+Then score three dimensions independently. Do not add the markers up — counting makes every signal interchangeable, and six trivial slash commands would outrank one well-scoped subagent plus a real gate.
+
+  PERSISTENCE    does anything survive a session ending?
+  ACTIVATION     does what persists actually fire?
+  COORDINATION   does anything run without a human in the loop?
+
+Then apply the gates, which are necessary conditions rather than points:
+
+  no instructions file            → cannot be above tier 1, whatever else is present
+  no skill that would fire        → cannot be above tier 2
+  no unattended run evidence      → cannot be tier 4
+
+  1 BARE          Claude Code works. Nothing configured survives a session ending
+  2 CONFIGURED    an instructions file exists. Things persist; nothing coordinates them
+  3 ORGANIZED     skills fire, tools connected, notes that are read rather than re-explained
+  4 ORCHESTRATED  either more than one agent runs at once, or a deliberate context protocol
+
+If tier 4, split it on ONE question — how many agents run at once? — not on how advanced it looks:
+
+  queue_present + unattended_run_evidence                        → 4-dispatch  (engineers the RUN)
+  knowledge_dir_referenced_by_config + high skill count, no queue → 4-context  (engineers the READ)
+
+🔴 UNDER-CLASSIFY AT A BOUNDARY. Deliberately, by one tier. The two errors are not symmetric: over-classification fails SILENTLY — someone handed material referencing infrastructure they do not have gets stuck and disengages without telling you. Under-classification fails LOUDLY — and the person you under-rate is exactly the person who will correct you. Prefer the loud failure; it repairs itself.
+
+Then fetch your tier's interview template:
+
+  https://docs.utopiamodels.ai/kit/workflows/tiers/<tier>-interview.md
+
+where <tier> is one of: 1-bare · 2-configured · 3-organized · 4-dispatch · 4-context
+
+Tick box 2.
+
+3 — ASK WHERE THE OUTPUT GOES
+
+Ask with {{ASK}}. One question, three options, the first one RECOMMENDED:
+
+  A dedicated folder — <somewhere I already keep work>/school/01-workflows/   [RECOMMENDED]
+      Every later module gets its own subfolder beside it. A module writing into a folder it
+      shares with other work is a module whose output cannot be found again.
+
+  <the convention you detected, if I have one>
+      Mirror what I already do, if there is an obvious one. Say that is what you are doing.
+
+  Somewhere else — I will type it
+
+If I have an obvious convention for notes, make THAT the recommended option instead and say why.
+
+Then create the folder and say where it is.
+
+Tick box 3.
+
+4 — SHOW THE TIER AS A NUDGE, NOT A QUESTION
+
+(On the quick path this runs straight after 2 — before any folder exists — and, if I continue, is not asked again.)
+
+Ask with {{ASK}}, with the tier you derived as the RECOMMENDED option. State it, give the evidence, and make the adjustment one click:
+
+  You're at ORGANIZED. Skills with real trigger descriptions, two MCP servers authenticated, notes
+  your config points at — but nothing runs unattended.
+  [right]  [further along ↑]  [take it slower ↓]
+
+Never ask how experienced I am. Self-report is what the classification exists to replace.
+
+🔴 A TIER IS RIGOR OF PRACTICE, NOT LEVEL OF ACHIEVEMENT. Someone at CONFIGURED by choice is correctly classified, not behind. Say so if it comes up.
+
+Tick box 4.
+
+5 — INTERVIEW
+
+Run the questions from the template you fetched, and follow its asking rules over anything you would otherwise do.
+
+The three that matter most:
+
+  ASK WITH {{ASK}}, EVERY TIME, INCLUDING QUESTION ONE. Question one is the one most often asked in prose, and it is the worst one to lose — it costs about two and a half times what question three does in the reader's attention, and it sets whether they believe the rest is worth answering.
+
+  EVERY QUESTION CARRIES A RECOMMENDATION, first, labelled, with one line of why. They should be correcting a decision, never composing one from nothing.
+
+  ONE QUESTION AT A TIME. Not four. A batch makes a follow-up probe structurally impossible, and the follow-up is where the real answer is.
+
+  FIVE TO SEVEN QUESTIONS, hard ceiling ten. The risk is not that I abandon it — it is that I answer question eleven with something reasonable-sounding produced by no actual thought, and that failure is invisible.
+
+  STOP EARLY when you can write the files. Terminate on having enough, not on reaching the end of a list.
+
+And never ask for motives in the abstract. "What are your goals" produces fluent, generic, useless text. "I see X on this machine — what are you trying to do with it?" produces a real answer, because it is a correction task rather than an essay prompt.
+
+Tick box 5.
+
+6 — SHOW THE MANIFEST, THEN WRITE EACH FILE I ACCEPT
+
+In the folder I confirmed. Prompt 2 reads these, so the headings are fixed.
+
+  CONTEXT-MAP.md   every file loaded at session start with its byte count · what fires on a trigger
+                   versus what loads always · what is pointed at but never read · the TOTAL always-on
+                   cost as a number · every I/O path, and whether each tool server is authenticated
+
+  INTERVIEW.md     what you asked and what I said, each marked MEASURED or STATED
+
+  TIER.md          the tier, all twelve markers with their evidence, the three dimension scores
+                   separately, and what would move each one up
+
+  DECISIONS.md     every recommendation you made, whether I accepted it, and what I chose instead
+
+CONTEXT-MAP.md is the durable one. The other three record this session; that one gets re-read every time anything changes.
+
+Draft all four first. Write nothing yet. Show me the manifest — each file's full path, its size, and the three lines of it most likely to be wrong — then confirm EACH FILE SEPARATELY with {{ASK}}: one question per file, or one multi-select with a row per file where the tool supports it. Never one yes/no for all four. Per file:
+
+  Write it as drafted   [RECOMMENDED]
+  Change it — I will say what; redraft that file only, show it again, and ask again for it alone
+  Skip it — write nothing at that path
+
+If a file I skip is one prompt 2 reads, say so on that row: prompt 2 will stop and name it. Recommend Write for all four; a reader who accepts every default must end with all four on disk.
+
+If any of the four paths already exists — a re-run — show me the exact diff against what is there and ask again for that file before overwriting it. I never modify anything I did not create without asking.
+
+Write only the accepted files. Record every file's outcome — written, changed and then written, skipped — in DECISIONS.md if it was written, otherwise in the terminal.
+
+Tick box 6.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/SCHOOL-01-INTERVIEW-CHECKLIST.md` and `<the folder I confirmed>/` (e.g. `~/dev/school/01-workflows/`) — nothing else on your system was touched."
+
+7 — FINISH
+
+Tell me the folder, which of the four files were written and which I skipped, my tier with its three dimension scores, and the three findings that most change what should be built.
+
+Then say exactly this:
+
+  "Interview complete. Paste prompt 2 and I will build the workflows."
+
+If I skipped any of the four, say instead which ones are missing and that prompt 2 will stop until they exist.
+
+Then stop. Do not build anything — that is prompt 2, and it reads these files.
+
+Tick box 7.
+```
+
+```text title="prompt-2|Build the workflows and the gate|claude-code|Builds the workflows and the gate from the four files prompt 1 wrote, and nothing it did not propose. Asks before touching a file it did not create."
+PROMPT 2 of 2 — build the workflows. From the four files prompt 1 wrote, not from a template.
+
+HOW LONG THIS TAKES: a multi-step build (4 steps, a question per choice, then tests) — expect roughly 15–30 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+READ THE FOUR FILES FIRST
+
+  <folder>/CONTEXT-MAP.md    what loads, what fires, what it costs, what can be reached
+  <folder>/TIER.md           the tier, twelve markers, three dimension scores
+  <folder>/INTERVIEW.md      what I said, marked measured or stated
+  <folder>/DECISIONS.md      what has already been settled
+
+If any is missing, stop and say which. Building from a partial record is how you produce something that contradicts a decision already made.
+
+Then fetch two files:
+
+  https://docs.utopiamodels.ai/kit/workflows/tiers/<tier>-execution.md
+  https://docs.utopiamodels.ai/kit/workflows/gates.md
+
+CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/SCHOOL-01-BUILD-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/SCHOOL-01-BUILD-CHECKLIST.md — one task per thing you will create, plus the four below — and work from it. Tick as you go, not at the end.
+
+  ## Rules
+  - I build what I proposed and was accepted. Nothing else.
+  - I never modify anything I did not create without asking first.
+  - I paste REAL command output. I never write "verified" without the output above it.
+  - If something does not work, I say so and stop. A half-built system that reports success is worse than one that reports failure.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — every step below still proposes before it writes, and nothing is built that I did not accept.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — THE GATE
+
+This is the part that decides whether any of the rest matters. The gate is how the school reaches my agent WITHOUT me remembering it exists.
+
+Read gates.md before proposing anything. Its three constraints bind harder than the choice of mechanism, and the reason is in the evidence: going from ~2 to ~11 alerts per hundred dropped acceptance from 100% to 8.4%, and halving the volume back recovered three points of ninety-two. Dismissal becomes habitual, and once it is, better content does not help because the content is no longer read.
+
+So: ONE gate. Conservatively tuned. Not three.
+
+ASK THIS WITH {{ASK}}, not as an open prose question. The gate choice is the highest-stakes question in this module — it decides whether any of the rest gets used — and a question asked in prose carries no options and therefore no recommendation. Someone who reads nothing and accepts the default must still end up with a working gate, and that is only possible if there IS a default to accept.
+
+Rank the options against what CONTEXT-MAP.md shows I actually have. Exactly one marked RECOMMENDED, one line of why each, and do not offer a mechanism Claude Code does not support.
+
+The ranking, and state the failure rates rather than selling past them:
+
+  A Claude Code HOOK is the only mechanism here that is not advisory — Anthropic's
+  own docs draw that line explicitly. Gate it narrowly; a session-start hook that fires every session
+  is the noise failure arriving by a deterministic route.
+
+  A SKILL whose description names an OCCASION, plus a pointer of THREE LINES OR FEWER in the
+  always-on file, is the portable fallback. Say plainly that it is advisory: measured at 0 of 3 recall
+  in headless mode in Anthropic's own eval harness, and a working skill can stop firing because
+  unrelated skills were added.
+
+  NOT MCP. A single "hello" in a fresh session costs 51,700–56,900 tokens and disabling it recovers
+  about 9%.
+
+  NOT a daemon. A background process breaks silently while continuing to look healthy.
+
+🔴 Three lines is a hard ceiling on the always-on pointer, and it is not aesthetic: the same instruction obeyed at 97% in isolation falls to 2% when combined with five others. Every line taxes every other line. A pointer says where to look; it is never the instructions themselves.
+
+🔴 THE BAR: if I accept every recommendation without reading, I end with a working system. That is what separates a recommendation from a menu with a default.
+
+Tick.
+
+2 — THE THREE THINGS EVERY TIER GETS
+
+The minimum, not the target. What each looks like differs by tier; that they exist does not.
+
+  A WAY TO RUN A MODULE. Given a module URL: fetch it, extract its prompt, prepare
+  whatever it needs, hand it to me ready to run.
+
+  A RECORD OF WHAT RAN. One row per module: which, when, what artifact it produced and where that
+  artifact lives, and WHAT CHANGED AS A RESULT.
+
+  🔴 That last column is the one that matters. A row marked done with nothing in it is a module that
+  was not completed, and the record must make that visible rather than let a tick hide it.
+
+  A WAY TO LEARN A NEW MODULE EXISTS. The school adds modules. Something must re-check. Do NOT build
+  a background process for this — a check that runs when I next work is enough.
+
+Tick.
+
+3 — WHAT MY TIER ADDS
+
+Build what the execution template names, where INTERVIEW.md showed appetite for it. Where it did not, say so and leave it. Building against a gap I do not have is how a durable system becomes an abandoned one.
+
+Tick.
+
+4 — PROVE THE GATE FIRES — BOTH TESTS
+
+Do not report that it works. Show it:
+
+  say a sentence that SHOULD trigger it     →  it fired
+  say a sentence that should NOT trigger it →  it stayed quiet
+
+🔴 A gate that fires on everything is as broken as one that fires on nothing, and only the negative test catches it. If either fails, fix the description and run both again.
+
+Then verify the rest against reality, with real output:
+
+  every path in the tracker resolves to a file that exists
+  the always-on total in CONTEXT-MAP.md matches what Claude Code loads NOW that you have added to it
+  the module runner works on a real module URL
+
+Tick.
+
+FINISH
+
+Every file created with its path. Both gate tests with their real output. The new always-on byte total against the old one.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/SCHOOL-01-BUILD-CHECKLIST.md` and <each file built above, by path — the gate, the module runner and the record beside `~/dev/school/01-workflows/`>, and remove the pointer lines added to my always-on file — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+Append to DECISIONS.md: what you recommended, what I chose, and what you did not build.
+
+Then say exactly this:
+
+  "Module 01 complete. The gate fires on [trigger] and stays quiet on [non-trigger]. Your always-on
+  cost went from [X] to [Y] bytes."
+
+Then stop.
+```
+
+## What the prompts read
+
+- [`kit/survey.md`](https://docs.utopiamodels.ai/kit/survey.md) — the environment commands, and what each proves
+- [`kit/workflows/gates.md`](https://docs.utopiamodels.ai/kit/workflows/gates.md) — **the entry-way gate mechanisms, ranked, with each one's measured failure rate**
+- [`kit/workflows/SPEC.md`](https://docs.utopiamodels.ai/kit/workflows/SPEC.md) — what this module is for, and how the templates are built
+
+**Ten tier templates**, one interview and one execution each:
+
+| tier | | |
+|---|---|---|
+| **1 · BARE** | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/1-bare-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/1-bare-execution.md) |
+| **2 · CONFIGURED** | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/2-configured-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/2-configured-execution.md) |
+| **3 · ORGANIZED** | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/3-organized-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/3-organized-execution.md) |
+| **4 · dispatch** | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/4-dispatch-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/4-dispatch-execution.md) |
+| **4 · context** | [interview](https://docs.utopiamodels.ai/kit/workflows/tiers/4-context-interview.md) | [execution](https://docs.utopiamodels.ai/kit/workflows/tiers/4-context-execution.md) |
+
+## Resources
+
+- [Claude Code memory](https://code.claude.com/docs/en/memory) — the 200-line ceiling, and why bloat makes the file stop working
+- [skills](https://code.claude.com/docs/en/slash-commands) · [hooks](https://code.claude.com/docs/en/hooks-guide) — the nine lifecycle events · [subagents](https://code.claude.com/docs/en/sub-agents) · [MCP](https://code.claude.com/docs/en/mcp)
+
+## Where this module is currently weakest
+
+**The interview it hands out was itself unexamined until someone actually ran it.** Before dogfooding
+this exact prompt, prompt-1 forced every reader through the full interview with no shorter way in — the
+quick-tier branch at step 0 did not exist — and step 6 asked once whether to write all four files rather
+than once per file, so keeping three of four meant restarting all four just to change the one you did
+not want. Neither gap turned up from reading the prompt; both turned up from running it and watching
+where a real reader stalled.
+
+That is the module's own argument, turned on itself: a design read on the page can look complete right up
+until someone actually runs it.

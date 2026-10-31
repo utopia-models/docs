@@ -1,0 +1,23 @@
+slug: 4-context
+name: ORCHESTRATED · context
+situation: >-
+  One agent, deep structured knowledge. The effort has gone into what is written down and how it
+  resolves, not into running many things at once.
+questions:
+  - How does the agent resolve a fact it needs, and what happens when it is not found?
+  - Which of your written material is authored, and which is generated from it?
+  - When a fact comes from an unvetted source and passes through three transformations, does anything still say so?
+  - What has drifted between what is written and what is true?
+  - What does an agent read first, and who decided that order?
+objection:
+  q: I have a knowledge base. Is this not the same thing?
+  a: >-
+    Only if it answers three questions a knowledge base usually does not: whether a fact's
+    trustworthiness survives derivation, what happens when a key is missing rather than wrong, and
+    which of your files are canonical versus regenerable. The third is easy to get wrong in a way that
+    is expensive later — an index nobody can rebuild has become substrate by accident.
+gates:
+  - name: a fact's trust does not improve by passing through a model
+    why: derivation launders provenance unless something forbids it
+  - name: a missing key logs a gap, never a guess
+    why: fail-closed resolution is the whole difference from a wiki

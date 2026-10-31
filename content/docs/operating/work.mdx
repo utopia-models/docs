@@ -1,0 +1,334 @@
+---
+title: How work flows
+description: The board is the queue, git is the state, and a merged pull request is the only status change. Plans, features, issues, lanes, specs, and why no check can stop a merge.
+updated: 2026-09-28
+---
+
+```text title="prompt-1|Learn how work flows from plan to merge|claude-code|Reads this page, explains the three words, the five derived steps and the advisory gates back to you, then tests you on real scenarios. Writes nothing."
+PROMPT 1 of 2 — learn what this module teaches. You write nothing anywhere in this prompt.
+
+ASK EVERY QUESTION WITH {{ASK}}, with a RECOMMENDED option first. Not prose.
+
+Fetch and read the whole page:
+
+  curl -s https://docs.utopiamodels.ai/docs/operating/work.md
+
+If the fetch fails, say what came back and stop.
+
+1 — EXPLAIN IT BACK, UNDER THESE HEADINGS
+
+  THE THREE WORDS     PLAN, Feature, issue — what each is, the layer it lives on, and why "task" was retired.
+                      Why a PLAN is not a Feature.
+  THE FIVE STEPS      BRIEF · LOOP · FILE · DISPATCHED · DONE — and why every step is derived, never reported.
+                      What the only thing that advances a step is.
+  LANES               Why an issue with no lane is structurally undispatchable however idle the fleet is, and why
+                      "plenty open, zero dispatchable" is a routing defect, not a capacity problem.
+  THICK TASKS         Where spec.md and plan.md live, why the plan.md checkboxes are the live work state, and the
+                      two rules that keep a brief from rotting.
+  GATES               Why nothing gates main, which one gate is the hard stop, which failures are real, and the
+                      two gate designs that are forbidden outright.
+  FINISHING           What "finished" means, and why an armed auto-merge is not it.
+  THE UNCOMFORTABLE   The four parallel trackers the page admits to, and why it publishes that.
+
+Quote the page where you lean on it.
+
+2 — WALK FIVE SCENARIOS
+
+For each, say what the page says happens, and quote the line:
+
+  a) A run exits with its pull request open and auto-merge armed.
+  b) A dispatched issue's body describes the work but names no spec path.
+  c) A lint on a pull-request title is red.
+  d) The board shows 40 open issues and the scheduler dispatches none.
+  e) A master needs another master's input on an issue.
+
+3 — QUIZ ME
+
+Three questions with {{ASK}}, one at a time, four options each, correct answer not always first. Draw from: which layer a Feature sits on, what advances step 5, what a superseded decision record must carry and in which commit, and how presence is established. After each answer, quote the line that settles it.
+
+If `AskUserQuestion` is unavailable in this session, ask the same questions as plain numbered text in one message instead.
+
+Then say exactly this:
+
+  "Module learned. Paste prompt 2 and I will map your own work loop onto it."
+
+Then stop.
+```
+
+```text title="prompt-2|Map your work loop onto plan → issue → merged PR|claude-code|Surveys your tracker and repo for thin tasks, typed status and second trackers, then proposes spec/plan templates and a merged-PR finish line. Writes only after you confirm."
+PROMPT 2 of 2 — integrate this module into my own setup. Survey read-only first; propose; write only what I confirm.
+
+HOW LONG THIS TAKES: a multi-step audit (6 steps, about 4 questions, writes only what you approve) — expect roughly 10–25 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+ASK EVERY QUESTION WITH {{ASK}}, each with a RECOMMENDED option first and one line of why. If I accept every default without reading, I must still end up with something that works.
+
+Reference, read it first:
+
+  curl -s https://docs.utopiamodels.ai/docs/operating/work.md
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/WORK-INTEGRATE-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/WORK-INTEGRATE-CHECKLIST.md and work from it:
+
+  # Work module — integrate
+  - [ ] 1. Find the tracker and how work reaches an agent
+  - [ ] 2. Measure how thick my tasks are
+  - [ ] 3. Measure how status actually moves
+  - [ ] 4. Measure my gates
+  - [ ] 5. Propose the adoption
+  - [ ] 6. Write only what I confirmed
+  ## Rules
+  - Read only until step 6. No tracker writes at any point.
+  - Every finding carries the command that produced it.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — nothing gets written until step 6, and there only what I confirm.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — FIND THE LOOP
+
+`gh auth status`, `git remote -v`. Then find how work reaches an agent here: an issue assigned to a bot, a TODO file, a chat message, a label. Say which is the real one. If there is more than one tracker, count them — the reference page admits to four, so do not pretend there is one if there is not.
+
+2 — HOW THICK ARE MY TASKS?
+
+Pull the last 30 closed issues (`gh issue list --state closed --limit 30 --json number,title,body`). For each: does the body name a spec file by path? Does that file exist (`git ls-files | grep <path>`)? Does it carry acceptance criteria? Report the fraction that are THIN — a sentence with no brief an agent could re-ground from.
+
+3 — HOW DOES STATUS MOVE?
+
+For the same 30: was each closed by a merged pull request whose body carries a closing keyword (`gh pr list --state merged --search "closes #<n>"` or the issue's timeline), or closed by hand? Report the fraction. Every hand close is a status a human typed.
+
+4 — WHAT ACTUALLY GATES MAIN?
+
+`gh api repos/<owner>/<repo>/branches/<default>/protection` (a 403 or 404 is a finding, not an error). List the workflows that run on pull requests. For each, classify it the way the page does: hard stop (secret scan), real (build, typecheck, deploy), or not real (a title or filename lint). Flag any gate that blocks on content keywords.
+
+5 — PROPOSE
+
+Terminal output, three parts:
+
+  THIN → THICK   a spec.md template (objective · acceptance · scope · grounding) and a plan.md template
+                 (phases → checkbox items), and the path convention they live at beside the work
+  THE FINISH     "done = a merged PR whose body closes the issue", and what in my current flow contradicts it
+  THE GATES      which checks to keep as real, which to demote to information, which to delete
+
+Ask me with {{ASK}} which to adopt first. RECOMMEND the templates plus a line in my agent instructions file saying the issue body must name the spec path — the page calls that the highest-leverage line in the pipeline and the easiest to omit.
+
+6 — WRITE ONLY WHAT I CONFIRMED
+
+Create only accepted files. Never modify an existing file you did not create without asking; if the instructions-file line is accepted, show me the exact diff and ask again before applying it. If something does not work, say so and stop.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/WORK-INTEGRATE-CHECKLIST.md` and <the spec.md and plan.md templates at the path convention I accepted> — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+FINISH
+
+Every file created with its path, and the three fractions you measured (thin tasks, hand closes, real gates) so I can re-measure them in a month. The runbook companion to this page is https://docs.utopiamodels.ai/docs/operating/operations.md.
+```
+
+**One principle underneath all of it: no stored copies of state, no resident processes, and the documents
+are the config.** Anything that can drift is deleted rather than monitored. Anything unattended announces
+itself where the founder already looks — the board — so silence can never be mistaken for health.
+
+## The three words
+
+Three layers, three words. Getting these confused is the most common vocabulary failure, so the fleet
+deliberately retired a fourth word ("task") that used to mean two of them at once.
+
+| Layer | Word | What it is | Example id |
+| --- | --- | --- | --- |
+| Above the board | **PLAN** | One thinking session: a document, its research, and the forks it closed | `PLAN-178` |
+| On the board | **Feature** | A body of shippable work with ordered children | `#5878` |
+| On the board | **issue** | One dispatchable unit, run to a merged pull request | `#5882` |
+
+A PLAN is **not** a Feature. It references Features; it does not equal one. A PLAN can spawn several, and
+some of what a PLAN decides never becomes work at all.
+
+## The five steps
+
+```text
+1 BRIEF · 2 LOOP ⟳ ‖ 3 FILE · 4 DISPATCHED · 5 DONE
+```
+
+| # | Step | What it means |
+| --- | --- | --- |
+| 1 | **BRIEF** | A rough note from the founder, restated. No research yet |
+| 2 | **LOOP** ⟳ | Research ⇄ questions, repeating, until the plan is complete |
+| 3 | **FILE** | At least one issue exists for this plan |
+| 4 | **DISPATCHED** | A master is executing |
+| 5 | **DONE** | Every referenced issue is closed |
+
+**Every step is derived, never reported.** Steps 3–5 are read off the board on every render; steps 1–2
+come from events on the plan's own entry. Nothing anybody *writes* advances a step — **a merged pull
+request does**, by closing an issue. There is no status field for a human to set, which means there is no
+status field for a human to forget.
+
+Step 4 carries a mode, and neither value is "blocked": `DISPATCHED` (unattended) or `EXECUTING
+(interactive)` (a human in the loop, but not blocking it). Being genuinely stuck is not a state — it is a
+comment on the issue saying exactly what blocks you, followed by a clean exit. Stopping silently is the
+one unacceptable outcome.
+
+## The loop, end to end
+
+```text
+PLAN (a thinking session)
+  └─ Feature issue  +  ordered sub-issues  +  a committed brief
+       └─ the Architect DISPATCHES  (starting the run IS the assignment)
+            └─ a master executes to merged + live
+                 └─ git moves the board
+                      └─ the founder glances at truth
+```
+
+## The board
+
+**There is exactly one tracker**: a GitHub organization project board. Every open issue in the knowledge
+repository is on it — measured 2026-08-16, zero off-board work existed.
+
+Work that becomes a board issue lives on the board and nowhere else. It specifically does **not** also
+live in an agent harness's private to-do list; two trackers cannot both be true.
+
+What the board carries per row: the issue, its **Lane** (which master serves it), **Priority**,
+**Portfolio**, and a **Status** that is derived rather than typed.
+
+### Lanes, and the failure mode nobody expects
+
+A lane routes an issue to a master. The important property is the negative one: **an issue with no lane,
+or on a lane no master serves, is structurally undispatchable** — permanently, silently, and regardless
+of how idle the fleet is.
+
+This is the single most misread signal in the system. A board showing plenty of open work and zero
+dispatchable looks exactly like a capacity problem, and investigations have gone looking for a broken
+scheduler while the scheduler was printing the real cause every five minutes. Measured 2026-08-16: of the
+open issues at that moment, thirteen were undispatchable — eleven with no lane at all, plus two on a lane
+that no sweeper reaches. That is a routing defect, and no amount of extra compute fixes it.
+
+The diagnostic exists and takes one command:
+
+```bash
+# on novaserver, from the knowledge clone
+bash _infra/scripts/sweep-dispatch.sh --explain
+```
+
+### Board hygiene, honestly
+
+Two measured weaknesses, recorded here rather than smoothed over:
+
+- **Closed rows from other repositories never converge.** The reconciler archives rows only for the
+  repository it runs in, so closed items from sibling repos accumulate. On 2026-08-16 they were the
+  majority of all rows on the board.
+- **Rows can carry no lane and no status at all.** Nothing rejects a row in that state at creation time,
+  and a row in that state is invisible to routing.
+
+## Thick tasks — never work a thin one
+
+A dispatched issue is not a sentence. The brief lives **beside the work**, in the repository:
+
+```text
+<portfolio>/specs/<issue#>-<slug>/spec.md    objective · acceptance · scope · grounding
+<portfolio>/specs/<issue#>-<slug>/plan.md    phases → checkbox items
+```
+
+**The `plan.md` checkboxes are the live work state.** Tick `[ ] → [~] → [x]` and commit as you go. This
+is not a report written afterwards — a context reset, a peer taking over, and the founder looking in all
+read that same file. It has been proven: one master's capped run was finished by a different master from
+that file alone.
+
+Two rules that keep this from rotting:
+
+1. **The issue body must contain the literal spec path.** A runner reads a spec only *if the issue names
+   one*. An unnamed spec does not exist to the master executing the work — the highest-leverage line in
+   the pipeline, and the easiest to omit.
+2. **If the spec references dead prerequisites, or there is no spec, stop cleanly and say exactly why on
+   the issue.** Never churn a stale brief. A spec can cite dead machinery in perfectly good faith, so
+   every reference gets re-grounded in the session that acts on it.
+
+Non-trivial architecture choices get a decision record beside the work, in
+`<portfolio>/specs/<issue#>-<slug>/decisions/`. Superseding one edits the old record's `Superseded-by`
+header **in the same commit** — a silently invalidated decision is this fleet's most repeated failure.
+
+## Communication
+
+Masters talk to each other by **@mentioning a GitHub account in a comment on the relevant issue**. That
+is the whole mechanism. A master's next dispatched run receives unread mentions injected at start, which
+gives at-least-once delivery with a durable read state, and it happens where the founder is already
+looking.
+
+There is no chat system, no message bus and no inbox service. There was a NATS bus; it was deleted. See
+[Decisions](/docs/structure/decisions).
+
+**Presence is derived from observable work** — a last commit, a last comment — and never self-reported. A
+heartbeat that an agent writes about itself is a claim, not evidence.
+
+## Gates: all of them are advisory
+
+**Nothing gates `main`.** Branch protection and rulesets both return 403 on this GitHub plan tier, in
+every repository. That is not a loophole being exploited; it is the actual configuration, and the fleet's
+process is built to be honest about it.
+
+Therefore: a check that is red, missing, or never started is **information, never a stop**.
+
+**Fix-forward is the rule.** When a check fails, identify the real failure. A broken build or a genuine
+security finding is real — fix it. Infrastructure being down is not — use the documented fallback and
+proceed. Waiting for a human to unblock a merge is never the move.
+
+| Gate | If it fails |
+| --- | --- |
+| **Secret scan** | The one hard stop. If the workflow cannot run, run the same pinned scanner locally (see [Operations](/docs/operating/operations)) and only then merge |
+| **A real build, typecheck or deploy failure** | Real. Fix the code |
+| **Shell syntax check** | Real, and cheap: a script that cannot be *parsed* cannot run. Read backwards from the reported line — an unbalanced quote is reported at the next paren, not at the defect |
+| **A lint on a title, a filename, or a doc convention** | Not real. Never blocks a merge |
+
+**A merge is never a human gate.** If a merge does not go through, read the actual error and act on it:
+rebase a conflicting branch, or use `gh pr merge <n> --squash --admin`. Escalating a merge — "needs
+eyes", "should I force it?" — is explicitly banned. A merge is reversible in git; leaving a pull request
+open is what actually costs.
+
+Two gate designs are **forbidden outright**, both because they were tried:
+
+- A gate that blocks on content keywords or on a generated map. That class false-blocked documentation
+  and auto-reverted its own cleanup.
+- Resident processes, heartbeat polls, and scheduled "health checks". The board is the queue, and silence
+  is the failure mode.
+
+## Finishing
+
+**Finish means: a pull request whose body says `Closes #N`, merged.** The merge closes the issue and
+moves the board. Nobody types a status; the board cannot lie about work that git already did.
+
+**Arming auto-merge is not finishing.** If the pull request is still open when the run exits, the work is
+not done, and the run's close-out comment has to say so. Fifteen pull requests once stacked up unnoticed
+behind exactly that misunderstanding.
+
+## What the loop actually produced
+
+Measured 2026-08-16, over the preceding seven days: **745 issues closed**. Over the preceding twenty-four
+hours: roughly **157 dispatch runs**, of which **two failed** — and both failures filed their own board
+issue automatically through systemd's `OnFailure` path.
+
+That last detail is the one worth taking away. The system is not designed to avoid failure; it is
+designed so that a failure announces itself within seconds, on the surface a human already reads.
+
+## The uncomfortable part
+
+Doctrine says *"the board is the ONLY tracker"* and also *"the `plan.md` checkboxes ARE the work state"*.
+Both statements are load-bearing, and they do not reconcile with each other. Counting honestly, there are
+**four parallel trackers** for one body of work: the board, a plan registry, the plan documents
+themselves, and the per-spec `plan.md` checkboxes. Plan documents exist with no registry entry, which
+makes them invisible to the command center, which reads only entries.
+
+This is published rather than hidden because a wiki that claims one tracker while the fleet runs four is
+the exact category of document this whole site was built to replace.

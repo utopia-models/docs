@@ -1,0 +1,37 @@
+slug: 3-organized
+name: ORGANIZED
+situation: >-
+  Skills fire and notes are read rather than re-explained. Decisions are probably written down somewhere
+  already. What is usually missing is anything that marks one dead when it is overtaken.
+questions:
+  - I found decision-shaped notes on this machine. Which still hold, and which were quietly overtaken?
+  - What was deleted that a skill or a note still describes as live?
+  - When a decision changes today, what marks the old one dead — and who has to remember to do it?
+  - Which skill should consult a record before it acts, and has it ever been wrong because it did not?
+  - Which cap or limit has never been measured against real load?
+objection:
+  q: Decision records are bureaucracy. Nobody reads them.
+  a: >-
+    Nobody reads most of them, and that is correct. A record is written only when a choice is
+    expensive to reverse or will otherwise be proposed again; everything else belongs in a commit
+    message. The part that earns its cost is one line — Superseded-by, edited in the same commit as
+    the replacement — because it is what stops a dead decision being cited as live by a skill that
+    cannot tell the difference.
+gates:
+  - name: the supersession check runs without anyone remembering it
+    why: a rule that depends on memory holds until the first busy week
+  - name: a kill record for everything deleted
+    why: a deleted thing with no record gets rebuilt by the session that cannot see it was tried
+builds:
+  - name: a skill whose description names the occasion, plus a pointer of three lines or fewer
+    why: the reminder is a judgement call, so it stays advisory and says so
+  - name: the checker wired to a Claude Code `PostToolUse` hook on writes to the records directory, and as a pre-commit hook
+    why: the link check is mechanical, so it is the part that gets to be deterministic
+  - name: kill records for what the history showed was deleted and never recorded
+    why: those are the things a well-organised setup rebuilds most confidently
+  - name: a limits pass — each numeric cap found gets its measurement, or a record saying it is a guess
+    why: a guessed cap reports success while doing a fraction of the work
+mechanism: >-
+  Two parts, and keep them apart. The REMINDER is a skill plus pointer — advisory, because no hook can
+  detect that a choice is expensive to reverse. The CHECK is a hook — deterministic, because a broken
+  link is mechanical. One reminder; the check is silent unless something is broken.

@@ -1,0 +1,35 @@
+slug: 2-configured
+name: CONFIGURED
+situation: >-
+  An instructions file exists. Some of what it holds is behaviour, and some is a decision written as a
+  rule, with the rejected alternative already erased.
+questions:
+  - Which lines in your instructions file record a choice rather than a behaviour? I found some — are they still true?
+  - Which choice has the agent re-proposed even though it is written down?
+  - What have you replaced, where the old thing's notes still describe it as current?
+  - Where would a record actually get read — in the repo beside the code, or in your notes?
+  - Which limit in your configuration was a guess?
+objection:
+  q: My instructions file already says what I decided.
+  a: >-
+    It says what is true now, with nothing marking what it replaced. A rule rewritten in place erases
+    the option you rejected, so the agent proposes it again and has no way to know it was tried. And a
+    file that accumulates decisions grows until it stops being read — every line in it taxes every
+    other line.
+gates:
+  - name: decisions held apart from the file that holds behaviour
+    why: mixing them grows the always-on file until its instructions stop being followed
+  - name: a replaced decision marked dead in its own record
+    why: an overwritten rule cannot say what it overwrote
+builds:
+  - name: a pointer of three lines or fewer added to the existing instructions file
+    why: it says where the records are; it never holds them
+  - name: decision-shaped lines moved out of the instructions file into records
+    why: the always-on file gets shorter, and the reason for each choice survives
+  - name: the checker as a git pre-commit hook in the repo the records live in, running --staged
+    why: the old record must change in the same commit as its successor, and only the index can see that
+  - name: the one to three records the interview surfaced
+    why: the re-proposed decision is the one that is costing something now
+mechanism: >-
+  Recommend the pointer plus a skill whose description names the occasion, and state the
+  skill's failure rate from gates.md rather than selling past it.

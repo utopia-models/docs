@@ -1,0 +1,267 @@
+---
+title: The dispatch runtime
+description: Two shell scripts and systemd are the entire agent runtime. No daemon, no queue, no watchdog — starting a run is the assignment, and the close-out comment is the only liveness there is.
+updated: 2026-09-28
+---
+
+<Status value="stable" />
+
+```text title="prompt-1|Learn the two-script runtime|claude-code|Reads this page, explains the no-daemon design and its three fail-open guards back to you, and reproduces the bash byte-offset hazard in a scratch directory. No repository writes."
+PROMPT 1 of 2 — learn what this module teaches. You write nothing to any repository. The one thing you create is a scratch directory under mktemp, and you delete it before you finish.
+
+ASK EVERY QUESTION WITH {{ASK}}, with a RECOMMENDED option first. Not prose.
+
+Fetch and read the whole page:
+
+  curl -s https://docs.utopiamodels.ai/docs/operating/dispatch-runtime.md
+
+If the fetch fails, say what came back and stop.
+
+1 — EXPLAIN IT BACK, UNDER THESE HEADINGS
+
+  THE WHOLE RUNTIME   What dispatch.sh does, what task-runner.sh is, and what is deliberately absent
+                      (daemon, queue, watchdog, scheduler). Why "starting a run is the assignment" leaves no
+                      state that can disagree with what is executing.
+  LIVENESS            Why the close-out comment is the only liveness, and what a clean exit code does NOT prove.
+  THREE GUARDS        Quota (exit 9), duplicate on one agent (exit 11), fleet claim (exit 14): what each refuses,
+                      and why all three FAIL OPEN and why none of them comments on the issue.
+  THE WINDOW          The measured 26–27 seconds, why a unique systemd unit name is a real mutex for one user
+                      and none at all across two users, and what closes the cross-agent case.
+  SELF-UPDATE         Why task-runner.sh re-executes itself exactly once after fast-forwarding.
+
+Quote the page where you lean on it.
+
+2 — REPRODUCE THE SELF-UPDATE HAZARD
+
+The page says bash reads a script incrementally, by byte offset, so rewriting a script under a live interpreter changes what runs. Prove it:
+
+  d=$(mktemp -d); printf 'echo one\nsleep 2\necho two\n' > "$d/s.sh"
+  bash "$d/s.sh" & sleep 1; printf 'echo three\n' >> "$d/s.sh"; wait; rm -rf "$d"
+
+Paste the raw output. Explain why a line that did not exist when the script started still ran, and why "re-exec once at a known safe point" is the whole fix.
+
+3 — CHECK THE NAMESPACE CLAIM ON THIS MACHINE
+
+Run `systemctl --user show-environment >/dev/null && echo user-manager-present` (say so plainly if systemd is absent here). Then state, in one sentence, the transferable rule: a uniqueness guarantee is only as wide as the namespace that enforces it — and name the namespace a --user unit name lives in.
+
+4 — QUIZ ME
+
+Three questions with {{ASK}}, one at a time, four options each, the correct answer not always first. Draw from: which exit code means which guard, why guards fail open, why a refusal must not post a marker on the issue, and why an armed auto-merge is not a finished run. After each answer, quote the line that settles it.
+
+If `AskUserQuestion` is unavailable in this session, ask the same questions as plain numbered text in one message instead.
+
+Then say exactly this:
+
+  "Module learned. Paste prompt 2 and I will audit your own job launcher against it."
+
+Then stop.
+```
+
+```text title="prompt-2|Audit your launcher, then adopt the smallest two-script shape|claude-code|Finds whatever starts your long-running jobs, grades it on the four properties this runtime has, and proposes the smallest change. Writes only after you confirm."
+PROMPT 2 of 2 — integrate this module into my own setup. Survey read-only first; propose; write only what I confirm.
+
+HOW LONG THIS TAKES: a multi-step audit (5 steps, about 5 questions, writes only what you approve) — expect roughly 10–25 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+ASK EVERY QUESTION WITH {{ASK}}, each with a RECOMMENDED option first and one line of why.
+
+Reference, read it first:
+
+  curl -s https://docs.utopiamodels.ai/docs/operating/dispatch-runtime.md
+
+That runtime is two shell scripts and systemd: no daemon, no queue, no watchdog. It runs on ONE machine with a handful of agents — that assumption is load-bearing in several of its choices, so if my situation differs, say so out loud rather than quietly assuming it holds.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/DISPATCH-INTEGRATE-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/DISPATCH-INTEGRATE-CHECKLIST.md and work from it:
+
+  # Dispatch runtime module — integrate
+  - [ ] 1. Find every launcher
+  - [ ] 2. Grade each on the four properties
+  - [ ] 3. Ask what the code cannot tell you
+  - [ ] 4. Propose one change
+  - [ ] 5. Write only what I confirmed
+  ## Rules
+  - Read only until step 5. Nothing that mutates state: no starting, stopping or enabling units, jobs or containers.
+  - Every claim quotes the file and line it came from.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — nothing gets written until step 5, and there only what I confirm.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — FIND EVERY LAUNCHER
+
+Look for all of these before concluding — most repositories have more than one, and they disagree:
+
+  systemd units or timers in the repo or referenced from it · crontab lines in scripts or docs · CI workflows that
+  dispatch other workflows · scripts named run / start / dispatch / worker / job / queue / launch · supervisord,
+  pm2, docker compose restart policies · an app-level queue (celery, sidekiq, bullmq, a polled table)
+
+List each with its path and say which is the real entry point. Several with no shared entry point IS the finding.
+
+2 — GRADE EACH ON THE FOUR PROPERTIES
+
+  ASSIGNMENT     Is "job X belongs to worker Y" written somewhere before the worker starts? Where, and what
+                 happens when it disagrees with what is actually running?
+  LIVENESS       Does a worker write a heartbeat about itself (a claim), or is liveness derived from output it
+                 leaves where people look (evidence)?
+  DOUBLE START   Find the guard. Measure its window between check and point of no return. Is it enforced by
+                 something that can refuse — a unit name, a lock, a DB constraint — or only by a read? If it
+                 is a unique name, what namespace enforces it, and can two callers sit in different ones?
+  FAIL DIRECTION For each guard: what happens when its input is missing, unreadable or malformed? Quote the path.
+                 Is failing that way right for this system? (The reference fails open: a false block stops the
+                 fleet, which it judges worse than a wasted run.)
+
+3 — ASK WHAT THE CODE CANNOT TELL YOU
+
+With {{ASK}}, one at a time, each with a recommended answer: how many runs happen at once, whether a run is safe to repeat, and whether anything outside the system must see progress before a run finishes. Stop asking as soon as you can recommend.
+
+4 — PROPOSE ONE CHANGE
+
+A table — property · what this repo does · what the reference does · defect or legitimate difference in substrate. Be willing to conclude my setup is right and the reference is wrong for my case.
+
+Then ONE recommendation, not a menu: either "adopt the two-script shape — here is the smallest version for your case" (the launcher, the run script, the guard, and where each announces start and finish), or "do not — here is what you need instead and why that fleet does not." Name the files and the shape of each edit. Ask me with {{ASK}} whether to write it, RECOMMENDED: yes, as a new file beside the existing launcher rather than an edit to it.
+
+5 — WRITE ONLY WHAT I CONFIRMED
+
+Create only accepted files. Never modify a file you did not create without asking. Do not start, enable or install anything — show me the command that would, and leave running it to me. If something does not work, say so and stop.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/DISPATCH-INTEGRATE-CHECKLIST.md` and <the new file beside the launcher, by path> — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+FINISH
+
+Every file created, with its path; the one property you changed and how I will see that it holds. The fleet's own runbook for watching runs is at https://docs.utopiamodels.ai/docs/operating/operations.md if I want the operational half.
+```
+
+Sourced from the fleet's own component document for `dispatch-runtime`. Called stable because both halves
+are in git, both are bound by assertions that re-check on every pull request, and four test harnesses
+exercise the parts that are easy to break silently.
+
+`dispatch.sh` **starts** a run. `task-runner.sh` **is** the run. That is the whole runtime.
+
+There is no daemon, no queue, no watchdog, and nothing resident between runs. Two consequences follow, and
+they are the reason the design is worth copying:
+
+- **Starting a run is the assignment.** There is no separate step where an agent is told what to work on,
+  so there is no state that can disagree with what is actually executing.
+- **Liveness is the close-out comment.** The run posts on its own issue when it starts and again when it
+  exits. Nothing else reports health, because nothing else is running to report it.
+
+Stop these two scripts and the fleet does not degrade — it stops, because nothing else in the organization
+can begin a unit of work.
+
+The one thing it deliberately is **not** is a scheduler. Choosing *which* issue and *which* agent belongs
+to the sweeper, described on [Operations](/docs/operating/operations); a human at the command line calls
+in through exactly the same door. The runtime never picks work.
+
+## Three pre-flight guards, and every one of them fails open
+
+| Guard | Refuses when | Exit | Escape hatch |
+| --- | --- | --- | --- |
+| **Quota** | the agent's own state file says its entitlement is exhausted, with a reset time still ahead | `9` | `DISPATCH_IGNORE_QUOTA=1` |
+| **Duplicate, same agent** | a unit for this issue is already active on that box | `11` | `DISPATCH_ALLOW_DUPLICATE=1` |
+| **Fleet claim** | a lock-held probe finds a live run for this issue on **any** agent | `14` | — |
+
+**Failing open is the decision, not an oversight.** An unreadable file, an unreachable box, an unparseable
+JSON document and an untakeable lock all mean *proceed, and say so on stderr*. A false block stops the
+fleet, which is worse than a wasted run.
+
+**None of the three writes a comment on the issue**, and they share one reason. The scheduler treats
+certain glyphs on an issue as terminal, so a marker posted by a *refusal* would permanently unqueue an
+issue whose only problem was transient. A guard that announces itself where the queue reads would be a
+guard that silently deletes work.
+
+### Why only the third guard has no window
+
+The first two are read-then-act checks, and a read-then-act check has a gap. Measured on this fleet:
+**26–27 seconds** pass between reading the board and launching the unit, so two dispatchers reading in the
+same second both pass.
+
+A zero-entropy unit name closes that for one agent — systemd refuses a duplicate unit name in the kernel,
+which is a real mutex and not a convention. But a user service manager is **per user**, so the same unit
+name under two different accounts is two different names, and the kernel has no opinion about the pair.
+
+The cross-agent case is covered by a single file lock on the shared box, held across the probe *and* the
+launch, because both dispatch paths — the scheduler running locally, and a hand dispatch arriving over SSH
+— execute the claim as the same unix user on the same machine. That is proven against real systemd, with a
+mutation control, by a committed test harness rather than by argument.
+
+**The transferable part:** a name-uniqueness guarantee is only as wide as the namespace that enforces it.
+Check what your namespace actually is before treating a unique name as a lock.
+
+### The last-moment disposal re-check
+
+An issue can stop being work while its run is starting. Every gate that asks about it from outside the run
+asks too early — the unit start, the self-update, the clone sync and the credential decrypts all come
+after that read. The fix asks the same two questions from **inside** the run, immediately before the
+started marker. The real case that produced it, with timestamps, is on
+[Architecture](/docs/structure/architecture).
+
+## There is no backend selection
+
+The launcher passes a literal backend name into the transient unit. There is no lookup, no registry read,
+and no per-agent resolution: a function that once chose between providers was deleted along with the
+alternate provider it chose between.
+
+The environment variable survives for a different reason — it is the fleet's *"am I inside a dispatched
+run"* signal, which is what every board-keyed gate exempts on. Worth noting as a pattern: a flag whose
+original job was deleted can be worth keeping for the second job it accidentally does, provided you write
+down which job it is now doing.
+
+## The run updates itself, then executes itself, exactly once
+
+`task-runner.sh` fast-forwards its own repository and then re-executes itself one time before doing
+anything else.
+
+**Never mutate a script a running bash is still reading.** Bash reads a script incrementally, by byte
+offset; rewriting it underneath a live interpreter resumes execution at an offset that now points into
+different text. Re-executing once, at a known safe point, is the whole fix.
+
+## Read the live state, do not recall it
+
+Every fact about a run in flight is off-git and changes by the minute, so this page states the command
+instead of the answer.
+
+| You want | Run |
+| --- | --- |
+| Which agents are dark right now | `_infra/scripts/dispatch.sh --quota` for a table, `--quota-dark` for names |
+| Would this dispatch be refused? | `--preflight-quota <agent>` (0 or 9) · `--preflight-duplicate <agent> <issue#>` (0 or 11) |
+| What is live for one issue | `_infra/scripts/dispatch.sh --live-units <agent> <issue#>` |
+| Every run on this box, now | `systemctl --user list-units --state=active 'task-*'` |
+| What one run actually did | `journalctl --user -u task-<issue>.service -o cat` |
+
+A run leaves nothing resident between invocations, so there is no daemon to check. The transient unit
+while it lives, and the started and finished comments on the issue afterwards, are the only liveness the
+runtime has.
+
+## What this runtime does not prove
+
+Published rather than smoothed over, because each one has cost this fleet a real run.
+
+- **A clean exit code is not a shipped artifact.** The finished marker says the process exited cleanly and
+  nothing more. The completion signal is a *merged* pull request whose body closes the issue.
+- **An armed auto-merge is not a merge.** A run that exits with its pull request still open has not
+  finished. Fifteen of them stacked up unnoticed once on exactly that confusion.
+- **The pre-flight clone sync stashes another agent's uncommitted work.** It hard-resets each clone to the
+  remote with a stash in front of it, so an interactive session's edits survive only as a stash entry
+  nobody is told about. Check the stash list before re-doing work that vanished mid-run.
+- **Transient units are outside the one registry check that actually executes.** Every run's unit is
+  created on the fly and collected on exit, so there is no installed unit file for the daily verifier to
+  prove. The two committed test harnesses are the substitute, and they run on pull requests rather than on
+  a timer.

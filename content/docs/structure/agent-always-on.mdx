@@ -1,0 +1,293 @@
+---
+title: The always-on agent
+description: The fleet forbids resident processes, then permits exactly one. What earns that exception, what the exception has to declare about itself, and the three properties that keep a permanent loop from dying quietly.
+updated: 2026-09-28
+---
+
+<Status value="experimental" />
+
+```text title="prompt-1|Learn what earns a process the right to be resident|claude-code|Reads this page, explains the ban on resident processes, its one exception and the three properties that keep a loop from dying quietly, then quizzes you. Writes only its checklist."
+PROMPT 1 of 2 — learn what the always-on agent page teaches: why a fleet that forbids resident processes permits exactly one, and the three properties that keep a permanent loop from dying quietly. You read and explain. You write one checklist file and nothing else.
+
+I run my own agents and background processes. Skip basics.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+Write ~/ALWAYS-ON-LEARN-CHECKLIST.md and work from it:
+
+  # Always-on agent — learn
+  - [ ] 1. Fetch the page
+  - [ ] 2. The ban, and the one exception
+  - [ ] 3. The loop, and why apply runs last
+  - [ ] 4. The three load-bearing properties
+  - [ ] 5. Isolation, and the weak points
+  - [ ] 6. Quiz me, then tell me to paste prompt 2
+
+  ## Rules
+  - Read only. The checklist is the one file I write.
+  - Every claim quotes the page sentence it came from.
+
+1 — FETCH
+
+    curl -s https://docs.utopiamodels.ai/docs/structure/agent-always-on.md
+
+If that fails, say what came back and stop.
+
+2 — THE BAN AND THE EXCEPTION
+
+Explain why a resident process is forbidden for anything the board, a run or a git event already announces — the failure mode is silence, which looks like health. Then the exception's condition: an external system that emits no subscribable signal, where latency below the poll interval is the point. And the requirement that does most of the work: the process must NAME that event in its own docs. Give the two events this one names, and why the second one — a poll that stopped for good once it captured its identifier — is the right shape.
+
+3 — THE LOOP
+
+Draw detect → enrich → mailbox → notify → apply. Explain why apply runs LAST, using the page's numbers (median 19 s, p90 98 s, max 246 s across 45 records) and the fact that duties run sequentially.
+
+4 — THE THREE PROPERTIES
+
+  - a duty is REGISTERED in the loop body, not discovered from a directory — why a dropped-in handler is dead code that looks installed
+  - `Restart=always` without a start-limit interval and burst restarts a crash loop forever, never enters `failed`, and never fires the failure path
+  - a schedule is a timer; only the watch is resident — the three tests the daily rollup failed
+
+5 — ISOLATION AND WEAK POINTS
+
+Explain why the isolation is "the absence of a name in two string literals" and why that survives everyone forgetting. Then the weak points: unit files in no repository, an undescribed virtualenv, and a probe run as the wrong user that cannot tell "absent" from "not permitted".
+
+6 — QUIZ AND FINISH
+
+Ask me three questions with {{ASK}}, one at a time, four options each, exactly one correct — one must be a proposed new duty I have to classify as resident or timer. Quote the settling sentence after each.
+
+If `AskUserQuestion` is unavailable in this session, ask the same questions as plain numbered text in one message instead.
+
+Then say exactly this:
+
+  "Always-on learned. Paste prompt 2 and I will put everything resident on your machine through the test."
+
+Then stop.
+```
+
+```text title="prompt-2|Put everything resident on my machine through the test|claude-code|Inventories everything that runs continuously or on a schedule on this machine, puts each through the naming test and finds the ones that can die silently. Writes only after you confirm."
+PROMPT 2 of 2 — inventory everything that runs continuously or on a schedule on this machine, put each resident process through the naming test, find the ones that can die silently, and fix what I approve. The survey is read-only; every change waits for my explicit yes.
+
+HOW LONG THIS TAKES: a multi-step audit (6 steps, about 5 questions, writes only what you approve) — expect roughly 10–25 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+    curl -s https://docs.utopiamodels.ai/docs/structure/agent-always-on.md
+
+Read it first if prompt 1 did not run in this session.
+
+ASK EVERY QUESTION WITH {{ASK}}, with a RECOMMENDED option first and one line of why.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/ALWAYS-ON-INTEGRATE-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/ALWAYS-ON-INTEGRATE-CHECKLIST.md and work from it:
+
+  # Always-on — integrate
+  - [ ] 1. Enumerate, from every layer
+  - [ ] 2. Separate resident from scheduled
+  - [ ] 3. The naming test on each resident process
+  - [ ] 4. Find the ones that can die silently
+  - [ ] 5. Report in three piles
+  - [ ] 6. Fix what I approve, and prove it
+
+  ## Rules
+  - Steps 1–5 are read only. I start, stop, enable, disable and edit nothing.
+  - Every finding carries the command and its raw output.
+  - Something I cannot read is UNREADABLE, never absent — say which account could read it.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — nothing gets written until step 6, and there only after my yes.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — ENUMERATE
+
+There is never only one scheduler. Cover all of these, and say which do not apply here:
+
+    systemctl list-units --type=service --state=running --no-pager
+    systemctl list-timers --all --no-pager
+    systemctl --user list-units --type=service --state=running --no-pager
+    systemctl --user list-timers --all --no-pager
+    crontab -l
+    ls -la /etc/cron.d/ 2>/dev/null
+    launchctl list 2>/dev/null
+    docker ps --format '{{.Names}}\t{{.Status}}\t{{.Command}}' 2>/dev/null
+
+Then ask me with {{ASK}} what runs that a machine listing cannot see — a hosted bot, a CI schedule, a browser tab left on a dashboard, a polling script on another box. RECOMMENDED option: "nothing else — use what you found".
+
+2 — RESIDENT OR SCHEDULED
+
+Resident stays up between pieces of work; scheduled starts, does a thing, exits. Anything resident that does its work on an interval is a timer wearing a daemon's clothes — flag it.
+
+3 — THE NAMING TEST
+
+For each resident process:
+  1. What EVENT does it exist to catch? "Monitoring the API" is not an event. "A 5xx rate crossing a threshold" is.
+  2. Could I be TOLD about that event — a webhook, subscription, callback, trigger, file watch? Say whether it already exists and I simply have not wired it.
+  3. Is SPEED the point? If five minutes later would be equally useful, it is a schedule.
+
+4 — SILENT DEATH
+
+For each resident process, from its actual config, quote:
+  - its restart policy — `Restart=always` with no `StartLimitIntervalSec`/`StartLimitBurst` crash-loops forever and never enters failed
+  - its failure path — an `OnFailure=` unit or any alert; if none, its death is silent
+  - where it announces liveness somewhere a person actually looks
+
+And every timer whose service unit does not exist — it never fails, so `systemctl --failed` reads clean.
+
+5 — REPORT
+
+Three piles: KEEP RESIDENT (passed the test) · DEMOTE TO A SCHEDULE · REPLACE WITH A SUBSCRIPTION. Then the silent-death list and any timer pointing at a missing unit.
+
+6 — FIX, WITH CONSENT
+
+Ask with {{ASK}} which to fix first. RECOMMENDED: the silent-death finding most likely dead right now — it is the one where I have no way of learning I was wrong.
+
+Show the exact change — for a systemd unit usually a drop-in adding `StartLimitIntervalSec=` / `StartLimitBurst=` and `OnFailure=` — and write it only after my yes. Then prove it: show `systemctl show <unit> -p StartLimitBurst -p OnFailure` reading the new values. Do not crash a production process to test the failure path without a separate yes.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/ALWAYS-ON-INTEGRATE-CHECKLIST.md` and <each drop-in you wrote, e.g. `~/.config/systemd/user/<unit>.d/<name>.conf`>, then run `systemctl --user daemon-reload` (without `--user` for a system unit) — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+Finish with: the three piles, what changed, and the one process you would bet is dead right now.
+```
+
+Sourced from the fleet's own component document for `agent-always-on`. Called experimental because there
+is exactly one instance of it; because it exists under an amendment to a rule that forbids its entire
+class; and because its service units live in no repository, so nothing compares what is running against a
+committed artifact.
+
+Everything else in this fleet is event-driven. Work arrives on a board, a run announces itself on an
+issue, a merge moves a status. **A resident process is forbidden for anything the board, a dispatched run
+or a git event already announces** — heartbeat polls and scheduled health checks are exactly that, and
+their failure mode is silence, which is indistinguishable from health.
+
+Then there is one exception, and this page is about what earned it.
+
+## What a permanent loop has to prove
+
+The amendment permits a resident process **only** to observe an external system that emits no signal
+anyone can subscribe to, and only where latency below the polling interval is the actual point. It adds
+one requirement that does most of the work:
+
+🔴 **The process must name the external event it exists to catch, in its own documentation.**
+
+That single requirement is the transferable part. A daemon that cannot name the unsubscribable event it
+watches is a daemon that is polling something it could have been told about, and writing the name down is
+where that becomes obvious — to the author, before anyone else has to review it.
+
+The one process here names two:
+
+- **A role appearing on an applicant-tracking board.** No webhook, no feed and no subscription exists for
+  *"a role opened at any company in this region"*. Being early is the entire edge, and two minutes and
+  twelve hours are different applications.
+- **A chat-membership update at bootstrap.** The moment a human adds the bot to a group. This one is
+  finished: the poll stopped **permanently** once the identifier was captured, and the published feed
+  reports it as captured rather than as running. A watch that has caught its event and stopped is the
+  right shape; a watch that keeps polling for something it already has is the wrong one.
+
+## The loop
+
+```text
+service, Restart=always            one cycle
+  ├─ detect     watch the external boards
+  ├─ enrich     fill in what was seen
+  ├─ mailbox    inbound replies
+  ├─ notify     outbound, successes only
+  └─ apply      act on what detect wrote   ← LAST, and deliberately
+
+each duty runs every executable in its directory, sequentially,
+logging the name and the exit code of each
+
+handlers WRAP the canonical tools in the main repository — never a fork
+
+every cycle merges a liveness block into a state file
+  → collected into a committed feed
+    → rendered on the command center, where a human already looks
+```
+
+## Three properties that are load-bearing and easy to undo
+
+### A duty is registered in the loop, not discovered from its directory
+
+*Which* directories run is a list of literal calls in the loop body. A handler dropped into a directory
+that is not on that list is **dead code that looks installed** — present, executable, and never invoked.
+
+Discovery-by-directory is the tempting alternative and it trades a small convenience for a silent failure
+mode. An explicit list means adding a handler requires one edit that a reviewer can see.
+
+The last duty runs last for a measured reason. It is the only handler that can spend minutes rather than
+seconds — median 19 seconds, 90th percentile 98, maximum 246, across 45 records — and the duties run
+sequentially. Placed ahead of the watch, it would spend the very latency budget the process exists to
+protect.
+
+**Order matters in a sequential loop, and the ordering argument belongs next to the order.**
+
+### The restart limit is what makes death visible
+
+`Restart=always` on its own restarts a crash loop **forever**. The unit never enters a failed state, the
+failure handler never fires, and an always-on agent dies silently while its service manager reports it as
+active.
+
+Adding a start-limit interval and burst is what converts an endless crash loop into a unit that eventually
+gives up, enters `failed`, and triggers the notification path. Without it, the most important property of
+the whole design — that failure announces itself — is quietly absent for the one component that has no
+other liveness signal.
+
+### A schedule is a timer. Only the watch is resident
+
+The daily rollup that summarizes what the loop did is a **timer**, not a sixth duty. Three reasons, and
+each one is a test a future addition should be run against:
+
+1. A rollup of rows already written has **no latency edge**, so it fails the criterion that permitted the
+   resident process in the first place.
+2. The duties are sequential, so a rollup inside the loop spends the watch's budget.
+3. A surface reporting what the system did today **must not go dark when the thing it reports on does.**
+
+**Anything that is a schedule is a timer here; only the watch is resident.** That is the line a proposed
+sixth thing gets tested against, and it is a much easier test than "is this important enough."
+
+## Its isolation is enforced by code that never reads the registry
+
+The scheduler's list of dispatchable agents is a hardcoded string in two scripts. This agent is in
+neither, so **no board issue can route to it** — not by misconfiguration, not by a lane typo, not by
+someone assigning it in good faith.
+
+Adding it to either list would make an always-on agent dispatchable, which is the one property the class
+denies. The isolation is therefore not a policy anyone has to remember; it is the absence of a name in two
+string literals, which is the kind of guarantee that survives everyone forgetting about it.
+
+There is a second half worth stating plainly: this agent is **never foreground**. All human interaction
+with it proxies through the planning agent. A resident process with its own conversational surface would
+be a second place to give it instructions, and a second place to give a system instructions is a second
+tracker wearing different clothes.
+
+## Where this one is currently weakest
+
+- **The unit files are not in any repository.** They are installed from a different repository by a
+  script, and the main repository holds neither — so nothing compares the running schedule against a
+  committed artifact. Read the live one on the box; do not trust a written copy, including this page.
+- **The interpreter is a virtual environment on the box that nothing in git describes.** One duty needs a
+  real browser under a virtual display, and the system interpreter has no package directory of its own on
+  this distribution. The environment is created by three commands documented in the agent's own brain
+  repository, and the handler's pre-flight names it concretely when it is missing rather than failing as a
+  bare non-zero exit. Probe it; do not assume it.
+- **A probe run as the wrong user reports absence and non-existence identically.** These are per-user
+  service units, invisible to a probe from another account, and the failure text does not distinguish
+  "not there" from "not yours to see." Run the probe as that account with the runtime directory set, or
+  fall back to the committed feed — which carries its own timestamp, and is the only reading available
+  from an account that cannot reach the box at all.
+
+That last point generalizes past this fleet: **a health check that cannot tell "absent" from "not
+permitted" is a health check that will eventually report a working system as dead.**

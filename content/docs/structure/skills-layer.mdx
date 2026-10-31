@@ -1,0 +1,291 @@
+---
+title: The skills layer
+description: Reusable agent behaviour packaged as a directory with one markdown file. Its defining property is negative — a skill reaches exactly one machine — and the fleet has three delivery layers with three different reaches.
+updated: 2026-09-28
+---
+
+<Status value="in-flux" />
+
+```text title="prompt-1|Learn the three delivery layers and why a skill reaches one machine|claude-code|Reads this page, explains the three delivery layers, their reaches and the conventions that decide whether a skill fires, then quizzes you. Writes only its checklist."
+PROMPT 1 of 2 — learn what the skills-layer page teaches: that a skill reaches exactly one machine, the three delivery layers and their reaches, and the conventions that decide whether a skill fires. You read and explain. You write one checklist file and nothing else.
+
+I use Claude Code skills already. Skip what a skill is; teach what this page claims about them.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+Write ~/SKILLS-LEARN-CHECKLIST.md and work from it:
+
+  # Skills layer — learn
+  - [ ] 1. Fetch the page
+  - [ ] 2. The description is the routing key
+  - [ ] 3. Three delivery layers, three reaches
+  - [ ] 4. The conventions, and doors versus frames
+  - [ ] 5. Grading a population, and the weak points
+  - [ ] 6. Quiz me, then tell me to paste prompt 2
+
+  ## Rules
+  - Read only. The checklist is the one file I write.
+  - Every claim quotes the page sentence it came from.
+
+1 — FETCH
+
+    curl -s https://docs.utopiamodels.ai/docs/structure/skills-layer.md
+
+If that fails, say what came back and stop.
+
+2 — THE ROUTING KEY
+
+Explain why the frontmatter description is not documentation but the routing key, and why a vague one makes a skill that exists and never fires.
+
+3 — THREE LAYERS
+
+Draw PLUGIN (one repo → every box, pinned and version-gated, carries hooks and scripts but never skills) · DOCTRINE (each box's own clone, live through a symlink — but the symlink is tracked in that box's repo) · SKILL (one box's own repo → exactly one box). Then tell the story of the five machines silently pinned to a stale tree because symlinks were repointed by hand and committed nowhere. The line to state: a repoint is not delivered until it is committed.
+
+4 — CONVENTIONS
+
+The four: load context and show a status table before a multi-file write · never open with a question · a skill with side effects opts out of automatic invocation · the fixed verbs (audit, self-enhance, update, fix). Then: a door is thin and the process lives in a frame — why two doors holding one process diverge. Then the live read: an exclamation mark followed by a backticked command runs before the model sees the file, so a stated count becomes a command that reads it. And why the executing agents carry NO skills — process travels to where work is done as data in the issue body.
+
+5 — POPULATION AND WEAK POINTS
+
+Why "the fleet has skill X" is only true per machine; the `gh api` 404-body-on-stdout trap; and the weak points: two of seven repos carry skills, 24 against 51 with nothing measuring the gap, a backup file in the loader's directory, and three pointers wired to nothing.
+
+6 — QUIZ AND FINISH
+
+Ask me three questions with {{ASK}}, one at a time, four options each, exactly one correct — one must give me a skill description and ask whether it would fire. Quote the settling sentence after each.
+
+If `AskUserQuestion` is unavailable in this session, ask the same questions as plain numbered text in one message instead.
+
+Then say exactly this:
+
+  "Skills layer learned. Paste prompt 2 and I will audit the skills on your machine and fix the worst one."
+
+Then stop.
+```
+
+```text title="prompt-2|Audit my skills for rot and dead routing, then fix one properly|claude-code|Audits every skill, rule and instruction file on this machine for stated facts already false and descriptions that will never fire, then rewrites or creates one skill. Writes only after you confirm."
+PROMPT 2 of 2 — audit every skill, rule and instruction file on this machine, find the stated facts that are already false and the descriptions that will never fire, then rewrite or create ONE skill to this page's conventions. The audit is read-only; the one write waits for my explicit yes.
+
+HOW LONG THIS TAKES: a multi-step audit (6 steps, about 5 questions, writes only what you approve) — expect roughly 10–25 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+    curl -s https://docs.utopiamodels.ai/docs/structure/skills-layer.md
+
+Read it first if prompt 1 did not run in this session.
+
+ASK EVERY QUESTION WITH {{ASK}}, with a RECOMMENDED option first and one line of why.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/SKILLS-INTEGRATE-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/SKILLS-INTEGRATE-CHECKLIST.md and work from it:
+
+  # Skills — integrate
+  - [ ] 1. Find every instruction file, and which layer delivers it
+  - [ ] 2. Extract every checkable claim
+  - [ ] 3. Check each one
+  - [ ] 4. Grade the routing descriptions
+  - [ ] 5. Report
+  - [ ] 6. Fix one skill, with consent
+
+  ## Rules
+  - Steps 1–5 are read only.
+  - Every finding carries the command and its raw output.
+  - Something I cannot check from here is UNCHECKABLE, never false.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — nothing gets written until step 6, and there only the one skill I approve.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — FIND THEM
+
+    ls -la ~/.claude/skills/ ~/.claude/rules/ ~/.claude/commands/ 2>/dev/null
+    ls -la .claude/ 2>/dev/null
+    find . -maxdepth 3 \( -name 'CLAUDE.md' -o -name 'AGENTS.md' -o -name 'SKILL.md' \) -not -path './node_modules/*' 2>/dev/null
+
+For each: path, size, real file or symlink, and which delivery layer it rides — a plugin, a symlink into another repo, or this machine only. For every symlink, run `git status --short` in the repo that holds it: a repoint that is not committed is undone by the next checkout.
+
+2 — EXTRACT
+
+Read each file fully — do not grep, because a grep cannot surface an absence. Pull every checkable statement: a path, a count, a command, a version, a port, a claim about another file.
+
+3 — CHECK
+
+    test -e <path> && echo PRESENT || echo ABSENT
+    command -v <tool> || echo 'not on PATH'
+    <the real count command> | wc -l
+
+For every stated count, go count the thing.
+
+4 — ROUTING
+
+For each skill description: is it the SITUATION a user is in, or a summary of what the skill does? Do two overlap so much the model could not choose? Does any skill that WRITES lack the opt-out from automatic invocation?
+
+5 — REPORT
+
+ALREADY FALSE (claim, file:line, command, output) · ROTS NEXT (true today but asserted — with the live-read replacement, e.g. an exclamation-mark-backtick command) · NEVER FIRES (with a rewritten description) · one number: the fraction of checkable claims that are false right now.
+
+6 — FIX ONE, WITH CONSENT
+
+Ask with {{ASK}}:
+  fix the worst ALREADY FALSE skill            [RECOMMENDED — it is misleading my agent right now]
+  rewrite the worst NEVER FIRES description
+  turn something I re-explain every session into a new skill (then interview me, one question at a time, until you know its trigger, its reads, its output and what it must never do)
+
+Write the result to this page's four conventions: situation-phrased description · every fact a live read · reads before it asks · shows its plan before any write and opts out of auto-invocation if it writes. Show me the full file before writing it. Ask with {{ASK}} whether it goes in `.claude/skills/<name>/SKILL.md` (RECOMMENDED when it is about this repo) or `~/.claude/skills/<name>/SKILL.md`.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/SKILLS-INTEGRATE-CHECKLIST.md` and `.claude/skills/<name>/SKILL.md` (or `~/.claude/skills/<name>/SKILL.md`, wherever I chose) — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+After writing, prove it: in a fresh `claude -p`, say a sentence that SHOULD trigger it and one that should NOT, and paste both results. A skill that fires on everything is as broken as one that never fires.
+```
+
+Sourced from the fleet's own component document for `skills-layer`. Called in-flux because three of its
+own in-repository pointers resolve to files that are wired to nothing; because only two of the fleet's
+seven agent repositories carry a skills directory at all; and because the two that do have diverged, with
+nothing measuring the gap.
+
+A skill is a directory holding one markdown file. The file's frontmatter description is what the model
+matches on to decide whether the skill applies — which means **the description is not documentation, it is
+the routing key**, and a vague one makes a skill that exists and never fires.
+
+This is where the fleet's process *doors* live: the entry points that start a plan, continue one, or run a
+feedback pass. Delete the layer and no agent stops executing — but every way of *starting* something goes
+with it.
+
+This page is about delivery: who gets a skill, and how far it actually travels.
+
+## The defining property is negative
+
+🔴 **A skill reaches exactly one machine.**
+
+The fleet ships a plugin to every box — hooks and scripts, pinned to a commit and gated on a version. It
+is genuinely one push and every box pulls. **That is true of the plugin and of nothing else**, and the
+sentence *"one push, every machine gets it"* has been applied to skills more than once by people who had
+read the plugin's documentation.
+
+The plugin does not carry skills. It never has.
+
+## Three delivery layers, three reaches
+
+```text
+PLUGIN        one repository  →  EVERY box
+              pinned to a commit, gated on a version
+              carries: hooks, scripts
+
+DOCTRINE      each box's own clone  →  EVERY box, live
+              read through a symlink, so a rule change
+              lands with no version bump
+              🔴 but the SYMLINK is tracked in that box's own repo
+
+SKILL         one box's own repository  →  exactly ONE box
+              arrives at that box's next pull
+```
+
+**Conflating any two of these is the recurring error**, and the middle one is where it bites, because it
+is the second layer wearing the third layer's clothes.
+
+Doctrine is symlinked live out of each machine's own clone, so a rule change reaches every box without a
+release. But the *symlink itself* is a tracked file in that machine's own repository. When the links were
+repointed by hand on five machines and committed on none, every subsequent checkout restored nine symlinks
+into a directory the rebuilt tree no longer had — and the automatic pull then skipped, because it refuses
+to run over uncommitted deletions. Five machines, silently pinned to a stale tree.
+
+**A repoint is not delivered until it is committed.** A change made by hand on a live machine is a change
+that exists until the next checkout, and no longer.
+
+## What belongs in a skill, and what does not
+
+**A skill belongs to the agent that owns the folder.** A machine's agent directory is that agent's; a
+project's own skills, commands and rules never live there. That boundary is what stops one agent's
+behaviour leaking into another's by proximity.
+
+Four conventions this fleet holds its own skills to, each earned rather than chosen:
+
+- **A skill that touches more than one file loads its context and shows a status table before any write.**
+  The reader sees what is about to happen while it is still cheap to stop.
+- **An interactive question is never step one.** A skill that opens by asking has not read anything yet,
+  so its question is uninformed by definition.
+- **A skill with side effects opts out of automatic invocation.** Auto-matching on a description is right
+  for a skill that reads and wrong for one that writes.
+- **The verbs are fixed**: *audit* is read-only, *self-enhance* is autonomous, *update* and *fix* are
+  scoped. A skill whose name does not start with one of those is claiming a shape the fleet has no rules
+  for.
+
+### A door is thin; the process is a frame
+
+The skills that start things resolve *which* process you mean and then hand off to a frame document. **The
+process lives in the frame, never in the door.**
+
+This matters more than it sounds. A door that contains its process cannot be shared with a second door, so
+the moment two entry points need the same steps, the steps get copied — and two copies of a process
+diverge exactly the way two copies of anything else do.
+
+### A fact a skill would assert becomes a command that reads it
+
+🔴 In a skill file, an exclamation mark immediately followed by a backticked command **runs in a shell
+before the content is sent to the model**, and the output replaces the placeholder. Verified here both
+without any tool allowlist and with automatic invocation disabled.
+
+So: a sentence stating a count, a path or a version is a sentence that rots. The live read cannot. This is
+the same discipline the pages on this wiki follow — [state the probe, not the answer](/docs/operating/operations) —
+applied one layer down, inside the instruction itself.
+
+### The executing agents have no skills at all
+
+🔴 And that is the current design, not a gap. An agent executing a filed piece of work reads its
+specification and its checklist; anything it needs from a process arrives **written into the issue body at
+filing time**.
+
+Worth sitting with, because it inverts the obvious approach. The machines doing the work carry the least
+process. Process lives where work is *shaped*, and travels to where work is *done* as data rather than as
+installed behaviour — which means the shape of a process can change without a deployment to anywhere.
+
+## Grade the population, never one machine
+
+🔴 *"The fleet has skill X"* is only ever true of machines individually, and most of them are not readable
+from any one account. A verification that read one machine and pronounced the layer sound has already
+shipped here once.
+
+Every fact about this layer is off-repository, so this page states the readings rather than the answers:
+
+| Question | Command |
+| --- | --- |
+| What does *this* machine have | `ls ~/.claude/skills/` |
+| What does a given machine's repository carry | `gh api repos/<org>/<repo>/contents/skills --jq '.[]\|select(.type=="dir").name'` |
+| What one skill actually does | `gh api repos/<org>/<repo>/contents/skills/<name>/SKILL.md --jq .content \| base64 -d` |
+| Does the plugin carry skills (it does not) | `gh api repos/<org>/<repo>/contents/plugins/<plugin> --jq '.[].name'` |
+| Is a machine on the current plugin payload | `bash _infra/scripts/plugin-deploy-check.sh` |
+
+One trap in that table, and it costs an hour the first time: **`gh api` writes its 404 body to standard
+output**, so a bare fallback prints the error JSON *and* the fallback text on one line. Filter for the
+shape you expect rather than for non-emptiness.
+
+## Where this layer is currently weakest
+
+- **Two of seven agent repositories hold a skills directory at all.** The rest return 404. So the layer's
+  real population is two machines, and the larger set — the majority of every skill that exists here — is
+  reachable by nobody else. **Any plan that says "ship a skill to the fleet" is describing a mechanism
+  that does not exist.**
+- **The two sets have diverged with nothing measuring the gap.** Twenty-four named skills against
+  fifty-one. No shared manifest, no linter, no index. There is no command that answers *"which skills
+  exist in the fleet"* — the probe table above is one read per machine precisely because that single
+  command has never existed.
+- **A backup file sits inside the skills directory**, in the same directory the loader walks. It is not a
+  skill and nothing prunes it, against this fleet's own standing rule that git history is the archive.
+- **Three of this component's own in-repository pointers are wired to nothing.** The assertion checker
+  reports them present on disk and called by nobody — which is exactly what a door that was replaced but
+  not deleted looks like.

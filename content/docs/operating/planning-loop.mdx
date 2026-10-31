@@ -1,0 +1,252 @@
+---
+title: The planning loop
+description: Five steps from a rough note to filed, dispatchable work — and not one of them is reported. Every step is derived from an event or from the board, so a plan has no field it could lie in.
+updated: 2026-09-28
+---
+
+<Status value="in-flux" />
+
+```text title="prompt-1|Learn the derived five-step loop|claude-code|Reads this page and its vocabulary twin, explains why no step can be reported, and walks one hypothetical plan through the derivation. Writes nothing."
+PROMPT 1 of 2 — learn what this module teaches. You write nothing anywhere in this prompt.
+
+ASK EVERY QUESTION WITH {{ASK}}, with a RECOMMENDED option first. Not prose.
+
+Fetch and read both, in this order:
+
+  curl -s https://docs.utopiamodels.ai/docs/operating/planning-loop.md
+  curl -s https://docs.utopiamodels.ai/docs/operating/work.md
+
+The second has the vocabulary (PLAN, Feature, issue); the first has the mechanism. If either fetch fails, say so and stop.
+
+1 — EXPLAIN IT BACK, UNDER THESE HEADINGS
+
+  DERIVED, NOT REPORTED  The five steps and, for each, the exact thing it is derived from. Why that means "a plan
+                         has no field it could lie in", and why `step < 3` is the entire definition of planning.
+  STEP ZERO              The three ordered questions — mode, portfolio, subprocess — and why the ORDER is load-bearing.
+                         The mode literals, and why `interactive` must never become a synonym for blocked.
+  THE TWO EXITS          The only two things that end the loop, why an approving remark is neither, and why a click
+                         is invisible to anything that reads only what the human typed.
+  FILING ADVANCES        Why neither exit advances the step, and what does.
+  WEAKEST POINTS         The three weaknesses the page publishes about itself, one line each.
+
+Quote the page where you lean on it.
+
+2 — RUN THE DERIVATION ON A HYPOTHETICAL
+
+Invent one plan and give it a list of events: a brief at 09:00, two planning turns, three issues filed, two of them closed. At each event, state which step the plan is at and WHICH FACT you derived it from. Then add a fourth event — the human says "looks great, ship it" — and show that the step does not move, and why.
+
+3 — QUIZ ME
+
+Three questions with {{ASK}}, one at a time, four options each, correct answer not always first. Draw from: what step 4 is derived from, why the click needs a separate hook, why the planner does not stay to watch a dispatched run, and why a count written into doctrine prose drifted twice. After each answer, quote the line that settles it.
+
+If `AskUserQuestion` is unavailable in this session, ask the same questions as plain numbered text in one message instead.
+
+Then say exactly this:
+
+  "Module learned. Paste prompt 2 and I will find the planning state your own system is guessing at."
+
+Then stop.
+```
+
+```text title="prompt-2|Replace typed planning status with derived status|claude-code|Finds every status field in your planning artifacts, measures the drift already there, and proposes the event that should set each one. Writes only after you confirm."
+PROMPT 2 of 2 — integrate this module into my own setup. Survey read-only first; propose; write only what I confirm.
+
+HOW LONG THIS TAKES: a multi-step audit (5 steps, about 4 questions, writes only what you approve) — expect roughly 10–25 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+ASK EVERY QUESTION WITH {{ASK}}, each with a RECOMMENDED option first and one line of why.
+
+Reference, read it first:
+
+  curl -s https://docs.utopiamodels.ai/docs/operating/planning-loop.md
+
+The property being adopted: every step of a plan is derived from an event or from the tracker, so nobody can type a status that is wrong.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/PLANNING-INTEGRATE-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/PLANNING-INTEGRATE-CHECKLIST.md and work from it:
+
+  # Planning loop module — integrate
+  - [ ] 1. Find every planning artifact
+  - [ ] 2. Find each status field's oracle
+  - [ ] 3. Measure the drift that already exists
+  - [ ] 4. Propose the derivation
+  - [ ] 5. Write only what I confirmed
+  ## Rules
+  - Read only until step 5, in the repository AND in the tracker.
+  - Every drift finding carries the command and its raw output, so I can reproduce it.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — nothing gets written until step 5, and there only what I confirm.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — FIND EVERY PLANNING ARTIFACT
+
+ROADMAP / PLAN / TODO / BACKLOG / MILESTONE files · an RFC or design directory and whether its documents carry a status · issue templates and which fields they ask a human to fill · project board config in the repo · the changelog, generated or hand-written. For each: path, and how it is maintained (hand-edited, generated, unknown).
+
+2 — FIND EACH STATUS FIELD'S ORACLE
+
+For every checkbox, Status:, phase marker, Done column or percentage:
+
+  What event would make it FALSE? (a merged pull request, a deleted file, a deploy)
+  Is anything watching for that event? Quote the hook or workflow if it exists.
+  If nothing is — how would anyone find out? "Someone would notice in review" means the field is decorative.
+
+3 — MEASURE THE DRIFT, DO NOT THEORIZE
+
+For at least ten items: compare the recorded status against git history. For any document carrying a date, compare it to `git log -1 --format=%ci -- <path>`. For any COUNT written into prose ("our 5 services"), go count the thing and show both numbers side by side — the page's own doctrine drifted exactly this way, twice.
+
+4 — PROPOSE THE DERIVATION
+
+A table: field · where it lives · what falsifies it · what watches for that · DERIVED or TYPED.
+
+Then map my process onto the five steps — BRIEF, LOOP, FILE, DISPATCHED, DONE — and for each say which event in MY system would derive it (an issue opened with a label, a PR merged with a closing keyword, all child issues closed). Where my system has no such event, say so; that gap is the finding.
+
+Recommend the ONE typed field whose switch to derived buys the most, and the concrete mechanism: which event, watched by what, writing where. Ask me with {{ASK}} whether to build it, RECOMMENDED: yes, as a check that reports drift before it is allowed to rewrite anything.
+
+5 — WRITE ONLY WHAT I CONFIRMED
+
+Create only accepted files. Never edit an existing planning document without asking first, and never change tracker state in this session. If something does not work, say so and stop.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/PLANNING-INTEGRATE-CHECKLIST.md` and <each file created in step 5, by path> — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+FINISH
+
+Every file created with its path, the drift you measured with its reproducing commands, and the one field that is now derived. For the board side of this (which fields an agent should write at all) see https://docs.utopiamodels.ai/docs/operating/board.md.
+```
+
+Sourced from the fleet's own component document for `planning-loop`. Called in-flux rather than stable
+because it has accumulated seven decision records; because its own doctrine file states a count that disk
+has already outgrown; and because the hooks that derive its first two steps ship in a separately versioned
+package that nothing in the repository can grade.
+
+This is the process a human and the planning agent run together, and the vocabulary the rest of the fleet
+uses to talk about work. Stop it and every agent keeps executing whatever is already filed, then runs dry —
+nothing else in the organization turns an intention into a board issue.
+
+What the five steps *mean* is on [How work flows](/docs/operating/work). This page is about the one
+structural property that makes them trustworthy.
+
+## No step is reported. Every step is derived
+
+```text
+1 BRIEF · 2 LOOP ⟳  ‖  3 FILE · 4 DISPATCHED · 5 DONE
+                      ↑ planning ends, execution begins
+```
+
+| # | Step | Derived from |
+| --- | --- | --- |
+| 1 | **BRIEF** | a brief event, with its timestamp, on the plan's registry entry |
+| 2 | **LOOP** ⟳ | at least one recorded planning-agent turn on that entry |
+| 3 | **FILE** | an issue reference on that entry |
+| 4 | **DISPATCHED** | at least one referenced issue still open |
+| 5 | **DONE** | every referenced issue closed |
+
+**That is why a plan cannot lie about where it is: there is no field to lie in.** Steps 3 through 5 are
+read off the board on every render. Steps 1 and 2 come from events a hook writes as they happen, not from a
+summary written afterwards.
+
+`step < 3` is the whole definition of planning. The command center's planning and execution sections
+partition on that single number, which means the boundary between "still thinking" and "being built" is
+one comparison rather than a judgement anyone makes.
+
+## Step zero asks three ordered questions, and the order is load-bearing
+
+Before step 1 there is a step zero: **mode, then portfolio, then subprocess.** The order matters because
+each answer narrows the next. Mode decides which section of a catalogue exists at all; portfolio decides
+which catalogue.
+
+The modes are exactly two, and they are literals rather than descriptions:
+
+| Mode | What it means |
+| --- | --- |
+| `dispatch` | agents execute; the planning agent's involvement ends at dispatch unless the chosen subprocess says otherwise |
+| `interactive` | the human and the planning agent work it in session, with the human in it |
+
+**Whether a dispatched chain is watched is read, never asked.** It is a `monitor: yes|no` field on the
+subprocess chosen at the third question. There used to be two dispatch modes — one monitored, one not —
+and they were merged because the monitor half duplicated a fact the subprocess already held, and could
+contradict it.
+
+🔴 **`interactive` is the whole name.** Not *needs-human*, not *blocked*, not *manual*, and above all it
+is **not a synonym for blocked**. It is a mode: work that is running, with a person in it. Work that
+genuinely cannot run unattended is *filed* as interactive; it is never filed as unattended work that then
+reports itself stuck.
+
+That distinction sounds pedantic and is not. The moment "interactive" and "blocked" become the same word,
+a queue of work that is *running fine with a human in it* becomes indistinguishable from a queue of work
+that is *stopped*, and no dashboard can tell the two apart afterwards.
+
+## Two things end the loop, and both are read rather than remembered
+
+Every turn in step 2 ends by asking the human a question whose last two options are, in that order,
+*research more* and *file it, move to step 3*. The loop ends when one of exactly two things happens:
+
+1. The human **clicks** the second option.
+2. The human **types** the sentence that means the same thing.
+
+An approving remark is neither. Enthusiasm about the artifact is neither.
+
+The click is the interesting half, because it is nearly invisible. **A click comes back as a tool result,
+not as a message** — so a per-turn injector that reads what the human said structurally cannot see it. A
+separate hook reads the tool response's answers field, and only that field, which is the difference
+between a mechanism that observes the exit and one that infers it from tone.
+
+**And neither exit advances the step. Filing does.** The click ends a conversation; a step changes when an
+issue exists.
+
+## Filing is one command, and its shape is a real decision
+
+Filing chains or waves the work, and the difference is not cosmetic — a plan designed as parallel groups
+and filed as a chain has exactly one dispatchable issue. The mechanics, the refusal rule and the case that
+produced it are on [The board](/docs/operating/board).
+
+## The loop ends at dispatch
+
+Steps 1 and 2 of the next plan run **concurrently with the execution of the last one**. The scheduler, the
+reaper and the announcer carry the tail; the planner does not.
+
+**Watching an agent work is indistinguishable from not trusting it.** If the only reason to stay is to see
+whether the run succeeds, the run already announces that on the issue, and staying buys nothing but a
+serialized planner.
+
+🔴 **The step-4 mode is not the planning mode, and the two words collide.** The planning mode is the step
+zero question above and decides which subprocesses exist. The step-4 mode is what the board shows for work
+already dispatched. They are different vocabularies that happen to share words, and the
+mapping between them is one table in doctrine rather than an inference anyone makes at the keyboard.
+
+## Where this loop is currently weakest
+
+- **A doctrine file states a subprocess count that disk has outgrown.** It heads its own table with a
+  count; a directory walk returns one more than that. The same section already carries a note saying the
+  count had drifted *once before* and instructing the reader to re-derive rather than edit the cell — and
+  it drifted again anyway. A number in prose is a claim about the filesystem, and nothing was re-checking
+  it.
+- **Nothing binds the two doctrine files to each other.** One is the full loop; the other is the compacted
+  version the executing agents read, and by design the same path resolves to a *different file* depending
+  on the agent's class. A rule changed in one is not checked against the other. A contradiction between
+  them is invisible to continuous integration and surfaces as an agent doing the planner's job, or the
+  reverse.
+- **The loop's own machinery is not gradable from the repository that documents it.** Everything that
+  derives steps 1 and 2 lives in a separate, version-gated package, so the repository's assertion checker
+  can bind the *doctrine* and never the *mechanism*. One script reads the real population across boxes,
+  and it is run by hand.
+
+Publishing that third one matters more than it looks: **a process whose enforcement lives in a different
+release train from its documentation will drift, and the drift will be invisible from either side.**

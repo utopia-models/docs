@@ -1,0 +1,5 @@
+# esbuild ships a platform binary via a postinstall script; fumadocs-mdx needs it to
+# compile the MDX source config. Without this, `pnpm install` exits 1 with
+# ERR_PNPM_IGNORED_BUILDS and the build never starts.
+allowBuilds:
+  esbuild: true

@@ -1,0 +1,573 @@
+---
+title: Module — Running Dispatched Agents on a Linux Server for Maximum Execution Efficiency
+description: Four steps. Study a fleet that actually runs, design yours against what your machine has, build it, and dispatch one real task end to end.
+updated: 2026-09-28
+---
+
+```text title="prompt-1|Study a fleet that runs, and measure mine against it|claude-code|Studies a dispatch fleet that runs and measures your setup against it, into FLEET-GAP.md. Writes nothing else."
+STEP 1 of 4 — study a dispatch fleet that actually runs, and measure mine against it.
+
+HOW LONG THIS TAKES: a multi-step study and measurement (4 steps, one question, subagents fanned out, 1 file written) — expect roughly 15–30 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+No interview beyond the one scope question below, which is my preference and so the one thing you cannot measure. Everything else in this step you can measure yourself, and asking me what you could have read is how you lose a technical person in the first five minutes.
+
+CHECKLIST FIRST
+
+RESUMING? Before you write anything, check whether ~/FLEET-GAP-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Long sessions compress their own history and pasted instructions get dropped. Write this to ~/FLEET-GAP-CHECKLIST.md and work from that file:
+
+  # Fleet gap — step 1 of 4
+  ## Tasks
+  - [ ] 1. Fetch and read both architecture files
+  - [ ] 2. Measure this machine against the nine must-haves
+  - [ ] 3. Fan out on what my environment actually raises
+  - [ ] 4. Write ~/FLEET-GAP.md
+  - [ ] 5. Report, and tell me to fetch step 2
+
+  ## Rules
+  - Read only. I create this checklist and FLEET-GAP.md. Nothing else.
+  - Every claim about this machine carries the command that proves it.
+  - Where the reference fleet's answer does not fit here, I say so rather than recommending it anyway.
+
+FETCH THE REFERENCE
+
+  https://docs.utopiamodels.ai/kit/fleet-architecture.md
+  https://docs.utopiamodels.ai/kit/dispatch-anatomy.md
+
+Extracted from a working ~7,000-line dispatch runtime — four workers, one Linux box, about eighteen months of accumulated failures. Twenty design decisions, each paired with the specific failure that produced it, plus every pre-flight refusal in order and a ~250-line minimum viable version.
+
+Read both in full before forming a view. They contradict most of what is written about agent orchestration, and the contradictions are the substance:
+
+  there is no orchestration layer
+  there is no message queue
+  there is no heartbeat
+  concurrency caps were DELETED, not tuned, after measuring 8% of proven capacity
+  the issue tracker IS the queue
+  completion is derived from a merged pull request, never self-reported
+
+If a fetch fails, say what you got and stop.
+
+Tick box 1.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before you measure this machine, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — this step writes only this checklist and ~/FLEET-GAP.md, never anything of mine.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+MEASURE THIS MACHINE
+
+dispatch-anatomy.md ends with nine must-haves — remove any one and the architecture stops working. For each, what does this machine have? Command, then answer:
+
+  1. an issue tracker with a status field, usable as a queue
+  2. a way to start a detached, named, supervised process
+  3. a wrapper that announces start and end on the work item
+  4. a forge whose merge state can be queried
+  5. a scheduler on a timer
+  6. pre-flight refusals
+  7. per-run isolated workspaces
+  8. a heartbeat
+  9. an attempt cap
+
+Most people have 1, 2 and 4 already. The interesting answers are 3, 6 and 7 — almost nobody has them and almost everybody assumes they are not needed.
+
+🔴 Two measurements decide whether any of this is possible here, and both are commonly wrong on a machine that looks fine:
+
+  Can a process survive me closing the terminal? On WSL that is whether systemd is PID 1:
+
+    ps -p 1 -o comm=
+
+  If that prints init rather than systemd, nothing here that runs in the background works, and the fix is /etc/wsl.conf with a [boot] section setting systemd=true, then wsl --shutdown from PowerShell. Say so plainly and design around it in the meantime.
+
+  Does PATH differ between shell types? Check all three:
+
+    bash -lc 'command -v node claude jq'
+    bash -c  'command -v node claude jq'
+    env -i bash -c 'command -v node claude jq'
+
+  A tool present in the first and absent in the third is why a job works when I type it and fails when a scheduler starts it. It is the most common first-fleet failure and it fails silently.
+
+Tick box 2.
+
+FAN OUT
+
+Use Claude Code's subagents — these are independent and slow in series.
+
+  What forge do I use, and does it support issue dependencies natively? If not, what carries ordering instead? Do not assume GitHub.
+  What supervisor does this machine have? The four properties needed are detached, supervised, named, tree-cleaning. Which does mine give me?
+  How many machines am I actually talking about? One box changes the locking answer completely.
+  What am I already paying for that could be the queue? A tracker my team already reads beats a new one.
+  What runs my agent non-interactively right now — is there a headless invocation, does it emit a machine-readable result, does it exit non-zero on failure?
+
+Every answer needs the command or the source that produced it. An answer you cannot back is a line in WHAT I COULD NOT DETERMINE, not a finding.
+
+Tick box 3.
+
+WRITE THE FILE
+
+~/FLEET-GAP.md. Five sections, these headings, this order:
+
+## WHAT I HAVE
+The nine must-haves, one row each: have it / partially / no, and the command that proves it.
+
+## WHAT IS MISSING
+Only the gaps. What it is, what specifically breaks without it, roughly what it costs to add, and which decision in fleet-architecture.md explains why it matters.
+
+## WHAT DOES NOT TRANSFER
+🔴 The section that makes this file honest, and the one you will be tempted to leave empty. The reference fleet made choices for reasons that may not be mine. Name every one that does not apply here and say why. One person on one machine does not need a fleet-wide lock. Work that produces no pull requests needs a different completion artifact entirely. A recommendation carried over unexamined is worse than none, because I will act on it.
+
+## THE ONE THING FIRST
+A single recommendation, not a list. The change that most reduces the distance between here and a working dispatch loop. One line of why, and what it costs.
+
+## WHAT I COULD NOT DETERMINE
+What you could not measure, and the command that would settle each.
+
+Tick box 4.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/FLEET-GAP-CHECKLIST.md` and `~/FLEET-GAP.md` — nothing else on your system was touched."
+
+FINISH
+
+Three findings that most change what I should build, and the one thing you would do first.
+
+Then say exactly this:
+
+  "Step 1 complete. FLEET-GAP.md is at ~/FLEET-GAP.md. Fetch step 2 from https://docs.utopiamodels.ai/docs/ai-infrastructure-upgrades/dispatch and paste it into a new session."
+
+Then stop. Do not design anything — step 2 does that, and it reads this file.
+
+Tick box 5.
+```
+
+```text title="prompt-2|Design my fleet, then stop for approval|claude-code|Designs your fleet from your intake and gap report, with every number carrying its measurement, then stops for approval. Writes two files and no code."
+STEP 2 of 4 — design my fleet. From my intake and my gap report, not from a template.
+
+HOW LONG THIS TAKES: a multi-step design (6 steps, forks put to you in rounds of four, 1 design file and a manifest) — expect roughly 20–40 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+This step produces a design and a manifest, and then STOPS for my approval. It writes no code.
+
+CHECKLIST FIRST
+
+RESUMING? Before you write anything, check whether ~/FLEET-DESIGN-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/FLEET-DESIGN-CHECKLIST.md and work from it:
+
+  # Fleet design — step 2 of 4
+  ## Tasks
+  - [ ] 1. Read FLEET-GAP.md
+  - [ ] 2. Decide the six shape questions
+  - [ ] 3. Put the genuine forks to me, in rounds of four
+  - [ ] 4. Write ~/FLEET-DESIGN.md and the file manifest
+  - [ ] 5. Show me the manifest and WAIT
+  - [ ] 6. On my approval, tell me to fetch step 4
+
+  ## Rules
+  - I write two files and no code. Step 3 builds.
+  - Every number in this design carries the measurement or the assumption behind it.
+  - I decide what I can decide. I ask only what genuinely depends on my judgement.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before you read the gap report, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — this step writes only this checklist and ~/FLEET-DESIGN.md, and nothing is built until I approve the manifest.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+READ THE GAP REPORT
+
+  ~/FLEET-GAP.md
+
+Step 1 wrote it: what this machine has against the nine must-haves, what is missing, and what of the reference deliberately does not transfer here.
+
+If it is absent, stop and say so. Designing without it means designing for a machine you have not measured.
+
+Tick box 1.
+
+THE SIX SHAPE QUESTIONS
+
+Answer each from MY situation. Where the reference fleet's answer applies, say so and why. Where it does not, say that louder.
+
+1 — WHAT IS THE QUEUE?
+
+The reference uses an issue tracker with a status field, because the queue should be the thing humans already look at. What do I already look at? If I have no tracker at all, that is the finding, and the cheapest correct answer is probably the forge I already push to.
+
+2 — WHAT SUPERVISES A RUN?
+
+The four properties needed are: detached, supervised, named, tree-cleaning. Name what gives me all four on this machine. If systemd is not running here, say what the alternative costs — and be concrete about it, because "use tmux" and "use systemd" differ in ways that only show up when something crashes at 3am.
+
+🔴 The unit name carries the mutual-exclusion guarantee. Name my runs after the WORK, never the attempt. This is the single highest-value detail in the whole design and it costs nothing.
+
+3 — HOW MANY WORKERS, AND WHERE?
+
+From the gap report: how many machines, how many concurrent runs, what capacity am I on. One worker on one box needs no distributed lock; two of anything needs one. Do not add machines I do not have.
+
+4 — WHAT IS THE COMPLETION ARTIFACT?
+
+The reference derives success from a merged pull request, because an agent can create one but cannot merge it. What is the equivalent in MY work? If my work does not produce PRs, this needs a real answer, not an analogy — it is the load-bearing decision in the architecture. An artifact the agent can forge is not an artifact.
+
+5 — WHAT DOES A RUN ACTUALLY DO?
+
+Name three real candidates from MY work, not examples. If the gap report did not surface them, ask me — this is one of the few things you genuinely cannot measure. A first fleet that runs one real task well beats one that could theoretically run anything.
+
+If you have to ask and no answer can reach me at all — a one-shot non-interactive run such as `claude -p`, a scripted or CI invocation, or the question coming back immediately with no real answer — do not wait and do not re-ask. Derive the three yourself from what you can read: the recurring shapes in my recent git history (`git log --oneline -50` in the repositories the gap report names), my open issues if a tracker is reachable, and any TODO or runbook file. Prefer the most boring, most repeated one. Write each under ## ASSUMPTIONS in ~/FLEET-DESIGN.md as "Run candidates — guessed without me, from <the command you ran>", and say so plainly in a line near the top of your output, directly under the scope line if there is one: "No interactive answer available — guessed the three run candidates from my history; see ## ASSUMPTIONS in ~/FLEET-DESIGN.md."
+
+6 — WHAT IS THE FIRST TASK?
+
+Exactly one, and it should be boring: something I do repeatedly, whose success is unambiguous, whose failure is cheap. Name it, and name how a machine will know it worked.
+
+Tick box 2.
+
+THEN ASK ME WHAT YOU CANNOT DECIDE
+
+ASK WITH {{ASK}}, one question at a time, each with a RECOMMENDED option first. Not prose — a prose question has no options and therefore no recommendation, and the recommendation is what lets someone who reads nothing still end with something durable.
+
+Leading with your recommendation. Ask only what genuinely turns on my judgement — how much capacity I am willing to spend, what I am unwilling to automate, what my employer's policy forbids. Do not ask me to pick a supervisor; that is a measurement and you have it.
+
+If no answer can reach me at all — a one-shot non-interactive run such as `claude -p`, a scripted or CI invocation, or the first question coming back immediately with no real answer — stop asking; do not wait and do not re-ask, and do not put the remaining questions either. These are open judgements, so there is no single safe letter to default to: make each call yourself, the way you would have recommended it, and where you are unsure lean to the choice that spends less and automates less, because that is the one I can widen later without undoing anything. Record every one under ## ASSUMPTIONS in ~/FLEET-DESIGN.md, one entry per question: the question as you would have asked it, the option you took, the reasoning in one or two sentences, and what I would have to say to change it. A decision made without me is fine; a decision made without me and not written down is a silent guess, and that is the thing this rule exists to prevent. Say so plainly in a line near the top of your output, directly under the scope line if there is one: "No interactive answers available — decided <N> open questions myself; each is recorded with its reasoning under ## ASSUMPTIONS in ~/FLEET-DESIGN.md."
+
+Tick box 3.
+
+WRITE THE DESIGN
+
+~/FLEET-DESIGN.md:
+
+## THE SHAPE
+The six answers, each with its reasoning in one or two sentences.
+
+## THE COMPONENTS
+What gets built, what each one does, and which decision in fleet-architecture.md it comes from.
+
+## THE NUMBERS
+Every constant, with its basis. 🔴 Where a number is a guess, mark it a guess and write down the measurement that would settle it. A cap chosen from caution silently becomes the system's capacity and never announces itself.
+
+## WHAT I AM NOT BUILDING
+The parts of the reference deliberately skipped, and the condition under which each becomes worth adding. This section is as important as the components list — the reference's own minimum viable version is 250 lines against 7,000.
+
+## THE FIRST TASK
+The one task, and its acceptance: a command whose exit status is the answer.
+
+## ASSUMPTIONS
+Only if a question could not reach me: each decision you made in my place, with its reasoning and what would change it. Absent in an interactive run.
+
+Then the manifest — every file step 4 will create, one line each:
+
+  path                          what it does                                   lines
+  ~/fleet/dispatch.sh           refuse or launch a named unit                   ~90
+  ~/fleet/run.sh                announce, invoke, derive the artifact           ~120
+  ...
+
+Tick box 4.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/FLEET-DESIGN-CHECKLIST.md` and `~/FLEET-DESIGN.md` — nothing else on your system was touched."
+
+SHOW ME THE MANIFEST AND STOP
+
+Print it and wait. Do not write a single file until I say go.
+
+🔴 This pause is deliberate. A manifest is one screen and I can see a wrong assumption in it immediately; a built fleet is twenty files and I will find the same wrong assumption in a week.
+
+If no answer can reach me at all — a one-shot non-interactive run such as `claude -p`, a scripted or CI invocation, or no one there to say go — do not wait. This step writes no code either way, so the safe default is to take the manifest exactly as listed, with no changes: tick box 5, write "Manifest: approved by default — no interactive answer, not reviewed by me" under ## Rules in the checklist and at the top of the manifest in ~/FLEET-DESIGN.md, and go on to ON MY APPROVAL. Say so plainly in a line near the top of your output, directly under the scope line if there is one: "No interactive approval available — took the manifest exactly as listed. Read ## ASSUMPTIONS and the manifest in ~/FLEET-DESIGN.md before you run step 3."
+
+Tick box 5.
+
+ON MY APPROVAL
+
+Say exactly this:
+
+  "Design approved. FLEET-DESIGN.md is at ~/FLEET-DESIGN.md. Fetch step 3 from https://docs.utopiamodels.ai/docs/ai-infrastructure-upgrades/dispatch and paste it into a new session."
+
+Tick box 6.
+```
+
+```text title="prompt-3|Build every file in the manifest|claude-code|Builds every file in the approved manifest and nothing that is not in it, pasting real output for each check. Asks before touching a file it did not create."
+STEP 3 of 4 — build it. Every file in the manifest, and nothing that is not.
+
+HOW LONG THIS TAKES: the longest step — one file built per manifest entry, then verified — expect roughly 30–90 minutes, scaling with the manifest across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+CHECKLIST FIRST
+
+RESUMING? Before you write anything, check whether ~/FLEET-BUILD-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/FLEET-BUILD-CHECKLIST.md, listing one task per file in the manifest plus the four below, and work from it. Tick each as you finish, not at the end — this is the longest step and the one most likely to lose its place.
+
+  ## Rules
+  - I build exactly the manifest. A file not in it does not get written.
+  - I never modify anything I did not create, without asking first.
+  - I paste REAL command output. I never write "verified" without the output above it.
+  - If something does not work, I say so and stop. A half-built fleet that reports success is worse than one that reports failure.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before you read the design, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — the manifest I approved in step 2 is still the only thing that gets written, and if it names a path my answer excludes, stop and ask me before writing that file.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+READ THE DESIGN AND THE REFERENCE
+
+  ~/FLEET-DESIGN.md
+  https://docs.utopiamodels.ai/kit/dispatch-anatomy.md
+
+The anatomy file has the run path and the refusals in order. Follow it. Where my design deliberately differs, follow my design and say so in a comment.
+
+BUILD, IN THIS ORDER
+
+The order is dependency, not preference. Each one is testable before the next exists.
+
+1 — THE WORKSPACE HELPER
+
+A per-run isolated workspace. If git: a worktree, DETACHED at a fresh origin/main — a named branch may be checked out in only one worktree at a time, so detaching is what makes two concurrent runs legal at all.
+
+Resolve the clone path physically, not through a symlink: git writes the worktree's pointer from the path it resolved through, and an aliased clone mints a pointer to a path that does not exist. Every git command inside then dies "fatal: not a git repository", and that failure is invisible from inside a run.
+
+Verify git actually works in the new workspace before returning it.
+
+2 — THE RUNNER
+
+The run path, in order: record the start timestamp before anything else · re-check that the work has not been disposed of · post the start marker BEFORE anything that can fail · create the workspace · invoke the agent, capturing stdout and stderr together · derive the outcome in an EXIT trap.
+
+🔴 Four things about the trap that are easy to get wrong, and each was a real failure:
+
+  Re-raise terminating signals. The shell does not run an EXIT trap on an unhandled SIGTERM, and a supervisor stops a unit with SIGTERM. Without this, a timeout or an OOM kill strands the item forever.
+
+  Never read the exit status inside a trap wrapper. Assigning it is itself a command with status 0, so the real code is gone by the time you use it. Pass it as a parameter.
+
+  Never swallow the terminal comment's own failure. It once ended with an unconditional true, and eight runs closed with no marker at all — a silent success became indistinguishable from a hang. Retry once, then log loudly.
+
+  Post the comment BEFORE attempting to close. Closing an already-closed item with a comment attached prints "already closed", returns zero, and silently drops the comment.
+
+Derive the outcome from the forge, never the exit code. A merged artifact created after the start timestamp is success. An open one is not finished. Nothing is a no-op, never a success.
+
+3 — THE DISPATCHER
+
+The four refusals from my design, in order, each failing OPEN — a refusal fires only on positive evidence, and every unreadable case means proceed. A guard that fails closed on its own outage is an outage.
+
+Check the JSON type before trusting an API response: a forge CLI prints its error body to stdout, so a failed call yields an object rather than an empty string, and a non-empty test reads an error as a blocker.
+
+Then launch: named after the WORK with no entropy, detached, collected, and passing PATH explicitly. The unit does not inherit your environment — it gets the supervisor's own PATH, and tools under a home directory are simply absent.
+
+4 — THE SCHEDULER
+
+The predicates from my design, on a timer. Dry-run by default; writes only behind an explicit apply flag. Raise the timer's start timeout above the worst-case cycle — the no-overlap guarantee then comes free from the timer rather than a lockfile.
+
+Write the heartbeat on EVERY exit path, including the halted and failed ones. "Nothing to do" and "not running" look identical from outside, and that ambiguity is what hides an outage for days.
+
+5 — THE AGENT BRIEF
+
+What the agent is told at the start of every run. It is a versioned artifact, not a sentence — the reference's is ~2,500 words and nearly every clause is a scar. Mine should carry at minimum:
+
+  the workspace is per-run; branch from a freshly fetched remote, never a stale local
+  finish at MERGED, not at "auto-merge armed"
+  do not close the work item; the merge closes it
+  never wait for a notification — nothing will wake you
+  write any verdict as structured JSON, not prose, because nothing downstream reads English
+  evidence quotes the exact command and its raw output, never a summary of it
+
+VERIFY — PASTE REAL OUTPUT, NEVER A CLAIM
+
+  # the supervisor refuses a duplicate name
+  <launch a unit named for work X>
+  <launch it again — must be refused>
+
+  # a run survives disconnect
+  <launch, close the shell, reconnect, confirm it is still going>
+
+  # the artifact check is honest
+  <run against work with no artifact — must NOT report success>
+
+  # the PATH is right inside the unit
+  <run `command -v` for every tool the runner needs, from inside a unit>
+
+🔴 That last one catches the most common first-fleet failure, and it fails silently otherwise.
+
+FINISH
+
+Report every file created with its path and line count, and the four verifications with their real output.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, run `systemctl --user disable --now <each timer or unit you installed>`, then delete `~/fleet/` (or the directory the manifest named) and `~/FLEET-BUILD-CHECKLIST.md` — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+Then say exactly this:
+
+  "Step 3 complete. Fetch step 4 from https://docs.utopiamodels.ai/docs/ai-infrastructure-upgrades/dispatch and paste it into a new session."
+
+Then stop. Do not dispatch real work — step 4 does that, deliberately, as its own act.
+```
+
+```text title="prompt-4|Dispatch one real task, end to end|claude-code|Dispatches one real task end to end without helping the run, then grades the artifact rather than the exit code."
+STEP 4 of 4 — dispatch one real task, end to end, and prove it worked.
+
+HOW LONG THIS TAKES: a multi-step end-to-end run (6 steps, one real task dispatched and watched to completion) — expect roughly 20–60 minutes, most of it the task's own run across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+This is the only step that touches real work. It is separate from step 3 on purpose: building a fleet and trusting it are two different decisions, and running the first real task deserves to be one.
+
+CHECKLIST FIRST
+
+RESUMING? Before you write anything, check whether ~/FLEET-VERIFY-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/FLEET-VERIFY-CHECKLIST.md:
+
+  # First dispatch — step 4 of 4
+  ## Tasks
+  - [ ] 1. Confirm the fleet is actually running
+  - [ ] 2. File the first task from FLEET-DESIGN.md
+  - [ ] 3. Dispatch it and watch, without touching it
+  - [ ] 4. Grade it against the acceptance criterion
+  - [ ] 5. Write ~/FLEET-VERIFIED.md
+  - [ ] 6. Report
+
+  ## Rules
+  - I do not help the run. If it fails, that is the finding.
+  - I paste real output for every claim.
+  - I grade the ARTIFACT, not the exit code and not the run's own report.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before you confirm the fleet is up, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — the only writes in this step are the one task you file in step 2, whatever its run produces, and ~/FLEET-VERIFIED.md.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+CONFIRM THE FLEET IS UP
+
+Paste real output for each:
+
+  the scheduler's unit is loaded and its timer is armed
+  the last heartbeat, and its age
+  the supervisor accepts a unit and refuses a duplicate of its name
+  the agent runs headless and emits a machine-readable result
+
+If any of these fails, stop. A first dispatch onto a fleet that is not up teaches you nothing about either.
+
+Tick box 1.
+
+FILE THE FIRST TASK
+
+The one from FLEET-DESIGN.md. Real work — something I actually want done.
+
+Its body must name what must be TRUE when it is finished, as a command whose exit status is the answer. Not "the docs are updated" but a command that exits 0 only if they are.
+
+🔴 An acceptance criterion that only elapsed time can satisfy is unsatisfiable by any work. One fleet asked for "24 hours of log entries" twenty-four MINUTES after the config went live, and dispatched six agents at work that did not exist. Grade the artifact that exists now.
+
+Tick box 2.
+
+DISPATCH IT, AND DO NOT HELP
+
+Dispatch, then watch. Do not intervene, do not fix its environment, do not answer questions it should answer itself.
+
+Record: when it was dispatched, when the start marker appeared, when the terminal appeared, what the terminal said, and what artifact it produced.
+
+🔴 If it fails, that is a RESULT, not a setback. A first dispatch that fails and says why has taught you where your fleet is wrong, which is what this step is for. Write down the failure exactly.
+
+Tick box 3.
+
+GRADE THE ARTIFACT
+
+Run the acceptance command yourself and paste its output.
+
+Then check the chain the run depended on:
+
+  did the start marker post before anything that could fail?
+  did the terminal post, and does it match reality?
+  is the artifact real — merged, present, exercisable — not merely claimed?
+  did the run use its own workspace, and is that workspace clean or kept?
+  did the status change without anyone typing one?
+
+🔴 A green build is not a working artifact, and a self-report is not evidence. Exercise the real thing.
+
+Tick box 4.
+
+WRITE THE FILE
+
+~/FLEET-VERIFIED.md:
+
+## WHAT RAN
+The task, the timestamps, the outcome.
+
+## THE EVIDENCE
+Every check above with its real output.
+
+## WHAT BROKE
+Everything that did not work first time, and what it cost. 🔴 If nothing broke, say so plainly — but check twice, because a first dispatch that goes perfectly usually means something was not actually exercised.
+
+## WHAT I WOULD FIX FIRST
+One thing. Lead with it.
+
+## WHAT THIS FLEET CANNOT DO YET
+The parts of the reference deliberately skipped, and which one the first real failure will make worth adding.
+
+Tick box 5.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, close the task you filed in step 2 (and revert whatever its run merged), then delete `~/FLEET-VERIFY-CHECKLIST.md` and `~/FLEET-VERIFIED.md` — nothing else on your system was touched."
+
+FINISH
+
+Tell me whether the task was completed by the fleet, and how I know that from the artifact rather than from the run's own claim.
+
+Then stop. There is no step 5 — from here it is real work, and the next thing worth doing is the second task.
+```
+
+## The four steps
+
+| | | ends with |
+|---|---|---|
+| **1** | Study a fleet that runs, measure mine against it | `FLEET-GAP.md` |
+| **2** | Design mine, then stop for approval | `FLEET-DESIGN.md` + a manifest |
+| **3** | Build every file in the manifest | a running fleet, verifications pasted |
+| **4** | Dispatch one real task, end to end | `FLEET-VERIFIED.md` |
+
+Each step names the next. Paste one, run it, paste the next.
+
+## What the steps read
+
+- [`kit/fleet-architecture.md`](https://docs.utopiamodels.ai/kit/fleet-architecture.md) — **twenty design decisions from a working ~7,000-line runtime**, each paired with the failure that produced it
+- [`kit/dispatch-anatomy.md`](https://docs.utopiamodels.ai/kit/dispatch-anatomy.md) — the run path, every pre-flight refusal in order, and the ~250-line minimum viable version
+
+## Resources
+
+- [Claude Code headless](https://code.claude.com/docs/en/sdk) · [memory](https://code.claude.com/docs/en/memory) · [skills](https://code.claude.com/docs/en/slash-commands) · [subagents](https://code.claude.com/docs/en/sub-agents) · [hooks](https://code.claude.com/docs/en/hooks)
+- [`systemd-run`](https://www.freedesktop.org/software/systemd/man/systemd-run.html) · [systemd timers](https://www.freedesktop.org/software/systemd/man/systemd.timer.html) · [systemd in WSL](https://learn.microsoft.com/en-us/windows/wsl/systemd)
+- [`git worktree`](https://git-scm.com/docs/git-worktree) · [GitHub issue dependencies](https://docs.github.com/en/issues) · [`gh` CLI](https://cli.github.com/manual/)

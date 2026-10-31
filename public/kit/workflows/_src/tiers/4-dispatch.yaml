@@ -1,0 +1,23 @@
+slug: 4-dispatch
+name: ORCHESTRATED · dispatch
+situation: >-
+  More than one agent runs at once. There is a queue, or something serving as one, and work completes
+  while you are elsewhere.
+questions:
+  - What is your queue, and what makes an item eligible?
+  - How does a run announce that it finished, and can it lie about that?
+  - What happens when two runs pick up the same work?
+  - What have you capped, and what measurement set the number?
+  - What ran, failed, and told nobody?
+objection:
+  q: I have run a fleet for a while. What could this tell me?
+  a: >-
+    Possibly nothing about dispatch. The two things worth checking are narrower: whether your
+    completion signal is something an agent can forge, and whether any of your caps were chosen from
+    caution rather than measurement. A cap chosen from caution silently becomes the system's capacity
+    and never announces itself — it reports success while doing a fraction of the work.
+gates:
+  - name: completion derived from an artifact the agent cannot forge
+    why: a self-reported success is not a signal
+  - name: every cap carries the measurement that set it
+    why: an unmeasured ceiling becomes your capacity without ever failing

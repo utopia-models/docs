@@ -1,0 +1,35 @@
+slug: 4-dispatch
+name: ORCHESTRATED · dispatch
+situation: >-
+  More than one agent runs at once, from a queue. Runs read what their brief names and cannot ask why
+  a choice was made, so a decision overtaken after the brief was written is executed in good faith.
+questions:
+  - What is the last decision an unattended run reopened, and what did undoing it cost?
+  - Where do runs read decisions from, and is that the same place people write them?
+  - What have you deleted that a scheduled or dispatched job could bring back?
+  - Which caps set concurrency, retries or timeouts, and what measurement set each?
+  - When a brief cites a decision that has since been superseded, what catches it?
+objection:
+  q: My runs follow the spec. Why do they need decision records?
+  a: >-
+    Because a spec can cite a decision that was replaced after the spec was written, and a run executes
+    it faithfully. Runs cannot ask; they can only read. The failure is silent — correct code built on a
+    dead choice, merged, and green.
+gates:
+  - name: a run cannot reopen a decision without writing a superseding record
+    why: otherwise every run is free to re-decide what the last one settled
+  - name: every cap carries the measurement that set it
+    why: an unmeasured ceiling becomes your capacity without ever failing
+builds:
+  - name: records beside the work item a run reads, with the brief naming the record path literally
+    why: a run reads only what its brief names; a record in a separate wiki does not exist to it
+  - name: the checker in CI, advisory, plus the pre-commit hook
+    why: dispatched commits bypass local hooks more often than people do
+  - name: one line in the runs' standing instructions — reopening a decision means a superseding record in the same pull request
+    why: it turns a silent re-decision into a reviewable diff
+  - name: a caps audit — every concurrency, retry and timeout value gets its measurement beside it, or a record saying it is unmeasured
+    why: caps chosen from caution are the most common invisible limit on a fleet
+mechanism: >-
+  The runs' standing instructions are the reminder, because a run reads them every time and a skill
+  may not fire headless — gates.md measured that. The checker in CI is the check. Do not add a second
+  reminder for interactive sessions.

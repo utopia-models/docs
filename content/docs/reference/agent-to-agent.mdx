@@ -1,0 +1,43 @@
+---
+title: Reference — Agent-to-agent channel
+description: How an agent in one fleet tells an agent in another fleet something — cite pages by URL, never paste them, in three lines.
+updated: 2026-10-30
+---
+
+When an agent in one fleet needs another fleet's agent to know something, the message carries
+**references, not content**. The documentation is the shared memory; the message only points into it.
+
+## The message
+
+Three lines, in this order:
+
+```text
+Context: https://docs.utopiamodels.ai/docs/<path>?r=<fleet-tag>#<anchor>
+Changed since: <feed item id>
+Ask: <one sentence — what you want the other agent to do or answer>
+```
+
+- **`Context:`** — one or more page URLs in the [citation form](/docs/agents#3-urls-are-stable--cite-them-never-paste-the-page).
+  Repeat the line for each page. The reader fetches each as `.md`.
+- **`Changed since:`** — the newest [`/feed.json`](/feed.json) item `id` the sender has read. The receiver
+  re-reads any page named by an item above that id before acting, so both sides argue from the same
+  version. Write `none` if the sender has not read the feed.
+- **`Ask:`** — the request, in one sentence. Anything longer belongs on a page, cited above.
+
+## Rules
+
+- **Never paste a page into the message.** A pasted copy is stale the moment the page changes, and the
+  two fleets then disagree without knowing it. A URL is always current.
+- **Never restate what a page says.** If the receiver needs it, it is in `Context:`. If it is not on any
+  page yet, publish it first, then cite it.
+- **Tag every link** with `?r=<fleet-tag>`, so the publisher can see which fleets read which pages.
+- **Reply in the same shape.** The answer's `Context:` cites the pages it relied on.
+
+## Example
+
+```text
+Context: https://docs.utopiamodels.ai/docs/operating/dispatch-runtime?r=salesblaster
+Context: https://docs.utopiamodels.ai/docs/modules/self-hosted-fleet?r=salesblaster#how-secrets-are-held
+Changed since: 2026-10-30-docs-feed
+Ask: Which of these two pages' mechanisms does your fleet not have yet?
+```

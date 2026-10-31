@@ -1,0 +1,102 @@
+@import 'tailwindcss';
+
+/*
+ * THE THEME IS A RIP OF ocp.wiki, NOT AN INTERPRETATION.
+ *
+ * Measured from https://ocp.wiki/_next/static/chunks/0sluzv9qp_7nq.css on 2026-08-16:
+ * every token ocp.wiki serves is byte-for-byte what Fumadocs' own `solar` preset
+ * emits on top of `lib/default-colors.css`. Importing the preset is therefore the
+ * exact rip — copying literals by hand would only be a snapshot of it.
+ *
+ *   solar.css      light --color-fd-primary #465f8f (oklch .487 .083 262.691)
+ *                        --color-fd-article #f7f7f7
+ *                  dark  --color-fd-primary #cde0fe (oklch .902 .0461 259.51)
+ *                        --color-fd-article #121212
+ *                        --color-fd-background #0d0d0d  (hsl 0 0% 5.04%)
+ *                  :root { letter-spacing: -.25px }
+ *                  #nd-sidebar[data-collapsed=false] { border:none; bg-fd-background }
+ *   default-colors light --color-fd-background #f5f5f5 · --color-fd-border #cccccc80
+ *                        --color-fd-muted-foreground #737373 · --color-fd-foreground #0a0a0a
+ *
+ * ocp.wiki serves NO other `--color-fd-*` overrides and no `.dark #nd-sidebar` block,
+ * which is how the neutral preset was ruled out.
+ *
+ * Font: ocp.wiki sets `font-family: Inter, Inter Fallback` on <html> via next/font —
+ * see app/layout.tsx, which does the same.
+ */
+@import 'fumadocs-ui/css/solar.css';
+@import 'fumadocs-ui/css/preset.css';
+
+html {
+  scrollbar-gutter: stable;
+}
+
+/*
+ * The ONE deliberate departure from the ocp.wiki rip above: light-theme muted text.
+ *
+ * default-colors' light `--color-fd-muted-foreground` #737373 fails WCAG AA (4.5:1) for this
+ * site's 12-15px muted text. Measured live 2026-09-28 (knowledge#8107), per background: 4.35 on
+ * the page (#f5f5f5), 4.20 on #f1f1f1, 4.07 on the harness strip, and 3.79 on the prompt-card
+ * chips (bg-fd-primary/10 ≈ #e3e6eb). #636363 measures 5.51 / 5.32 / 4.80 on those same
+ * backgrounds, so even the worst one clears. Dark theme (#b3b3b3cc, 7.6-9.3:1) is untouched,
+ * which is why this is scoped `:not(.dark)`.
+ */
+:root:not(.dark) {
+  --color-fd-muted-foreground: #636363;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+/*
+ * A generated diagram keeps its REAL width and scrolls inside its figure.
+ *
+ * Every SVG under public/diagrams is written by `_infra/scripts/gen-wiki-diagrams.py` in
+ * utopia-models/knowledge and carries this class on its root. Fumadocs' prose styles would
+ * otherwise apply `max-width:100%`, and a 1,871px container diagram would render at 353px on a
+ * phone — measured — where every label in it is unreadable. Scrolling a legible diagram beats
+ * seeing the whole of an illegible one, so the width stays and `components/diagram.tsx` puts an
+ * `overflow-x-auto` box around it.
+ *
+ * Colour comes from the file itself: each element carries a literal light-theme hex as a
+ * presentation attribute, and a `<style>` block inside the SVG maps those to this site's own
+ * `--color-fd-*` tokens, so an inlined diagram follows the theme toggle while the same file
+ * served at its own URL still renders.
+ */
+svg.fd-diagram {
+  max-width: none;
+  height: auto;
+  display: block;
+}
+
+/*
+ * The five meta prompts soft-wrap inside their fold. Nothing else on the site does.
+ *
+ * ADR-178/004 solved this for the three older prompts by hard-wrapping the MDX source at ~92
+ * columns, because Fumadocs gives its `<pre>` `w-max` and lets the block scroll horizontally. The
+ * five that replaced them are audited artifacts published byte-for-byte, so re-wrapping their
+ * source is not available. Measured on the deployed page 2026-08-16: prompt 2's `<pre>` laid out
+ * 5,153px wide inside a 597px column, so every paragraph was cut off mid-sentence for a reader who
+ * expanded one to read it before running it — which is the only reason the fold opens at all.
+ *
+ * `[data-prompt] pre` outranks Fumadocs' `.w-max` on specificity, so no `!important` is needed.
+ * Wrapping is visual: the copy button reads the `.line` spans, so the clipboard is unaffected.
+ */
+[data-prompt] pre {
+  width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/*
+ * Give a blank line its height back. Fumadocs lays the highlighted code out as a flex column, so an
+ * empty `.line` is a flex item with no line box and collapses to zero — which erases every paragraph
+ * break in a 9,000-character prompt and runs the whole thing together. Only lines shorter than one
+ * line-height are affected, so a wrapped line is untouched. Scoped to the prompt fold: elsewhere the
+ * blocks are a handful of lines and this never shows.
+ */
+[data-prompt] pre .line {
+  min-height: 1lh;
+}

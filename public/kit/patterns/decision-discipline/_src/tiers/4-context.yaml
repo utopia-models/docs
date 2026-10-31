@@ -1,0 +1,34 @@
+slug: 4-context
+name: ORCHESTRATED · context
+situation: >-
+  One agent, deep structured knowledge. Decisions are part of what it resolves, which means a superseded
+  record is not stale text — it is a wrong answer that arrives with provenance.
+questions:
+  - When a lookup lands on a superseded record, what does your resolver return — the record, its successor, or nothing different?
+  - Which records are authored, and which are generated from them?
+  - What was decided and later contradicted by another note, with nothing linking the two?
+  - What does an agent find first if it looks up an approach you killed?
+  - Which values stated in your notes are claims about code that nothing re-checks?
+objection:
+  q: My knowledge base already versions everything.
+  a: >-
+    Versioning records that a file changed, not that a claim was replaced. A superseded record that
+    still resolves as a fact is the highest-trust wrong answer the system can give, because it comes
+    with a source attached. The fix is one typed field the resolver follows, not more history.
+gates:
+  - name: the resolver follows Superseded-by
+    why: otherwise the most authoritative-looking answer is the dead one
+  - name: a stated value is bound to its source or not stated
+    why: a number copied into a note outlives the constant it describes
+builds:
+  - name: decisions as a closed type in the taxonomy, with Status and Superseded-by as fields rather than prose
+    why: a resolver can follow a field; it cannot follow a sentence
+  - name: the checker inside the index or build step
+    why: a broken link then fails where the knowledge is assembled, not where it is read
+  - name: a resolution rule — a lookup that lands on a superseded record returns the successor and says so
+    why: the reader learns both the answer and that it changed
+  - name: kill records for approaches that were tried and dropped
+    why: in a knowledge base, an absent record reads as an unexplored idea
+mechanism: >-
+  The resolution rule is the reminder, because it fires on every lookup without a trigger description
+  to match. The checker in the index build is the check. No separate skill.

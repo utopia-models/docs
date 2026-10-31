@@ -1,0 +1,290 @@
+---
+title: The board
+description: One GitHub project board is the only tracker. An agent writes two fields; every other field is derived on a runner, and status changes only when a merged pull request closes an issue.
+updated: 2026-09-28
+---
+
+<Status value="stable" />
+
+```text title="prompt-1|Learn how one board stays true|claude-code|Reads this page, explains the two-written-fields model back to you, and proves the iteration trap against the live GitHub schema. Writes nothing."
+PROMPT 1 of 2 — learn what this module teaches. You write nothing to any repository in this prompt and you change nothing in any tracker.
+
+ASK EVERY QUESTION WITH {{ASK}}, with a RECOMMENDED option first. Not prose.
+
+Fetch and read the whole page:
+
+  curl -s https://docs.utopiamodels.ai/docs/operating/board.md
+
+If the fetch fails, say what came back and stop. Everything below is about that page, not about issue trackers in general.
+
+1 — EXPLAIN IT BACK, IN YOUR OWN WORDS, UNDER THESE FIVE HEADINGS
+
+  TWO FIELDS        What an agent writes on that board, and the full list of what is derived instead —
+                    Lane, Priority, Sprint, Status, Archived, Week/Cycle — each with what it is derived from.
+  WRITE ONLY ON DIFF Why the reconciler writes only on diff, and the two properties that buys (no agent-side
+                    rate-limit outage; running twice is indistinguishable from running once).
+  CHAIN vs WAVE     What --chain and --wave each make dispatchable, and what happened to the plan of five
+                    parallel waves filed as a fourteen-deep chain.
+  THE ITERATION TRAP Why a write to an iteration configuration orphaned 84 assignments.
+  FOUR LIES         The four ways the page says the board has been made to lie, one line each.
+
+Quote the page where you lean on it. Do not pad with general project-management advice.
+
+2 — PROVE THE ITERATION CLAIM YOURSELF
+
+The page says not to trust its paragraph and to reproduce the schema instead. Do it, if gh is authenticated (check with `gh auth status` and say so if it is not):
+
+  gh api graphql -f query='{ a: __type(name:"ProjectV2IterationFieldIterationInput"){name}
+                             e: __type(name:"ProjectV2Iteration"){kind inputFields{name}} }'
+
+Paste the raw output. Then say, from that output alone, why an iteration cannot be "updated", only replaced — and state the transferable rule the page draws from it.
+
+3 — CHECK YOURSELF ON THE CLOSING-KEYWORD TRAP
+
+Write the exact pull-request sentence the page warns about, using the placeholder #1234, and explain why it closes the issue. Then write the two-step recovery, and name the state (open AND done) that the first step alone leaves behind.
+
+4 — QUIZ ME
+
+Ask me three questions with {{ASK}}, one at a time, each with four options and the correct one NOT always first. Draw them from: which fields an agent writes, chain vs wave, why a Feature never closes itself, and why `gh api` errors must be checked by shape. After each answer, tell me whether I was right and quote the line of the page that settles it.
+
+If `AskUserQuestion` is unavailable in this session, ask the same questions as plain numbered text in one message instead.
+
+Then say exactly this:
+
+  "Module learned. Paste prompt 2 and I will measure your own tracker against it."
+
+Then stop.
+```
+
+```text title="prompt-2|Measure your tracker, then derive what a human types|claude-code|Reads your real tracker through its API, finds every field typed twice or typed at all, and proposes a derive-on-diff reconciler. Writes only after you confirm."
+PROMPT 2 of 2 — integrate this module into my own setup. Survey read-only first; propose; write only what I confirm.
+
+HOW LONG THIS TAKES: a multi-step audit (5 steps, about 5 questions, writes only what you approve) — expect roughly 10–25 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+ASK EVERY QUESTION WITH {{ASK}}, each with a RECOMMENDED option first and one line of why. If I accept every default without reading, I must still end up with something that works.
+
+Reference model, read it before anything else:
+
+  curl -s https://docs.utopiamodels.ai/docs/operating/board.md
+
+That fleet has ONE board. An agent writes two fields on it; everything else is computed by a job that writes only on diff, and status moves only when a merged pull request closes an issue.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/BOARD-INTEGRATE-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Long sessions compress their own history; a file survives that. Write ~/BOARD-INTEGRATE-CHECKLIST.md and work from it:
+
+  # Board module — integrate
+  - [ ] 1. Find the tracker and the credential
+  - [ ] 2. List every surface that carries work state
+  - [ ] 3. Pull a real sample and measure every field
+  - [ ] 4. Propose the adoption plan
+  - [ ] 5. Write only what I confirmed
+  ## Rules
+  - Every call to a tracker is a READ until step 5. No create, edit, close, label or comment.
+  - I report that a credential is SET, never its value.
+  - Every finding carries the command that produced it.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — nothing gets written until step 5, and there only what I confirm.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — FIND THE TRACKER
+
+Check in this order and stop at the first that authenticates:
+
+  gh auth status
+  git remote -v
+  env | grep -iE 'JIRA|LINEAR|ASANA|TRELLO|GITHUB_TOKEN|GH_TOKEN' | sed 's/=.*/=<set>/'
+
+If nothing authenticates, say so and stop — there is no honest version of this against a tracker you cannot read.
+
+2 — FIND THE SECOND TRACKER I DO NOT KNOW I HAVE
+
+Search this repository for surfaces that also carry work state: ROADMAP / TODO / BACKLOG files, checklists in docs, a status column in a spreadsheet the repo links to, a changelog written by hand. Then ask me with {{ASK}} which other surfaces exist outside the repo (chat channels, standup docs, personal to-do lists) — prompt me with those categories rather than waiting for me to remember.
+
+Build one table: one row per FACT (status, owner, priority, due date, scope), one column per surface. A fact in more than one column is a finding.
+
+3 — MEASURE, DO NOT EYEBALL
+
+Pull the most recent 100 items, open and closed, with every field the API gives. Two traps from the reference page:
+
+  `gh api` writes its ERRORS to standard output — check the SHAPE of what you captured, not whether it is non-empty.
+  Never write to an iteration configuration. An iteration has no id in its own input type; a write replaces the list and orphans every assignment.
+
+For every field report fill rate, distinct-value distribution, and — the whole point — what it CORRELATES with that the system already knows: does status track a merged pull request? priority track a label? lane track the assignee? A field that correlates near-perfectly is a field a job could compute.
+
+4 — PROPOSE
+
+Write the proposal to the terminal, in three lists:
+
+  DERIVABLE NOW          field · what it correlates with · the rule that would compute it
+  TYPED AND LOAD-BEARING field · why it resists derivation (if you cannot say why, it belongs above)
+  DEAD / DUPLICATED      fields nothing depends on, and second copies of a fact — delete these first
+
+Then the concrete adoption: a reconciler that computes the DERIVABLE fields and writes ONLY ON DIFF, triggered on the tracker's own events plus a schedule as the backstop. Name the file it would live in (for GitHub, a workflow under .github/workflows/), what it reads, what it writes, and why it is idempotent.
+
+Ask me with {{ASK}} which part to build first. RECOMMEND the dead fields and duplicates — they cost nothing to remove and they are what makes a board look more informative than it is.
+
+5 — WRITE ONLY WHAT I CONFIRMED
+
+Create only the files I accepted, never modify a file you did not create without asking first, and never change tracker fields in this session — the reconciler does that once it is merged and running. If a piece does not work, say so and stop.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/BOARD-INTEGRATE-CHECKLIST.md` and <each file created in step 5, by path> — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+FINISH
+
+Every file created, with its path. The one number I should watch — not a dashboard — and what it means when it moves. For runbook-level detail on reading a fleet's live state, point me at https://docs.utopiamodels.ai/docs/operating/operations.md.
+```
+
+Sourced from the fleet's own component document for `board`. Called stable because the one constant every
+script uses to address it is bound in five separate files and re-checked on every pull request — which is
+the only part of a hosted product a repository can hold still.
+
+Work exists here or it does not exist.
+
+A body of work is a **Feature** issue with ordered sub-issues. Status derives from a merged pull request
+whose body closes the issue, and **nobody ever types one**. If this surface is wrong, the fleet works on
+the wrong thing — there is no second list to cross-check against, deliberately, and creating one is the
+fence this whole component exists to hold.
+
+The vocabulary — plan, Feature, issue — and the lane routing that decides which agent serves a row are on
+[How work flows](/docs/operating/work). This page is the mechanism underneath: which fields are written,
+which are derived, and the four ways this board has been made to lie.
+
+## The fleet owns no file that *is* the board
+
+The component's list of owned files is **empty, and that is the fact rather than an omission**. The board
+is a hosted product. Everything in the repository that touches it belongs to a neighbour, and the
+partition is exactly three ways: one script owns the write path in, one set of workflows owns the
+mechanisms that keep it honest, and the scheduler owns the single consumer of the Todo status.
+
+Naming that boundary explicitly is what stops a fourth thing quietly growing a copy of the board.
+
+## An agent writes two fields. Everything else is derived
+
+**An agent's entire board job is: assign itself, and give the issue a title** — plus an optional priority
+label. Every other field is derived on a hosted runner by a reconciliation workflow, and written **only on
+diff**.
+
+| Field | Derived from |
+| --- | --- |
+| Lane | the primary assignee's login — the lane names the **box**, never the portfolio |
+| Priority | the priority label, defaulting to the middle value |
+| Sprint | the current iteration if unset; a deliberately-chosen one is never clobbered |
+| Status | the board's own native workflows; the reconciler is only the closed-to-done backstop |
+| Archived | closed and done goes off the board; open and archived is pulled **back onto** it |
+| Week / Cycle | **never written by any script** — see below |
+
+Two properties fall out of that, and both are the point:
+
+- **Agents make zero field calls**, so no amount of agent activity can cause an agent-side rate-limit
+  outage against the tracker.
+- **Writing only on diff** means the reconciler is idempotent. Running it twice is indistinguishable from
+  running it once, which is what makes it safe to run on a timer *and* on an event.
+
+## The shape of a filing is a real choice
+
+```text
+--chain              task k is blocked by task k-1
+                     → exactly ONE issue is ever dispatchable
+
+--wave               every task in a group is blocked by the WHOLE of the previous group,
+                     and by no sibling
+                     → a whole group starts at once
+```
+
+A plan designed as five parallel waves was once filed as a fourteen-deep chain. Nothing errored; the board
+simply had one dispatchable issue instead of five, and the fleet ran at a fifth of its shape for as long
+as nobody looked at the dependency graph.
+
+**If two phases can run at once, the shape is a wave.** The filing tool now refuses a long chain whose
+tasks name no file in common, and prints the wave rewrite — a serial order needs a stated reason, not a
+default.
+
+## The iteration field is read-only to every script, and this one is worth stealing
+
+Any API write to a board's iteration configuration **mints new iteration ids and orphans every assignment
+that pointed at the old ones**. On this board that cost 84 field assignments in a single call.
+
+The reason is visible in the schema rather than in the documentation, so reproduce it rather than trusting
+this paragraph:
+
+```bash
+gh api graphql -f query='{ a: __type(name:"ProjectV2IterationFieldIterationInput"){name}
+                           e: __type(name:"ProjectV2Iteration"){kind inputFields{name}} }'
+```
+
+`a` comes back `null` — the input type a caller would need does not exist. And `e.inputFields` has no
+`id`: an iteration's complete input set is a start date, a duration and a title, so there is no way to
+say *"update this one"*, only *"here is the new list"*.
+
+**The field id is durable and is the only id worth hardcoding. An iteration id rotates the moment a human
+edits the field in the interface**, which is why the filing script resolves the current iteration live on
+every filing and treats the result as advisory.
+
+The transferable rule: before writing to a hosted API, introspect whether the thing you are updating has
+an identity the API will preserve. If its input type has no id field, you are not updating — you are
+replacing.
+
+## Read the board, never recall it
+
+Every count on it changes by the minute, so this page states the reading rather than the number.
+
+| You want | Run |
+| --- | --- |
+| Open issues | `gh api repos/<org>/<repo>/issues --jq 'length'` |
+| Feature rollups, one call | `bash _infra/scripts/feature-progress.sh` |
+| One issue with its comments | `gh api repos/<org>/<repo>/issues/<n>` |
+| One line per queued issue, and why each is held | `bash _infra/scripts/sweep-dispatch.sh --explain` |
+
+Two traps in that table. `gh issue view` currently fails against this board with a deprecation error from
+the older projects API, so the `gh api` form is the working one. And **`gh api` prints its errors to
+standard output**, not standard error — so validate the *shape* of what you captured, never merely that it
+is non-empty.
+
+## Four ways this board has been made to lie
+
+- **Saying you are *not* closing an issue closes it.** The platform matches a closing keyword immediately
+  followed by an issue reference anywhere in a pull request body or commit message, and does not read the
+  words around it. A sentence of the form *"this does NOT close `#1234`"* is a closing reference. This
+  fired twice in one day on one issue: first from a pull request whose entire point was that the issue
+  must stay open, and then from the follow-up pull request **documenting the trap**, which fired it by
+  quoting the sentence into its own body.
+
+  Recovery is two steps and only the first is obvious. A close also sets the status to done, and reopening
+  the issue does not undo that — leaving it open **and** done, which is the one state no selector reads.
+  Reopen, *and* set the status back, then read both back. To refer to an issue without acting on it, use a
+  non-keyword form, and keep any illustration on a placeholder number, which is why the example above is
+  `#1234`.
+
+- **The terminal state is eventually consistent, not instant.** Archiving is *attempted* on the close event
+  and *guaranteed* by a scheduled sweep, and concurrency cancellation killed 25 of 30 consecutive event
+  runs in one measured window. Expect a handful of closed-but-still-listed rows at any moment. Filing
+  "done is stuck at zero" off a single read is a false alarm this fleet has already raised.
+
+- **A Feature never closes itself.** A closing keyword structurally cannot fire on a parent issue, because
+  a parent has no pull request. So the agent that finishes the last child *attests* the Feature, and a
+  separate sweep closes it. A complete Feature with no attestation is **surfaced, never closed** — which is
+  the correct failure, because the alternative is a parent that auto-closes over its own verifier's
+  objection.
+
+- **Nothing gates the default branch.** Branch protection and rulesets both return 403 on this plan tier,
+  in every repository. A red check is information. A merge is never a human gate. The full argument is on
+  [How work flows](/docs/operating/work).

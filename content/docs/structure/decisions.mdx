@@ -1,0 +1,361 @@
+---
+title: Decisions
+description: What was built, killed, and why — each one sourced. Read this before proposing to rebuild any of it, because re-litigating a decision that was already paid for is this fleet's most expensive recurring failure.
+updated: 2026-09-28
+---
+
+```text title="prompt-1|Learn why re-deciding is the expensive failure|claude-code|Reads this page, explains the reopening rule, the four kills and the standing decisions back to you, then quizzes you. Writes only its checklist."
+PROMPT 1 of 2 — learn what the Decisions page teaches: what the fleet killed, why, and the standing decisions that constrain new work. You read and explain. You write one checklist file and nothing else.
+
+I run my own agents with Claude Code and I am senior. Skip basics. Where the page's reasoning would not survive contact with a setup like mine, say so.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+Write ~/DECISIONS-LEARN-CHECKLIST.md and work from it:
+
+  # Decisions — learn
+  - [ ] 1. Fetch the page
+  - [ ] 2. The reopening rule
+  - [ ] 3. The four kills, each as killed / why / replaced by / residue
+  - [ ] 4. The standing decisions
+  - [ ] 5. Quiz me, then tell me to paste prompt 2
+
+  ## Rules
+  - Read only. The checklist is the one file I write.
+  - Every claim quotes the page sentence it came from.
+
+1 — FETCH
+
+    curl -s https://docs.utopiamodels.ai/docs/structure/decisions.md
+
+If that fails, say what came back and stop.
+
+2 — THE REOPENING RULE
+
+State it precisely: a decision is reopened by a SUPERSEDING RECORD naming what changed, written beside the original, with the original's `Superseded-by` header updated in the same commit — never by disagreement. Explain why a silently invalidated record is worse than no record.
+
+3 — THE KILLS
+
+For each, one row: what it was · why it died · what replaced it · what RESIDUE survived.
+
+  ralph, the 24x7 loop       — and the per-agent field named after it that outlived the loop
+  the generated catalog      — the fail-closed gate that auto-reverted its own cleanup, and the
+                               honest footnote: `verify:` is read by humans and executed by nothing
+  the NATS bus               — and `nats-reload.path`, still active (waiting), watching the config
+                               of a service that will never start
+  the local CI re-run timer  — and why deleting it from the brain repo did not stop it (copies in
+                               ~/.config/systemd/user/, not symlinks; it fired 203/EXEC and filed a
+                               P0 about itself)
+
+The pattern across all four is the lesson: a deletion in a repository is half a deletion. Say it in your own words.
+
+4 — STANDING DECISIONS
+
+Summarize each in one line with its evidence: one secret store · subtract by default · options before decisions (two real options + do-nothing + integrate-existing) · a limit is a measurement (the dispatcher at ~8% of proven capacity behind caps of 1, 4 and 2) · fix forward, never pre-gate. Then the never-resurrect list, and the one sanctioned exception (a */5 self-reported heartbeat) and why it does not break the ban.
+
+5 — QUIZ AND FINISH
+
+Ask me three questions with {{ASK}}, one at a time, four options each, exactly one correct — at least one about residue, one about the reopening rule. After each, quote the settling sentence.
+
+If `AskUserQuestion` is unavailable in this session, ask the same questions as plain numbered text in one message instead.
+
+Then say exactly this:
+
+  "Decisions learned. Paste prompt 2 and I will find the decisions your own history made and never wrote down."
+
+Then stop.
+```
+
+```text title="prompt-2|Find my unrecorded decisions and their residue, then adopt a record format|claude-code|Finds the decisions your repository made and never recorded, plus the residue of what you deleted, then proposes a record format sized to your setup. Writes only after you confirm."
+PROMPT 2 of 2 — find the decisions my own repository already made and never recorded, find the residue of the things I deleted, and adopt a decision-record discipline sized to my setup. Survey is read-only; every write waits for my explicit yes.
+
+HOW LONG THIS TAKES: a multi-step audit (5 steps, about 6 questions, writes only what you approve) — expect roughly 10–25 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
+
+    curl -s https://docs.utopiamodels.ai/docs/structure/decisions.md
+
+Read it first if prompt 1 did not run in this session.
+
+ASK EVERY QUESTION WITH {{ASK}}, with a RECOMMENDED option first and one line of why.
+
+FIRST — WRITE YOUR CHECKLIST TO A FILE
+
+RESUMING? Before you write anything, check whether ~/DECISIONS-INTEGRATE-CHECKLIST.md already exists. If it does, this prompt was interrupted: read it, tell me which steps are already ticked, and continue from the first unchecked step. Do not overwrite it, do not redo a ticked step, and do not re-ask a question whose answer it already records — the scope answer under ## Rules included, if it's there. If ## Rules has no Scope field, this checklist predates the scope question: say so plainly in your first output line and ask it now, before anything else. Only if the file does not exist, write it fresh as below.
+
+Write ~/DECISIONS-INTEGRATE-CHECKLIST.md and work from it:
+
+  # Decisions — integrate
+  - [ ] 1. Mine git history for decisions
+  - [ ] 2. Find residue of deletions
+  - [ ] 3. Find existing decision records, and their reopen discipline
+  - [ ] 4. Report
+  - [ ] 5. Propose a record format; write only what I approve
+
+  ## Rules
+  - Steps 1–3 are read only.
+  - Every finding carries the command and its raw output.
+  - I never modify a file I did not create without asking.
+
+SCOPE — ASK ME BEFORE YOU SURVEY ANYTHING OF MINE
+
+Before step 1, ask me this with {{ASK}}, with both options exactly as written:
+
+  "Should I treat any path as off-limits, or do you want me to have full access to survey and propose changes anywhere in this environment?"
+
+  A — Exclude .env*, credentials and CI/deploy config (.github/workflows/, deploy keys) from anything I read or propose touching.   [RECOMMENDED for most readers]
+  B — No exclusions. Full access to survey and propose anywhere, including secrets and CI files.
+
+This is my preference, not a policy: some people want their agent to reach everything, some do not, and neither answer is the correct one. Never assume it and never pick for me. My answer governs every read and every proposal for the rest of this prompt. Write my answer under ## Rules in the checklist as "Scope: A" or "Scope: B", so it survives compaction. It governs the SURVEY and PROPOSE steps only — nothing gets written until step 5, and there only what I approve.
+
+Before you ask, decide whether an answer can reach me at all. It cannot in a one-shot non-interactive run — `claude -p`, `codex exec`, `gemini -p`, a scripted or CI invocation — and you can tell without guessing: {{ASK}} is missing from your tool list there, while an interactive session has it. It also cannot if the question comes back immediately with no real answer. In either case do not ask, do not wait and do not re-ask: a question asked as plain text in a one-shot run ends the run with nothing done. This is the one case where you pick for me: treat A as my answer, record and hold it exactly as above, and make the first line of your output exactly: "No interactive scope answer available — defaulted to A (excluded .env*, credentials and CI/deploy config). To choose B, re-run this prompt in an interactive session and answer the scope question."
+
+Only if {{ASK}} is in your tool list but fails when you call it, ask the same question as plain numbered text in one message instead.
+
+1 — MINE THE HISTORY
+
+In each repository I name (ask with {{ASK}}; RECOMMENDED: the current one plus the repo holding my agent config):
+
+    git log --format='%H %ad %s' --date=short -300 | grep -iE 'revert|instead of|replaced|migrat|switch|remove|drop|deprecat|kill'
+
+For each hit, read the commit (`git show --stat <sha>`) and decide: was this a DECISION — a choice between alternatives that a future reader could re-litigate — or routine? For each decision, check whether anything records WHY. A commit subject is not a why.
+
+Then look for the page's most expensive failure: a thing built, removed, and built again. Search for pairs — an added path that was deleted and later re-added:
+
+    git log --diff-filter=D --name-only --format='--- %h %s' -300
+    git log --diff-filter=A --name-only --format='--- %h %s' -300
+
+2 — FIND THE RESIDUE
+
+The page's four kills all left something running. For each deletion found above that touched a service, timer, cron job, hook or config:
+  - is a copy still installed outside the repo? (`systemctl --user list-unit-files`, `crontab -l`, ~/.config/, ~/.claude/)
+  - does a name, field or flag outlive it in config or docs? (`grep -rn '<name>'` across the repo)
+
+3 — EXISTING RECORDS
+
+Find any ADR / decisions / docs/adr directory. If present: does any record have a Superseded-by or equivalent, and does any decision contradict another without one?
+
+4 — REPORT
+
+Three lists: UNRECORDED DECISIONS (sha, what was chosen, what the alternative evidently was) · RESIDUE (what still runs or is named after its deletion, with the command that shows it) · REBUILT (anything deleted and re-added).
+
+5 — PROPOSE, THEN WRITE
+
+Ask with {{ASK}}:
+  a minimal record format — context · options considered (≥2 + do-nothing) · decision · consequences ·
+    Superseded-by — in a decisions/ directory, written only when a choice is expensive to reverse or
+    will be re-litigated   [RECOMMENDED]
+  one decisions log file, appended
+  no records — just clean up the residue
+
+Then ask with {{ASK}} which ONE unrecorded decision to backfill first (RECOMMENDED: the one most likely to be re-litigated — say why). Show the draft record before writing it. Write only what I approve.
+
+For residue, show the exact commands that would remove each item, and run none of them without a separate yes per item — removing a running unit is not reversible from git.
+
+When the writes are done, tell me in one line, filled in with the real paths:
+
+  "To undo, delete `~/DECISIONS-INTEGRATE-CHECKLIST.md` and <the decisions/ directory or log file you created, by path> — nothing else on your system was touched."
+
+If I approved an edit to a file you did not create, name that file in the same line with the command that reverts it (`git checkout -- <path>` if uncommitted) instead of claiming nothing else was touched.
+
+Finish with: what you wrote and where, the residue list with its status, and the one decision you think I am most likely to re-make without knowing I already made it.
+```
+
+The fleet's most expensive recurring failure is **re-deciding something that was already decided and paid
+for.** Every entry below says what the thing was, why it died, and what replaced it. If you are about to
+propose one of these, the burden is new information — not a fresh opinion.
+
+A decision is not reopened by disagreement. It is reopened by a **superseding record that names what
+changed**, written beside the original, with the original's `Superseded-by` header updated in the same
+commit. A silently invalidated decision record is worse than none.
+
+## Killed: ralph — the 24×7 autonomous loop
+
+**Deleted 2026-07-24.**
+
+`ralph.service`, with `Restart=always`, drove a loop: pick the next open board issue for this master's
+lane, run headless `claude -p`, repeat. Around it accreted watchdogs, heartbeats, priority-sort tests,
+self-reload fixes and a pick-order bug — an entire body of supervision machinery whose only job was
+keeping a resident process honest.
+
+**Replaced by on-demand dispatch**: `dispatch.sh` plus `task-runner.sh`, no resident agent process at all.
+The close-out measured the replacement rather than asserting it — **7 dispatched runs, 7 verified
+outcomes, 0 runtime failures**, against a roughly 20% baseline.
+
+The residue was instructive, and it took a second deletion to clear. For weeks after the loop was
+deleted, the registry still carried a per-agent field named after it, still described as the live backend
+selector — and the field really was read, so nobody could call it dead. The framing outlived the system,
+then the field outlived the framing. Both are gone now: nothing in the dispatch scripts selects a backend,
+and the launcher passes one literal provider name to every run.
+
+**A name outliving its system is how a deleted thing keeps costing you**, and the cost is specifically
+that the surviving name makes the deletion look incomplete to everyone who reads it afterwards.
+
+## Killed: the generated component catalog and its fail-closed gates
+
+**Deleted 2026-07-23/24.**
+
+An 804-line machine-generated registry where every component carried a shell predicate, run
+**fail-closed on every pull request** by three separate workflows plus a post-commit regeneration hook.
+Its own header claimed *"a fix isn't done until catalog = reality."*
+
+It was killed because a gate that blocks on a generated map **false-blocked documentation changes and
+auto-reverted its own cleanup**. Eighteen dead gate workflows went in one commit.
+
+The replacement inverts the design deliberately. There is one hand-maintained component registry, and
+every entry carries a `verify:` command **you run**, with the instruction *"run it — never trust this
+file's prose."* Advisory by construction.
+
+Then the honest footnote, because this wiki does not publish only the flattering half: an audit found
+that `verify:` is **read by humans and executed by nothing**, and that it records no box, so a quarter of
+its commands fail from the wrong machine and pass from the right one. The mechanism is better than what
+it replaced and it is not yet what its own header claims.
+
+## Killed: the NATS message bus
+
+`nats.service` and its reload units are on the **never resurrect** list. Cross-machine agent comms
+were replaced by **issue comments and @mentions** — delivery that is durable, at-least-once, and
+visible on the surface a human already reads.
+
+**Three zombie units survive on the box, and one of them is active.** Their residue was documented
+in a file that was itself deleted, which is why they get named here. This page said *two*, and said
+they were *inactive and disabled*, until a reader running the pattern walk ran the command and
+reported otherwise (knowledge#6665). Re-measured on the box, 2026-08-23:
+
+```console
+$ systemctl list-unit-files | grep -i nats
+nats-reload.path       enabled   enabled
+nats-reload.service    static    -
+nats.service           disabled  enabled
+
+$ systemctl list-units --all | grep -i nats
+nats-reload.path      loaded active   waiting  Watch NATS config; reload server on change
+nats-reload.service   loaded inactive dead     Reload NATS on config change
+nats.service          loaded inactive dead     NATS JetStream fleet hub
+```
+
+`nats-reload.path` is `enabled` and `active (waiting)` — a live path unit watching for changes to
+the config of a service that will never start again. A deletion in a repository is half a deletion,
+and the surviving half is the half that keeps running.
+
+## Killed: the command center's generated infrastructure surface
+
+Built on the deleted catalog, so it returned a permanent empty state once the catalog died. Removed in a
+single pull request that deleted *"11 callerless routes, 7 orphaned components, 5 dead libs."*
+
+This one is listed because **open plans still name deleting it as a to-do.** Anyone dispatched on that
+line finds nothing to delete, which reads like a lost change rather than an already-shipped one. A stale
+local clone will happily disagree; `git ls-tree origin/main` is the truth and a local `ls` is not.
+
+## Killed: a scheduled local re-run of another repository's CI
+
+**Deleted 2026-08-15.**
+
+A timer fired every three hours on one master: check out the product repo, typecheck, build, test, file a
+P0 on any real failure. It was built to close a genuine blind spot and was repeatedly repaired over
+months.
+
+It died because the product repo's own CI runs those same three phases on every push to main — it just
+**told nobody**. Once it announced for itself, a second box re-running identical work was duplicated
+effort.
+
+### The half-deletion, which is the real lesson
+
+**Deleting the unit from the agent's brain repository did not stop it running.** `~/.config/systemd/user/`
+holds *copies*, not symlinks into the repo. The timer stayed `active waiting` with its `ExecStart`
+pointing at a script that no longer existed, and the next firing — nearly three hours after the "delete"
+— exited `203/EXEC` and filed a P0 about itself.
+
+A brain-repo deletion is **half** of a deletion. The other half is on the box, and it is five commands.
+They are written out in [Operations](/docs/operating/operations).
+
+## Standing decisions
+
+These are not history. They are current, and they constrain new work.
+
+### Publish the mechanics, not the identifying values
+
+**Superseded 2026-09-27.** This entry used to read *"publish everything, unsanitized"*: real hostnames,
+real tailnet IPs and real usernames, decided after measuring what that exposed, with an explicit
+instruction that a contributor sanitizing the site was a regression. The founder narrowed it. What
+changed is the audience — these pages now exist to be copied into strangers' agents as prompts, and a
+literal tailnet address or an admin UI's hostname teaches such a reader nothing a placeholder does not.
+
+The current rule: **publish how everything works; withhold the literal values that locate private
+infrastructure.** Tailnet addresses become `100.x.x.x` or `<tailnet-ip>`, internal hostnames and bucket
+URLs become named placeholders, and every row, class and lesson around them stays exactly as it was.
+The redaction is applied page by page; [Surfaces](/docs/structure/surfaces) and
+[Architecture](/docs/structure/architecture) carry it, and so does the [landing page](/docs)'s tailnet table.
+
+This is also the reopening rule at the top of this page, followed: the old entry is not silently
+deleted, it is marked superseded here with what changed.
+
+**The one hard stop is unchanged and absolute: never a secret in a tracked file.** Publishing the vault's
+mechanics is in scope; publishing a credential never is.
+
+### One secret store
+
+Infisical, self-hosted, and nothing else. No local vault, no second store, no `.env` in a repository.
+A separate registry carries each credential's *meaning* — account, scopes, what it can and cannot do —
+so that "I don't have access" is a claim that must be checked against a list before it can be made.
+
+### Subtract by default
+
+Before adding a script, a rule, a service, a gate or a file, the question is what can be **deleted or
+merged instead**. Legacy that is replaced is deleted at the moment of replacement. Git history is the
+archive; `archive/` folders are banned. A convention gets an advisory linter; only a stable invariant
+gets a blocking gate.
+
+### Options before decisions
+
+A non-trivial architecture or tooling choice gets researched alternatives — at least two real options,
+plus do-nothing, plus integrate-something-existing — before the decision, and the decision is written
+down. Proven native and open-source tools beat custom machinery; custom is the exception that must
+justify itself.
+
+This site is its own example. The wiki lives in a standalone repository rather than inside the product
+monorepo, and the record naming the four options considered, the reason, and the **costs the choice
+imposes** was committed before the first line of the app.
+
+### A limit is a measurement, never a precaution
+
+Before setting any ceiling — concurrency, retries, batch size, timeout — measure the real headroom and
+**write the measurement next to the number**. A cap chosen out of caution silently becomes the system's
+capacity, and unlike a bug it never announces itself: it reports success while doing a fraction of the
+work.
+
+The fleet learned this in the most annoying possible way. Its dispatch scheduler ran for days at roughly
+**8% of proven capacity** — three of four masters idle on a 12-core box under a load average below 1 —
+because caps of 1, 4 and 2 had been set against a failure mode that two other mechanisms already covered.
+The defence was real; it was simply aimed at the wrong axis.
+
+### Fix forward, never pre-gate
+
+Build, merge, deploy. If it breaks, revert or fix and redeploy. The alternative — a human approving each
+step — was measured and is slower at every scale this fleet operates at. What this explicitly does *not*
+license: skipping verification, force-pushing shared branches, or claiming completion that was not
+observed.
+
+## Never resurrect
+
+- **ralph** and every watchdog, heartbeat and supervisor built to babysit it.
+- **The NATS bus** and its three remaining zombie units.
+- **The generated component catalog** and any fail-closed gate built on a generated map.
+- **Content-keyword gates** of any kind.
+- **Resident processes, heartbeat polls and scheduled health checks** as a way of knowing whether the
+  fleet is alive. The board is the queue; a run's own close-out comment is the liveness signal; and the
+  one page that reads current state does so at request time and stores nothing.
+
+  **One sanctioned exception, named here so a reader does not have to discover it with `ps`.** A
+  `*/5 * * * *` cron entry on each master's own crontab POSTs that master's record to the command
+  centre, which stores it under a five-minute TTL; the TTL expiring is what turns a box grey on a
+  dashboard a human is looking at. That is a self-reported heartbeat and it was adopted deliberately
+  (2026-07-22) because it answers a different question: *which box is online right now*, not *is
+  this work alive*. Nothing in the work loop reads it — no dispatch, no gate and no close-out
+  depends on it, which is what keeps the ban meaningful. Separately, a master's own standing
+  interactive session is resident for as long as nobody restarts it (measured 13.3 days on one
+  master, 2026-08-23); no *dispatched run* leaves a process behind. The ban is on resident
+  machinery as the ANSWER to "is the fleet alive". It has never been a ban on every scheduled job,
+  and a reader who runs the walk from inside this fleet will find both of these — so they are
+  written down rather than left to look like drift (knowledge#6665).
+
+If you believe one of these should come back, the path is a superseding decision record naming what
+changed. Not a rebuild.
