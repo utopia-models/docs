@@ -191,8 +191,7 @@ The fleet's canonical list of the 14 patterns is in its knowledge base, at
 Nothing on this page is a health reading. Whether a host is online, whether an agent can run *today*,
 and how full the disk is all change often, and a written page that stated them would be wrong within
 days. Where this page needs one of these values, it gives **the exact command and the box that answers
-it** instead of a number. The fleet's cockpit at [utopiamodels.ai](https://utopiamodels.ai) shows the
-current state.
+it** instead of a number.
 
 ## Hosts
 
@@ -285,12 +284,13 @@ that job is.
 
 ## The dispatch runtime
 
-The whole agent runtime is two scripts and systemd. There is no scheduler daemon, no queue and no
+The whole agent runtime is three shell scripts and systemd. There is no scheduler daemon, no queue and no
 watchdog. This section is the overview. The guards, their exit codes and the race that only a file lock
 can close are on [The dispatch runtime](/docs/operating/dispatch-runtime).
 
 | Script | What it does |
 | --- | --- |
+| `_infra/scripts/sweep-dispatch.sh` | The scheduler: on a timer, picks the next dispatchable issue and a healthy master |
 | `_infra/scripts/dispatch.sh <master> <issue#> [repo]` | The Architect gives a master its issue **by starting the run** |
 | `_infra/scripts/task-runner.sh <issue#> [repo]` | Runs the task itself, on the master's own box |
 
@@ -308,7 +308,7 @@ One dispatch does these steps, in order.
    in only one of them cannot see the other path.
 5. **Pre-flight syncs the master's clones.** For every repo in the run's repo list it fetches, stashes
    anything uncommitted, checks out main and hard-resets to `origin/main`.
-6. It launches a **detached transient unit** with `systemd-run --user --unit=task-<issue>-<n> --collect`,
+6. It launches a **detached transient unit** with `systemd-run --user --unit=task-<issue> --collect`,
    so the run keeps going if the SSH connection drops or the laptop goes to sleep.
 7. `task-runner.sh` updates itself once and checks again that the issue is *still work*. It posts
    **▶ started** before anything that can fail, then runs `claude -p` under a turn cap. On exit, its trap

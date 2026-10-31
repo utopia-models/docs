@@ -1,6 +1,6 @@
 # Dispatch: the decisions, not the code
 
-Extracted from a working ~7,000-line dispatch runtime — three shell scripts, four worker machines,
+Extracted from a working ~7,000-line dispatch runtime — three shell scripts, four workers (separate unix users) on one Linux host,
 about eighteen months of accumulated failures. **The 7,000 lines are not the asset.** Roughly 250 of
 them are the architecture; the rest is integration with one company's planning layer, plus the scar
 tissue of every way it broke. This file is the scar tissue, generalised.
@@ -79,7 +79,7 @@ at the top of any script that can be invoked remotely, and pass `--setenv=PATH` 
 ## D4 · The unit name carries ZERO entropy, and that absence is the lock
 
 The unit is named `task-<issue>` and nothing else. The supervisor refuses a second unit with a live
-name — in the kernel, atomically, with no window.
+name — in that user's systemd manager, atomically, with no window.
 
 🔴 **The history is the lesson.** The name *used to* carry a timestamp and a random suffix. That
 entropy was added as a "fix" when two dispatches inside one second built the same name and the
@@ -99,7 +99,7 @@ work that never ran.
 | layer | covers | how it fails |
 |---|---|---|
 | a pre-flight duplicate check | the obvious case, explained early | read-then-act: 26–27s of window |
-| the zero-entropy unit name | a second run **on the same worker**, refused in the kernel | a *user* supervisor is per-user — the same name under two unix users is two names |
+| the zero-entropy unit name | a second run **on the same worker**, refused by that user's systemd manager | a *user* supervisor is per-user — the same name under two unix users is two names |
 | **one lock held across the probe AND the launch** | a second run **on any worker** | fails open: an unwritable lock proceeds and says so |
 
 The third layer is the one you will miss. The check must move *inside* the lock, and the lock must

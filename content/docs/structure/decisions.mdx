@@ -4,7 +4,7 @@ description: What the fleet built and killed, and why, with a source for each. R
 updated: 2026-10-31
 ---
 
-```text title="prompt-1|Learn why re-deciding is the expensive failure|claude-code|Reads this page, explains the reopening rule, the four kills and the standing decisions back to you, then quizzes you. Writes only its checklist."
+```text title="prompt-1|Learn why re-deciding is the expensive failure|claude-code|Reads this page, explains the reopening rule, the five kills and the standing decisions back to you, then quizzes you. Writes only its checklist."
 PROMPT 1 of 2 — learn what the Decisions page teaches: what the fleet killed, why, and the standing decisions that constrain new work. You read and explain. You write one checklist file and nothing else.
 
 I run my own agents with Claude Code and I am senior. Skip basics. Where the page's reasoning would not survive contact with a setup like mine, say so.
@@ -16,7 +16,7 @@ Write ~/DECISIONS-LEARN-CHECKLIST.md and work from it:
   # Decisions — learn
   - [ ] 1. Fetch the page
   - [ ] 2. The reopening rule
-  - [ ] 3. The four kills, each as killed / why / replaced by / residue
+  - [ ] 3. The five kills, each as killed / why / replaced by / residue
   - [ ] 4. The standing decisions
   - [ ] 5. Quiz me, then tell me to paste prompt 2
 
@@ -41,13 +41,13 @@ For each, one row: what it was · why it died · what replaced it · what RESIDU
   ralph, the 24x7 loop       — and the per-agent field named after it that outlived the loop
   the generated catalog      — the fail-closed gate that auto-reverted its own cleanup, and the
                                honest footnote: `verify:` is read by humans and executed by nothing
-  the NATS bus               — and `nats-reload.path`, still active (waiting), watching the config
-                               of a service that will never start
+  the NATS bus               — and its reload units, which outlived it on the box until they were removed
+                               (re-measured 2026-10-31: none left)
   the local CI re-run timer  — and why deleting it from the brain repo did not stop it (copies in
                                ~/.config/systemd/user/, not symlinks; it fired 203/EXEC and filed a
                                P0 about itself)
 
-The pattern across all four is the lesson: a deletion in a repository is half a deletion. Say it in your own words.
+The pattern across all five is the lesson: a deletion in a repository is half a deletion. Say it in your own words.
 
 4 — STANDING DECISIONS
 
@@ -125,7 +125,7 @@ Then look for the page's most expensive failure: a thing built, removed, and bui
 
 2 — FIND THE RESIDUE
 
-The page's four kills all left something running. For each deletion found above that touched a service, timer, cron job, hook or config:
+The page's five kills each left something running at the time. For each deletion found above that touched a service, timer, cron job, hook or config:
   - is a copy still installed outside the repo? (`systemctl --user list-unit-files`, `crontab -l`, ~/.config/, ~/.claude/)
   - does a name, field or flag outlive it in config or docs? (`grep -rn '<name>'` across the repo)
 
@@ -215,26 +215,19 @@ its own header claims.
 replaced it for cross-machine agent messages. That delivery is durable and at-least-once, and it shows up
 where a human already reads.
 
-**Three leftover units remain on the box, and one of them is active.** The file that documented them
-was itself deleted, so we name them here. This page used to say there were *two*, and that they were
-*inactive and disabled*. Then a reader doing the pattern walk ran the command and reported otherwise
-(knowledge#6665). We measured again on the box on 2026-08-23:
+**The leftover units are gone now.** For a while they were not. This page once said there were *two*
+leftover units, *inactive and disabled*. Then a reader ran the command and found
+three, one of them active. On 2026-08-23 `nats-reload.path` was still `enabled` and
+`active (waiting)`, a live path unit watching the config of a service that would never start again.
+Re-measured on the box on 2026-10-31, both commands print nothing:
 
 ```console
 $ systemctl list-unit-files | grep -i nats
-nats-reload.path       enabled   enabled
-nats-reload.service    static    -
-nats.service           disabled  enabled
-
 $ systemctl list-units --all | grep -i nats
-nats-reload.path      loaded active   waiting  Watch NATS config; reload server on change
-nats-reload.service   loaded inactive dead     Reload NATS on config change
-nats.service          loaded inactive dead     NATS JetStream fleet hub
 ```
 
-`nats-reload.path` is `enabled` and `active (waiting)`. It is a live path unit watching the config of a
-service that will never start again. Deleting something in a repository is half of the deletion, and the
-other half is the part that keeps running.
+Deleting something in a repository is half of the deletion. The other half is whatever keeps running on
+the box, and only a command run on the box shows it.
 
 ## Killed: the command center's generated infrastructure surface
 
@@ -339,7 +332,7 @@ observed.
 ## Never resurrect
 
 - **ralph** and every watchdog, heartbeat and supervisor built to watch over it.
-- **The NATS bus** and its three remaining leftover units.
+- **The NATS bus** and its reload units (removed from the box; re-measured 2026-10-31).
 - **The generated component catalog** and any fail-closed gate built on a generated map.
 - **Content-keyword gates** of any kind.
 - **Resident processes, heartbeat polls and scheduled health checks** as a way to know whether the

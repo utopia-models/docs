@@ -1,0 +1,64 @@
+# Outside-reader review (utopia-models/knowledge#10854). Before anything on this public surface ships, a fresh
+# `claude -p` with no fleet context reads the RENDERED Vercel preview as its real audience, every link on it is
+# fetched, and the review is posted on the PR with the commit status `outside-reader`.
+#
+# Tyler, 2026-10-31: "Why is there a YouTube link on my website? ... run thorough research so we don't need people
+# like boogs to catch this for us."
+#
+# The status cannot hard-block a merge on this plan tier (branch protection 403s). The hold is the fleet-doctrine
+# plugin's PreToolUse hook, which refuses `gh pr merge` here unless `outside-reader` is success on the head SHA.
+# The reviewer itself is ONE script in the knowledge repo, fetched at run time so there is no copy to drift:
+#   _infra/scripts/outside_reader.py
+# It runs on the org's self-hosted runners as the runner's unix user, with that user's gh and claude logins.
+name: outside-reader
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  deployment_status:
+
+concurrency:
+  group: outside-reader-${{ github.event_name }}-${{ github.event.deployment.sha || github.event.pull_request.head.sha }}
+  cancel-in-progress: true
+
+jobs:
+  pending:
+    # A new head has no review yet: say so on the PR at once rather than leaving the last head's verdict implied.
+    if: github.event_name == 'pull_request'
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 5
+    steps:
+      - run: |
+          gh api -X POST "repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }}" \
+            -f state=pending -f context=outside-reader -f description="waiting for the Vercel preview to render" >/dev/null
+
+  review:
+    if: >-
+      github.event_name == 'deployment_status' &&
+      github.event.deployment_status.state == 'success' &&
+      !startsWith(github.event.deployment.environment, 'Production')
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 60
+    steps:
+      - name: Review the rendered preview
+        env:
+          SHA: ${{ github.event.deployment.sha }}
+          PREVIEW: ${{ github.event.deployment_status.environment_url }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          PR="$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '[.[] | select(.state=="open")][0].number // empty')"
+          [ -n "$PR" ] || { echo "no open PR has head $SHA — nothing to review"; exit 0; }
+          T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
+          mkdir -p "$T/_infra/scripts" "$T/net/work/resume"
+          gh api repos/utopia-models/knowledge/contents/_infra/scripts/outside_reader.py \
+            -H 'Accept: application/vnd.github.raw' > "$T/_infra/scripts/outside_reader.py" \
+            || { echo "::error::could not fetch the reviewer from utopia-models/knowledge"; exit 1; }
+          gh api repos/utopia-models/knowledge/contents/net/work/resume/tyler-youk.yaml \
+            -H 'Accept: application/vnd.github.raw' > "$T/net/work/resume/tyler-youk.yaml" || true
+          # Actions runs this as `bash -e`, and `set -uo pipefail` does not clear -e: `|| rc=$?` is what keeps
+          # exit 1 (findings) from killing the step before it is read.
+          rc=0
+          python3 "$T/_infra/scripts/outside_reader.py" pr --repo "$REPO" --pr "$PR" --base-url "$PREVIEW" --post || rc=$?
+          # 1 = blocking findings: a correct outcome, reported on the PR and in the status. Anything else (3 =
+          # could not check, a crash) turns the job red, so a red job always means the reviewer, not the page.
+          case "$rc" in 0|1) exit 0 ;; *) echo "::error::outside-reader exited $rc"; exit 1 ;; esac

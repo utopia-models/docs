@@ -1,6 +1,6 @@
 ---
 title: The Utopia fleet
-description: One Ubuntu box runs five AI agents. A GitHub board is the work queue and git holds the state.
+description: One Ubuntu box runs four dispatch agents and a planner. A GitHub board is the work queue and git holds the state.
 _note: title/description drive the tab, OG image and llms.txt line. `app/docs/layout.tsx` hides the H1+lede on this page (Tyler, 2026-08-30) so it opens on the first heading.
 updated: 2026-10-31
 ---
@@ -9,7 +9,7 @@ updated: 2026-10-31
 
 I'm [Tyler Youk](https://tyleryouk.com), a software engineer. This site documents the agent fleet I
 designed and run. It is one Ubuntu server with Claude Code agents running as separate unix users. A GitHub
-project board is the only work queue, and git holds the state. I write the specs and the process the
+project board is the work queue, and git holds the state. I write the specs and the process the
 fleet follows, and I direct the agents that write the code.
 
 If you are a person, read these three things first.
@@ -34,14 +34,14 @@ one fetch. It was about 430 KB when I measured it on 2026-10-30, and it grows as
 (`curl -s https://docs.utopiamodels.ai/llms-full.txt | wc -c` gives today's size). An agent should start at
 [Start here for agents](/docs/agents), which explains how to poll [`/feed.json`](/feed.json) for changes.
 
-Five meta prompts follow. Each one runs to completion in the tool it names. Two of them get an agent to
-understand this fleet, one applies it to your own setup, and two build you a fleet of your own. Pick a
+The prompts below are each written for the tool they name. Pick a tool to see its prompts: some get an
+agent to understand this fleet, one applies it to your own setup, and the rest build you a fleet of your own. Pick a
 tool and click copy.
 
 <HarnessToggle />
 
 ```text title="prompt-1|Understand this fleet|desktop|Reads the wiki in three passes and hands back a briefing that sorts every claim into measured and asserted. Finishes in one paste."
-You are reading a public wiki that documents a real, running AI agent fleet — one Ubuntu server, a GitHub project board as the only work queue, and no orchestration layer between the agents. I want you to understand it well enough to argue with it.
+You are reading a public wiki that documents a real, running AI agent fleet — one Ubuntu server, a GitHub project board as the work queue, and no orchestration layer between the agents. I want you to understand it well enough to argue with it.
 
 Work in three passes. Do not summarize until the third.
 
@@ -95,14 +95,14 @@ Then write:
 
 Skip the throat-clearing and the recap of what you just did. If a page contradicts another page, quote both and say which you believe. If you think a decision on that site is wrong, say so and why — an agreeable summary of someone else's architecture is worth less to me than a specific objection.
 
-This fleet has a live cockpit at https://utopiamodels.ai. Open it yourself rather than fetching it; it renders client-side, so a fetch returns an empty shell. Its board endpoint, above, is the part you can fetch.
+The board endpoint above is the live state. Fetch it rather than trusting any number written on a page.
 ```
 
 ```text title="prompt-2|Understand this fleet|claude-code,opencode,codex,cursor,gemini|Fans subagents across the wiki, checks the prose against the live board, and reports the drift. Finishes in one paste."
 You are going to read the public documentation of a real, running AI agent fleet and report what it actually is. Two public surfaces, no auth on either:
 
 - https://docs.utopiamodels.ai — the wiki, the written argument for how the fleet is built
-- https://utopiamodels.ai — the OCC, its live cockpit, and the counterpart that either confirms the prose or contradicts it
+- https://utopiamodels.ai/v1/board — the live board as JSON, the counterpart that either confirms the prose or contradicts it
 
 Do not edit, create, or delete any file on my machine. This is a read-and-report task from start to finish.
 
@@ -112,7 +112,7 @@ Run this first:
 
     curl -s https://docs.utopiamodels.ai/llms.txt | head -3
 
-You should get a line reading `# The fleet` followed by a bulleted entry for `/docs`. If you get empty output or a non-zero exit, curl is not reaching the host from this machine. Try `python3 -c "import urllib.request; r=urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20); print(r.status, len(r.read()))"`, which should print `200 1506`, or fall back to wget, or use whatever web-fetch tool you have. Tell me which one worked before continuing, because everything below depends on it.
+You should get a line reading `# Utopia Fleet Wiki` followed by a `## Start here` list. If you get empty output or a non-zero exit, curl is not reaching the host from this machine. Try `python3 -c "import urllib.request; r=urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20); print(r.status, len(r.read()))"`, which should print `200 1506`, or fall back to wget, or use whatever web-fetch tool you have. Tell me which one worked before continuing, because everything below depends on it.
 
 Now derive the page list rather than trusting one I typed:
 
@@ -164,7 +164,7 @@ A response where `ok` is true, `generatedAt` is present and the item list is pop
 
 The parser uses `.get()` throughout for exactly this reason: indexing directly into the counts crashes on the unhealthy shapes, and a traceback tells you less than the error string does.
 
-One caution on the OCC. `https://utopiamodels.ai` is a client-rendered application, so fetching the root with curl gives you the shell and a few loading strings rather than the live sections. Use `/v1/board` for data. If you have a browser tool the rendered page is worth a look; if you do not, say you could not see it.
+Use `https://utopiamodels.ai/v1/board` for live data. It is the public JSON endpoint; the rest of that host is client-rendered.
 
 ## Step 3b — find the ceiling on what you can prove
 
@@ -236,7 +236,7 @@ print(d.get('generatedAt'), d.get('counts'), d.get('byLane'))
 
 It reads the live board, no auth and no jq required. It branches on `ok` because this endpoint degrades rather than failing: when its upstream read is refused it still returns valid JSON with `ok` false and an error string, and a fleet with no work and a fleet that cannot see its work are different claims. If the parser raises a JSON decode error instead, the endpoint returned HTML, which means an outage — treat it as unreachable.
 
-`https://utopiamodels.ai` is the command center itself, but it is a client-rendered app, so curl returns a loading skeleton. Use the endpoint above for state and ignore the root URL unless you have a browser tool.
+Use the endpoint above for state; the rest of that host is client-rendered.
 
 What you are looking for in step 1 is not features. It is the shape of the decisions: what that fleet deliberately does not have, and what each absence buys and costs. Their wiki argues that most agent infrastructure is supervision machinery whose only job is keeping a resident process honest, and that deleting the resident process deletes the machinery. Judge that argument on their evidence.
 
@@ -445,7 +445,7 @@ If I approved an edit to a file you did not create, name that file in the same l
 
 This finishes in one paste on a normal repo. If my repo is large enough that step 2 does not fit, stop after step 3, write the manifest to `docs/KB-PLAN.md`, and tell me to start a fresh session pointing at that file. A half-written knowledge base is worse than a manifest, because the half that exists reads as complete.
 
-For live context on the reference fleet as you work, its cockpit is at https://utopiamodels.ai, and its board state is one fetch away:
+For live context on the reference fleet as you work, its board state is one fetch away:
 
     curl -s https://utopiamodels.ai/v1/board | python3 -c "
     import json,sys
@@ -469,11 +469,11 @@ What you cannot do is anything that needs me: creating accounts, paying for subs
 
 ## Step 1 — Study the reference fleet
 
-The fleet is documented at https://docs.utopiamodels.ai and its live cockpit is at https://utopiamodels.ai. Start with the index:
+The fleet is documented at https://docs.utopiamodels.ai and its live board is https://utopiamodels.ai/v1/board. Start with the index:
 
     curl -s https://docs.utopiamodels.ai/llms.txt | head -3
 
-You should see `# The fleet` and a bulleted list. If that command prints nothing or exits non-zero, the site is unreachable from this machine; try `python3 -c "import urllib.request;print(urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20).read().decode())"` or `wget -qO- https://docs.utopiamodels.ai/llms.txt` before concluding it is down.
+You should see `# Utopia Fleet Wiki` and a `## Start here` list. If that command prints nothing or exits non-zero, the site is unreachable from this machine; try `python3 -c "import urllib.request;print(urllib.request.urlopen('https://docs.utopiamodels.ai/llms.txt',timeout=20).read().decode())"` or `wget -qO- https://docs.utopiamodels.ai/llms.txt` before concluding it is down.
 
 Derive the page list from the index rather than hardcoding URLs, so this stays correct as the wiki grows:
 
@@ -629,7 +629,7 @@ Every page here follows four rules. They come from a full audit of the fleet's o
    an agent that means a real `claude -p` probe, for a surface an HTTP status code, and for a systemd unit
    `Result=success`.
 4. Generate facts that change, and write down facts that don't. Disk usage, uptime, node liveness and issue
-   counts all go out of date within days of being written down, so no prose page on this site states one.
+   counts all go out of date within days of being written down, so no prose page on this site states one without the date it was measured.
    Each such fact is either generated from the knowledge base when you request the page, or replaced by
    the command that measures it. That is why the rest of the prose can stay unchanged for a long time.
 
@@ -653,7 +653,7 @@ tailnet, and saying that is more useful than a status dot that might be a day ol
 
 ## The dispatch loop
 
-This is the whole runtime. It is two shell scripts, both readable end to end, plus systemd.
+This is the whole runtime: three shell scripts (a scheduler, a dispatcher and a runner), each readable end to end, plus systemd.
 
 ```text title="The dispatch loop"
 Architect (ETH)                          novaserver
@@ -670,7 +670,7 @@ Architect (ETH)                          novaserver
 Starting the run is the assignment. There is no acceptance step, no claim and no lock file. The run shows
 it is alive by posting a close-out comment on its own issue. If a run dies, its trap still fires and posts
 that it died. If the whole unit fails, systemd's `OnFailure=` files a board issue about it. So a failed run
-always produces a message, and this design never fails silently.
+always produces a message, unless the process is killed outright before its handler runs.
 
 ## What the numbers say
 
@@ -685,13 +685,13 @@ I measured these on 2026-08-16, on the live fleet.
 - 14 places claim to be a source of truth, not the five that the fleet's own documentation implies.
 - Zero failed systemd units in any of the five service contexts on the server.
 
-These numbers describe one moment, which is why each has a date. For the current state, read the fleet's
-cockpit at [utopiamodels.ai](https://utopiamodels.ai).
+These numbers describe one moment, which is why each has a date. For the current state, fetch the board
+endpoint, `https://utopiamodels.ai/v1/board`.
 
 ## An honest description [#the-honest-framing]
 
-The fleet is real, busy and well built. The runtime is two scripts with no daemon to watch over. The
-command center provably does not drift, because it stores nothing. Failure announcements cover every run: on 2026-08-16,
+The fleet runs real work every day. The runtime is three shell scripts with no daemon to watch over. The
+command center stores nothing, so it has no copy of state to drift from. Failure announcements cover every run: on 2026-08-16,
 every transient run unit on every master had the `OnFailure` hook. Every box runs the same version of the
 doctrine files.
 

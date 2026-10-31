@@ -44,7 +44,7 @@ Draw detect → enrich → mailbox → notify → apply. Explain why apply runs 
 4 — THE THREE PROPERTIES
 
   - a duty is REGISTERED in the loop body, not discovered from a directory — why a dropped-in handler is dead code that looks installed
-  - `Restart=always` without a start-limit interval and burst restarts a crash loop forever, never enters `failed`, and never fires the failure path
+  - `Restart=always` whose `RestartSec` outruns the start-limit window restarts a crash loop forever, never enters `failed`, and never fires the failure path
   - a schedule is a timer; only the watch is resident — the three tests the daily rollup failed
 
 5 — ISOLATION AND WEAK POINTS
@@ -138,7 +138,7 @@ For each resident process:
 4 — SILENT DEATH
 
 For each resident process, from its actual config, quote:
-  - its restart policy — `Restart=always` with no `StartLimitIntervalSec`/`StartLimitBurst` crash-loops forever and never enters failed
+  - its restart policy — `Restart=always` whose `RestartSec` outruns the start-limit window (default 5 starts in 10 s) crash-loops forever and never enters failed
   - its failure path — an `OnFailure=` unit or any alert; if none, its death is silent
   - where it announces liveness somewhere a person actually looks
 
@@ -238,7 +238,8 @@ In a loop that runs duties in sequence, order matters, so write the reason for t
 
 ### The restart limit is what makes death visible
 
-`Restart=always` on its own restarts a crash loop forever. The unit never enters a failed state, the
+`Restart=always` with a `RestartSec` longer than the start-limit window (by default 5 starts in 10 s)
+restarts a crash loop forever. The limit is never reached, the unit never enters a failed state, the
 failure handler never fires, and the always-on agent dies while its service manager still reports it as
 active.
 

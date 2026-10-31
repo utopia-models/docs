@@ -15,7 +15,7 @@ build them in.
 | One box | A single always-on Linux machine you own. Every agent is a unix user on it. | [Hosts](/docs/structure/architecture#hosts) |
 | One backend | Claude Code, on flat subscriptions. Never a pay-per-use API key. | [Architecture](/docs/structure/architecture) |
 | A queue | A GitHub project board. An issue is the unit of work. A merged PR that says `Closes #N` is the only status change. | [How work flows](/docs/operating/work), [The board](/docs/operating/board) |
-| A runtime | Two shell scripts and systemd. Dispatching an issue starts a transient unit under the agent's user. The run posts on the issue when it starts and when it exits. There is no daemon and no queue process. | [The dispatch runtime](/docs/operating/dispatch-runtime) |
+| A runtime | Three shell scripts and systemd. Dispatching an issue starts a transient unit under the agent's user. The run posts on the issue when it starts and when it exits. There is no daemon and no queue process. | [The dispatch runtime](/docs/operating/dispatch-runtime) |
 | State | Git. A spec and a `plan.md` with checkboxes sit beside the work, so any agent can pick it up. | [How work flows](/docs/operating/work) |
 | At most one resident loop | Use one only for an external system that emits nothing you can subscribe to. Everything else is a run. | [The always-on agent](/docs/structure/agent-always-on) |
 
@@ -36,8 +36,8 @@ This section describes the mechanism. It never names a key, and no page on this 
 - Each agent has its own scope. An agent's machine identity sees only the projects it needs. One agent
   has the authority to provision credentials for the rest.
 - There is one hard stop. A secret scanner (gitleaks) runs on every push and pull request. A secret in a
-  tracked file is the only mistake an agent may not fix forward. Everything else an agent does can be
-  reverted in git.
+  tracked file is the only mistake an agent may not fix forward: it has to be rotated, not reverted. Most
+  of what an agent does lands in git and can be reverted there.
 
 For the full mechanics, see [Secrets](/docs/structure/architecture#secrets) and the runbook commands under
 [Operations](/docs/operating/operations#secrets).
@@ -49,8 +49,11 @@ For the full mechanics, see [Secrets](/docs/structure/architecture#secrets) and 
 2. Set up the secret store and the read script before any agent needs a credential.
 3. Set up the board. You need one project, an issue template that names a spec path, and the rule that a
    merge is the only status change.
-4. Build the runtime. A dispatch script starts a transient unit per issue and names the unit after the
-   issue, so a second copy of the same issue cannot start. A runner posts on the issue when the run starts and exits.
+4. Build the runtime. A dispatch script starts a transient unit per issue, named after the issue, under
+   one fleet-wide lock held from the check of every agent's units through the launch. A unit name on its
+   own stops a second copy only inside one user's systemd manager, so with one unix user per agent the
+   lock is what keeps an issue from running twice
+   ([the race](https://github.com/utopia-models/dispatch-runtime#the-race-this-repo-is-mostly-about)). A runner posts on the issue when the run starts and exits.
 5. Run one real task end to end. File it, dispatch it, merge it, and let the merge close it. The
    [dispatch module](/docs/ai-infrastructure-upgrades/dispatch) walks through this step with prompts.
 6. Then publish a feed of what your fleet learns so other fleets can read it, as this site does.

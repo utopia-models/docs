@@ -1,12 +1,12 @@
 ---
 title: The dispatch runtime
-description: Two shell scripts and systemd make up the entire agent runtime. There is no daemon, queue or watchdog. Starting a run is the assignment, and the close-out comment is the only sign that a run is alive.
+description: Three shell scripts and systemd make up the entire agent runtime. There is no daemon or watchdog, and the board is the only queue. Starting a run is the assignment, and the run announces its start and its exit on the issue.
 updated: 2026-10-31
 ---
 
 <Status value="stable" />
 
-```text title="prompt-1|Learn the two-script runtime|claude-code|Reads this page, explains the no-daemon design and its three fail-open guards back to you, and reproduces the bash byte-offset hazard in a scratch directory. No repository writes."
+```text title="prompt-1|Learn the three-script runtime|claude-code|Reads this page, explains the no-daemon design and its three fail-open guards back to you, and reproduces the bash byte-offset hazard in a scratch directory. No repository writes."
 PROMPT 1 of 2 — learn what this module teaches. You write nothing to any repository. The one thing you create is a scratch directory under mktemp, and you delete it before you finish.
 
 ASK EVERY QUESTION WITH {{ASK}}, with a RECOMMENDED option first. Not prose.
@@ -57,7 +57,7 @@ Then say exactly this:
 Then stop.
 ```
 
-```text title="prompt-2|Audit your launcher, then adopt the smallest two-script shape|claude-code|Finds whatever starts your long-running jobs, grades it on the four properties this runtime has, and proposes the smallest change. Writes only after you confirm."
+```text title="prompt-2|Audit your launcher, then adopt the smallest script-and-systemd shape|claude-code|Finds whatever starts your long-running jobs, grades it on the four properties this runtime has, and proposes the smallest change. Writes only after you confirm."
 PROMPT 2 of 2 — integrate this module into my own setup. Survey read-only first; propose; write only what I confirm.
 
 HOW LONG THIS TAKES: a multi-step audit (5 steps, about 5 questions, writes only what you approve) — expect roughly 10–25 minutes across several turns. Running headless with a timeout? Budget for that, or start with a shorter prompt first. Cut off partway? Paste this prompt again — it resumes from its checklist rather than starting over.
@@ -68,7 +68,7 @@ Reference, read it first:
 
   curl -s https://docs.utopiamodels.ai/docs/operating/dispatch-runtime.md
 
-That runtime is two shell scripts and systemd: no daemon, no queue, no watchdog. It runs on ONE machine with a handful of agents — that assumption is load-bearing in several of its choices, so if my situation differs, say so out loud rather than quietly assuming it holds.
+That runtime is three shell scripts and systemd: no daemon, no queue process, no watchdog. It runs on ONE machine with a handful of agents — that assumption is load-bearing in several of its choices, so if my situation differs, say so out loud rather than quietly assuming it holds.
 
 FIRST — WRITE YOUR CHECKLIST TO A FILE
 
@@ -132,7 +132,7 @@ With {{ASK}}, one at a time, each with a recommended answer: how many runs happe
 
 A table — property · what this repo does · what the reference does · defect or legitimate difference in substrate. Be willing to conclude my setup is right and the reference is wrong for my case.
 
-Then ONE recommendation, not a menu: either "adopt the two-script shape — here is the smallest version for your case" (the launcher, the run script, the guard, and where each announces start and finish), or "do not — here is what you need instead and why that fleet does not." Name the files and the shape of each edit. Ask me with {{ASK}} whether to write it, RECOMMENDED: yes, as a new file beside the existing launcher rather than an edit to it.
+Then ONE recommendation, not a menu: either "adopt the script-and-systemd shape — here is the smallest version for your case" (the launcher, the run script, the guard, and where each announces start and finish), or "do not — here is what you need instead and why that fleet does not." Name the files and the shape of each edit. Ask me with {{ASK}} whether to write it, RECOMMENDED: yes, as a new file beside the existing launcher rather than an edit to it.
 
 5 — WRITE ONLY WHAT I CONFIRMED
 
@@ -153,7 +153,7 @@ This page comes from the fleet's own component document for `dispatch-runtime`. 
 because both halves are in git, assertions re-check both of them on every pull request, and four test
 harnesses exercise the parts that can break without anyone noticing.
 
-`dispatch.sh` starts a run, and `task-runner.sh` is the run. That is the whole runtime.
+`sweep-dispatch.sh` decides what to start, `dispatch.sh` starts a run, and `task-runner.sh` is the run. That is the whole runtime.
 
 There is no daemon, no queue, no watchdog, and nothing running between runs. That has two consequences,
 and they are why the design is worth copying:
@@ -163,7 +163,7 @@ and they are why the design is worth copying:
 - **Liveness is the close-out comment.** The run posts on its own issue when it starts and again when it
   exits. Nothing else reports health, because nothing else is running.
 
-If you stop these two scripts, the fleet does not slow down. It stops, because nothing else in the
+If you stop these scripts, the fleet does not slow down. It stops, because nothing else in the
 organization can begin a unit of work.
 
 The runtime is deliberately not a scheduler. The sweeper, described on
@@ -193,10 +193,10 @@ The first two guards read a value and then act on it, and that kind of check has
 this fleet. Between reading the board and launching the unit, 26 to 27 seconds pass, so two dispatchers
 that read in the same second both pass the check.
 
-For a single agent, a fixed unit name with no random part closes that gap. Systemd refuses a duplicate unit
-name in the kernel, which makes it a real mutex and not a convention. But each user has a separate service
-manager, so the same unit name under two different accounts counts as two different names, and the kernel
-does not check the pair.
+For a single agent, a fixed unit name with no random part closes that gap. The user's systemd manager refuses a
+second unit with a name that is already loaded, which makes it a real mutex and not a convention. But each
+unix user has its own `systemd --user` manager, so the same unit name under two accounts is two names in two
+managers, and neither manager knows about the other.
 
 For the cross-agent case, a single file lock on the shared box covers it. The lock is held across both the
 probe *and* the launch. Both dispatch paths run the claim as the same unix user on the same machine: the
