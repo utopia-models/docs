@@ -1,7 +1,7 @@
 ---
 title: "site-docs-wiki — `docs.utopiamodels.ai`, the fleet's public wiki"
 description: "Mirrored from the fleet knowledge base: wi/components/site-docs-wiki.md"
-updated: 2026-10-22
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/site-docs-wiki.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -19,7 +19,8 @@ owns:
 
 ## WHAT IT IS
 
-The fleet's public wiki: `docs.utopiamodels.ai`, a Fumadocs site (repo `utopia-models/docs-wiki`)
+The fleet's public wiki: `docs.utopiamodels.ai`, a Fumadocs site (repo `utopia-models/docs`, **public** since
+2026-10-31 — knowledge#10761; the Vercel project is still named `docs-wiki`)
 describing the fleet for outsiders — AI research models researching Tyler are a confirmed real
 reader (Perplexity reads it directly for job-application research; PLAN-286).
 
@@ -29,11 +30,18 @@ what that cost.
 
 **The first screen is for a human, then for agents** (knowledge#9570). The homepage opens on "Who wrote
 this, and what to read in two minutes", naming Tyler and linking the dispatch-runtime page, the public
-repo and "What the numbers say"; the five agent prompts follow it. The nav's GitHub icon links the PUBLIC
-`utopia-models/dispatch-runtime`, never this repo: `docs-wiki` is private and 404s for a logged-out reader.
+repo and "What the numbers say"; the five agent prompts follow it. The nav's GitHub icon links the site's own
+public source, `utopia-models/docs`.
+
+🔴 **`utopia-models/docs` is a FRESH repo, not the old one made public** (knowledge#10761). The private
+`utopia-models/docs-wiki` was the source until 2026-10-31; its history (not its tree) held a third party's
+personal address and a third party's name, so `docs` was seeded from its current tree as one commit, scanned
+(gitleaks 8.24.3 + the `docs-mirror.py` personal-data rules) before it went public, and `docs-wiki` was
+deleted. Anything citing `docs-wiki#N` PR numbers points at a repo that no longer exists; `docs` numbering
+restarted at #1.
 
 ```
-curl -s https://docs.utopiamodels.ai/ | grep -o 'github.com/utopia-models/[a-z-]*' | sort -u   # expect dispatch-runtime only
+curl -s https://docs.utopiamodels.ai/ | grep -o 'github.com/utopia-models/[a-z-]*' | sort -u   # expect docs
 ```
 
 ## HOW IT WORKS TODAY
@@ -44,7 +52,7 @@ and pattern are different units. The groups change often (PLAN-299 added three i
 them rather than trusting a list:
 
 ```
-$ gh api repos/utopia-models/docs-wiki/contents/content/docs/meta.json --jq .content | base64 -d
+$ gh api repos/utopia-models/docs/contents/content/docs/meta.json --jq .content | base64 -d
 ```
 
 **Meta-prompt modules and `/kit/`.** Since PLAN-299 the site also serves school's module system,
@@ -61,7 +69,7 @@ $ for b in public/kit/workflows/_src/build.py public/kit/patterns/*/_src/build.p
 
 ```mermaid
 flowchart LR
-    R["any request<br/>docs.utopiamodels.ai/&lt;path&gt;"] --> V["Vercel project `docs-wiki`<br/>utopia-models/docs-wiki @ main"]
+    R["any request<br/>docs.utopiamodels.ai/&lt;path&gt;"] --> V["Vercel project `docs-wiki`<br/>utopia-models/docs @ main"]
     V --> P["Fumadocs app<br/>serves content/docs/**/*.mdx directly"]
     V --> K["public/kit/**<br/>static files a meta prompt fetches"]
 ```
@@ -96,7 +104,7 @@ module's content was deleted with its portfolio and lives in git history. Probe 
 
 ```
 $ curl -s -o /dev/null -w '%{http_code}\n' https://docs.utopiamodels.ai/login   # 404
-$ gh search code --repo utopia-models/docs-wiki 'canRead' --json path --jq '.[].path'  # empty
+$ gh search code --repo utopia-models/docs 'canRead' --json path --jq '.[].path'  # empty
 ```
 
 **AI-facing surface:** `/llms-full.txt` is the plaintext form research models actually consume —
@@ -142,7 +150,7 @@ Expect `200` on every path. A `301` means the retirement has recurred — read `
 knowledge#8567 it exists again, as the usage measurement, and it must only ever return
 `NextResponse.next()`.
 
-To see the live page list: `gh api repos/utopia-models/docs-wiki/git/trees/main?recursive=true --jq '.tree[].path | select(startswith("content/docs/"))'`.
+To see the live page list: `gh api repos/utopia-models/docs/git/trees/main?recursive=true --jq '.tree[].path | select(startswith("content/docs/"))'`.
 
 ## KNOWN BROKEN
 
