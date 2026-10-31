@@ -1,7 +1,7 @@
 ---
 title: "planning-loop — how a rough note becomes filed, dispatchable work"
 description: "Mirrored from the fleet knowledge base: wi/components/planning-loop.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/planning-loop.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -79,7 +79,9 @@ turn ends in an `AskUserQuestion` whose last two options are, in order, `researc
 `file it, move to step 3`. Tyler either clicks the second — a click returns as a **tool result**, which
 the per-turn injector structurally cannot see, so `plan-loop.sh` reads
 `tool_response.answers` and only `answers` — or types *"Plan is good, proceed with step 3, file it."*
-An approving remark is neither. **Neither exit advances the step**: filing does.
+Either side matches **"step 3"**, **"file it"** or **"proceed"** (`plan_step.is_exit`, #10772). An approving
+remark is neither. **Neither exit advances the step**: filing does — and once the Plan issue has filed
+anything, `plan-loop.sh` and the per-turn injector stay silent (planning steps only, #10772).
 
 **The Plan issue is the only record of a planning session** (PLAN-405 P4, ADR-9839). /plan-start opens it
 after its three answers (`plan-open.sh open`): label `planning`, the board's Portfolio · Mode · Recipe ·

@@ -1,7 +1,7 @@
 ---
 title: "Floor 1 — the plan lifecycle"
 description: "Mirrored from the fleet knowledge base: _process/floor/lifecycle.md"
-updated: 2026-10-25
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `_process/floor/lifecycle.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -71,5 +71,4 @@ clicked (`_rules/done-means-the-artifact-was-exercised.md`).
 🔴 **Status is derived and residue is deleted**: set fields at filing, post the close-out, answer "where are
 we" from the board, never let a write fail quietly; a verification report goes on the ISSUE, never a file
 (`_rules/status-is-derived-and-residue-is-deleted.md`).
-Gates are advisory except the secret scan; a blocking gate is for a stable invariant only, conventions get
-linters, and a banned-word check is never the fix (`_rules/gates-are-for-invariants-conventions-get-linters.md`).
+A blocking gate guards a stable invariant; conventions get linters; a banned-word check is never the fix (`_rules/gates-are-for-invariants-conventions-get-linters.md`).

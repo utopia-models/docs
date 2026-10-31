@@ -68,6 +68,7 @@ These pages are copied from the private `utopia-models/knowledge` repo by an all
 - [wi/components/feedback-loop.md](/docs/source/wi/components/feedback-loop)
 - [wi/components/fleet-health-automation.md](/docs/source/wi/components/fleet-health-automation)
 - [wi/components/fleet-refresh-tailnet.md](/docs/source/wi/components/fleet-refresh-tailnet)
+- [wi/components/followups.md](/docs/source/wi/components/followups)
 - [wi/components/gate-retractor.md](/docs/source/wi/components/gate-retractor)
 - [wi/components/google-drive.md](/docs/source/wi/components/google-drive)
 - [wi/components/google-workspace.md](/docs/source/wi/components/google-workspace)

@@ -1,7 +1,7 @@
 ---
 title: "sweeper — the only thing in the fleet that starts work"
 description: "Mirrored from the fleet knowledge base: wi/components/sweeper.md"
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/sweeper.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -64,7 +64,7 @@ The twelve predicates, numbered as the script numbers them:
 | 7 | ▶-count below the attempt cap | the burn-loop guard, counted from the issue's OWN ▶ comments — no state file |
 | 8 | no ⏸ comment | the cap's terminal latch, matched on the GLYPH alone (it once matched prose and re-parked #3737) |
 | 9 | no human is on it | a non-master assignee, a hold label, or `test-fixture` (#3782/#3789 burned two full runs on throwaway probes) |
-| 10 | the master is not unhealthy | `pick_master()`'s one gate: not in `ALL_UNHEALTHY`, which is quota-derived |
+| 10 | the master is not unhealthy | `pick_master()`'s one gate: not in `ALL_UNHEALTHY`, which is quota-derived (one `dispatch.sh --capacity` call per cycle, which also runs the live token probe, so a 401 reads `login-expired`). An unlaned issue goes to the live master with the most 7-day headroom; ties go to fewer in flight, and with no probe data the old fixed order applies (#10774) |
 | 11 | zero OPEN sub-issues | a grouper is not the work, its children are (#4063: Feature #4034 and its own sub-issue went to nova 12 seconds apart) |
 | 12 | not a parentless issue with no sub-issues at all, filed in the last 15 minutes | a Feature is created before its children: #8659 was dispatched 44 seconds after filing, 84 seconds before its first child existed (#8670). Self-releasing, so a Feature that really has no children waits 15 minutes and then runs |
 
