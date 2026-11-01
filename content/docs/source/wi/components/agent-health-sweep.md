@@ -31,7 +31,7 @@ as not graded, and its open drift issues are closed:
 | **login** | the detector's verdict WORD is `ok` or `no-login` (its own healthy set; a trailing `(detail)` such as `(rate-limited, login live)` is detail, never the verdict, #10910): HTTP 200 or 429 on the seat Tyler's rule names (masters on `nova@`, every other agent on `tyler@`) | `_infra/scripts/probe-logins.sh`, the login detector (#10216), which derives the rule from the registry |
 | **unit** | no user unit is `failed`, and the resident unit the agent's liveness block names is `active` | `systemctl --user` run as the agent |
 | **liveness** | `_infra/occ-feeds/usage/<agent>.json` on origin/main was fetched within 2 h, and its liveness block, where there is one, has not read `red` with its loop silent for more than 30 min | the published feed |
-| **quota** | the probe's live 7-day utilization is under 0.95, and `dispatch.sh --quota` does not hold a master dark for a quota reason | probe header `anthropic-ratelimit-unified-7d-utilization`; `dispatch.sh --quota` |
+| **quota** | the probe's live 7-day utilization is under 0.95, and `dispatch.sh --quota` does not hold a master dark for a quota reason. A `quota-exhausted` dark whose `resets=` lands before the next sweep grades ✅ ⏳: the clock clears it and dispatch already routes around it, so filing it would only cost a dispatch nobody can act on (#10911). A missing or unparseable reset, or one past the next sweep, is still drift | probe header `anthropic-ratelimit-unified-7d-utilization`; `dispatch.sh --quota` |
 | **acl** | every `invokable_by`/`talks_to` name is a registered agent, and the `Talks to` line of the agent's own `~/.claude/CLAUDE.md` names exactly the registry's `talks_to` | registry vs the file the agent actually loads |
 
 Then it writes to the board, and nowhere else:
@@ -51,14 +51,19 @@ An **acl** drift on an agent with no identity renderer (only the masters run
 `sessionstart-render-identity.sh`; poppi and the other project-bound agents hand-write their `CLAUDE.md`) is fixed
 by a literal `**Talks to (ACL — ONLY these):** <names>` line in that agent's brain repo, then a `git pull
 --ff-only` in its `~/.claude` as the agent: the check greps the first `Talks to` line, so a `talks_to: [...]` in
-prose does not count (#10235, brain-poppi#6).
+prose does not count (#10235, brain-poppi#6). When the file cannot be read at all (a failed `sudo` hop), acl grades ❔ could-not-check and
+files nothing. The old "states no Talks to" message on a hop failure was a false content finding (#10908).
+A prose rewrite of that line regresses it the same way: scout's option E edit replaced it with "Who I talk to is my
+record's `talks_to`" and acl went red (knowledge#10901, brain-agent-net#45). Also check `git status` in the
+agent's `~/.claude`: an edit left uncommitted on the box is what the agent loads, not what the brain repo holds.
 
 ## HOW IT RUNS
 
 As **nova**, appended to nova's existing weekly `claude-code-update.service` (timer Sun 09:30 UTC) by the
 drop-in `_infra/systemd/dropin/claude-code-update-agent-health-sweep.conf`. The drop-in's header carries the
 install commands. No new timer, and nothing stays resident. nova runs it because its NOPASSWD sudo reaches each
-agent directly. The script reads every agent as that agent (`sudo -n -u <agent>`), and from any other master it
+agent directly. The script reads every agent as its novaserver unix user (`sudo -n -u <user>`, the `user:` of its novaserver
+location — the Architect's key is `agent`, its user `architect`, #10907), and from any other master it
 hops through `ssh nova@localhost` the way `probe-logins.sh` does.
 
 It exits 0 once the report comment is posted. Drift is reported on the board, not through the exit code. It
