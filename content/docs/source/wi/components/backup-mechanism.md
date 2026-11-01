@@ -1,7 +1,7 @@
 ---
 title: "backup-mechanism — the org's durability layer"
 description: "Mirrored from the fleet knowledge base: wi/components/backup-mechanism.md"
-updated: 2026-10-31
+updated: 2026-11-01
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/backup-mechanism.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -154,7 +154,10 @@ including `RESTIC_HOMES_PASSWORD` → `restic restore` from `wi.novaserver-resti
 `ansible-playbook -i _infra/ansible/inventory.yml _infra/ansible/site.yml --tags backup --check --diff` reports
 drift for both. The role also refuses to start a timer whose `ExecStart` script is missing and proves every secret
 the scripts read at run time (`RESTIC_HOMES_PASSWORD`, `BACKUP_AGE_IDENTITY`, the R2 keys) is readable in Infisical,
-by byte count only. Walkthrough: `_infra/ansible/ANSIBLE-FOR-TYLER.md` § The `backup` role.
+by byte count only. Walkthrough: `_infra/ansible/ANSIBLE-FOR-TYLER.md` § The `backup` role. The role also installs
+nova's `crm-backup` timer (the Twenty CRM's Postgres, a docker volume restic never sees, age-encrypted to the Drive
+folder behind manifest key `wi.crm-backups`, #10924); it is documented in `wi/components/crm.md` and is not a row in
+the table below, which is the 2026-10-30 measurement.
 
 **Every backup timer on the box, 2026-10-30** (the probe is below; this table is the measurement on the day
 it was written, not a standing claim):
