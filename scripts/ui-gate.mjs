@@ -75,7 +75,7 @@ for (const run of runs) {
       for (const f of findings) {
         const where = clip(`${f.selector || ''} ${f.snippet || ''}`, 300);
         // a script-error thrown by ANOTHER origin's frame (an embedded Sheet, a widget) is not this repo's code
-        const src = f.antipattern === 'script-error' && /\(at (https?:\/\/[^/)\s]+)/.exec(f.snippet || '');
+        const src = f.antipattern === 'script-error' && /\(at [^)]*?(https?:\/\/[^/)\s]+)/.exec(f.snippet || '');
         if (src && new URL(src[1]).host !== new URL(base).host) { out(`::warning title=Impeccable ${f.antipattern} (third-party frame)::${run.name} ${r} ${where}`); continue; }
         if (f.severity === 'error') { p0++; failed = 1; out(`::error title=Impeccable P0 ${f.antipattern}::${run.name} ${r} ${where} — ${clip(f.description, 400)}`); }
         else out(`::warning title=Impeccable ${f.antipattern}::${run.name} ${r} ${where}`);
