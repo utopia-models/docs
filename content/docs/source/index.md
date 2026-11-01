@@ -55,6 +55,7 @@ These pages are copied from the private `utopia-models/knowledge` repo by an all
 - [wi/components/credential-domains.md](/docs/source/wi/components/credential-domains)
 - [wi/components/credential-health.md](/docs/source/wi/components/credential-health)
 - [wi/components/credentials-web.md](/docs/source/wi/components/credentials-web)
+- [wi/components/crm.md](/docs/source/wi/components/crm)
 - [wi/components/dispatch-runtime.md](/docs/source/wi/components/dispatch-runtime)
 - [wi/components/doc-integrity.md](/docs/source/wi/components/doc-integrity)
 - [wi/components/docs-sync.md](/docs/source/wi/components/docs-sync)
