@@ -1,7 +1,7 @@
 ---
 title: "agent-health-sweep — the weekly self-enhancement sweep over every agent"
 description: "Mirrored from the fleet knowledge base: wi/components/agent-health-sweep.md"
-updated: 2026-10-30
+updated: 2026-11-01
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/agent-health-sweep.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -28,7 +28,7 @@ as not graded, and its open drift issues are closed:
 
 | check | healthy when | read from |
 |---|---|---|
-| **login** | the detector's verdict is `ok`: HTTP 200 on the seat Tyler's rule names (masters on `nova@`, every other agent on `tyler@`) | `_infra/scripts/probe-logins.sh`, the login detector (#10216), which derives the rule from the registry |
+| **login** | the detector's verdict WORD is `ok` or `no-login` (its own healthy set; a trailing `(detail)` such as `(rate-limited, login live)` is detail, never the verdict, #10910): HTTP 200 or 429 on the seat Tyler's rule names (masters on `nova@`, every other agent on `tyler@`) | `_infra/scripts/probe-logins.sh`, the login detector (#10216), which derives the rule from the registry |
 | **unit** | no user unit is `failed`, and the resident unit the agent's liveness block names is `active` | `systemctl --user` run as the agent |
 | **liveness** | `_infra/occ-feeds/usage/<agent>.json` on origin/main was fetched within 2 h, and its liveness block, where there is one, has not read `red` with its loop silent for more than 30 min | the published feed |
 | **quota** | the probe's live 7-day utilization is under 0.95, and `dispatch.sh --quota` does not hold a master dark for a quota reason | probe header `anthropic-ratelimit-unified-7d-utilization`; `dispatch.sh --quota` |
