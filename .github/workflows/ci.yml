@@ -19,7 +19,7 @@ jobs:
   # main there is no base to compare against that the PR did not already check.
   updated-date:
     if: github.event_name == 'pull_request'
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -27,8 +27,11 @@ jobs:
       - run: bash scripts/check-updated.sh "${{ github.event.pull_request.base.sha }}"
 
   typecheck:
-    # Org self-hosted runner on novaserver ($0 Actions minutes — hosted minutes froze the fleet, #1320).
-    runs-on: [self-hosted, linux, x64]
+    # GitHub-hosted: this repo is PUBLIC, and the org runner group refuses public repos
+    # (allows_public_repositories=false — fork PRs must never run on novaserver), so every self-hosted
+    # job here sat `queued` forever: 10 runs, oldest 12.6 h, on 2026-11-01 (knowledge#10964).
+    # Hosted minutes are free for public repos, so the #1320 cost reason does not apply.
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +45,7 @@ jobs:
       - run: pnpm types:check
 
   build:
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
