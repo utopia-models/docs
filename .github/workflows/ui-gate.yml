@@ -1,0 +1,50 @@
+# ui-gate — the UI CI floor (utopia-models/knowledge#10976). Runs on every successful Vercel PREVIEW deployment, against
+# that preview's own URL, when the commit changes UI files vs main. FAILS on any Impeccable P0 (impeccable@4.8.0 severity
+# "error", first-party) or any axe violation not in design/ui-gate.json's adoption baseline. The script is
+# scripts/ui-gate.mjs (canonical copy: utopia-models/knowledge _infra/ci/ui-gate/). The design LOOP — census, tokens,
+# screenshots, independent critic — is fleet-doctrine's `ui-design` skill; this job is only the floor under it.
+# Advisory like every check on this plan tier; the site-merge receipt gate is what refuses the merge.
+name: ui-gate
+on:
+  deployment_status:
+permissions:
+  contents: read
+concurrency:
+  group: ui-gate-${{ github.event.deployment.sha }}
+  cancel-in-progress: true
+jobs:
+  ui-gate:
+    if: github.event.deployment_status.state == 'success' && contains(github.event.deployment.environment, 'Preview')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ github.event.deployment.sha }}", fetch-depth: 0 }
+      - name: Does this commit change UI?
+        id: ui
+        run: |
+          git fetch -q origin main
+          changed=$(git diff --name-only origin/main...HEAD)
+          printf '%s\n' "$changed"
+          ui=$(printf '%s\n' "$changed" | grep -Ei '\.(tsx|jsx|vue|svelte|astro|html?|css|scss|sass|less|mdx)$|(^|/)tailwind\.config\.|(^|/)design/|(^|/)public/|ui-gate' | grep -Eiv '\.(test|spec|stories)\.[jt]sx?$|(^|/)(__tests__|e2e|tests?)/' || true)
+          if [ -n "$ui" ]; then echo "ui=1" >> "$GITHUB_OUTPUT"; else echo "no UI file changed vs main — nothing to gate"; fi
+      - uses: actions/setup-node@v4
+        if: steps.ui.outputs.ui == '1'
+        with: { node-version: 22 }
+      - name: Install the gate (outside the repo — no lockfile churn)
+        if: steps.ui.outputs.ui == '1'
+        run: |
+          d="$RUNNER_TEMP/ui-gate"; mkdir -p "$d"; cp scripts/ui-gate.mjs "$d/"
+          printf '{"private":true,"type":"module","dependencies":{"playwright":"1.64.0","@axe-core/playwright":"4.11.0"}}' > "$d/package.json"
+          (cd "$d" && npm install --no-audit --no-fund --silent)
+          # novaserver runners share the browsers the claude_managed role lays down; a hosted runner downloads them
+          if [ -d /srv/ms-playwright/chromium-1248 ] && [ -d /srv/ms-playwright/webkit-2370 ]; then
+            echo "PLAYWRIGHT_BROWSERS_PATH=/srv/ms-playwright" >> "$GITHUB_ENV"
+          else
+            (cd "$d" && npx playwright install --with-deps chromium webkit)
+          fi
+      - name: Impeccable P0 + axe on the preview
+        if: steps.ui.outputs.ui == '1'
+        env:
+          PREVIEW_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
+        run: node "$RUNNER_TEMP/ui-gate/ui-gate.mjs" "$PREVIEW_URL"

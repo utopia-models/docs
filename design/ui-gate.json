@@ -1,0 +1,21 @@
+{
+  "_doc": "ui-gate config (utopia-models/knowledge#10976): routes the gate loads, and the axe violations recorded against production at adoption (2026-11-01) as debt to burn down. A violation NOT listed here fails the ui-gate check. Never add an entry to make a PR green; fix the page.",
+  "routes": [
+    "/",
+    "/docs"
+  ],
+  "axe_baseline": [
+    "/ landmark-no-duplicate-banner",
+    "/ landmark-one-main",
+    "/ landmark-unique",
+    "/ page-has-heading-one",
+    "/ region",
+    "/ svg-img-alt",
+    "/docs landmark-no-duplicate-banner",
+    "/docs landmark-one-main",
+    "/docs landmark-unique",
+    "/docs page-has-heading-one",
+    "/docs region",
+    "/docs svg-img-alt"
+  ]
+}
