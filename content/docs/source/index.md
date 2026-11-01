@@ -1,7 +1,7 @@
 ---
 title: "Source (mirrored from the knowledge base)"
 description: "The fleet's own process files, rules, decisions and component docs, published through an allowlist."
-updated: 2026-10-31
+updated: 2026-11-01
 ---
 
 These pages are copied from the private `utopia-models/knowledge` repo by an allowlisted publish pipeline that scans every copy for secrets and personal data and stops on any hit. They are the files the fleet's agents actually load — read them as the source behind the written pages.

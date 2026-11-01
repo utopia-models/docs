@@ -1,7 +1,7 @@
 ---
 title: "fleet-health-automation — the box's own self-heal and alarm layer"
 description: "Mirrored from the fleet knowledge base: wi/components/fleet-health-automation.md"
-updated: 2026-10-31
+updated: 2026-11-01
 ---
 
 > Mirrored verbatim from `utopia-models/knowledge` `wi/components/fleet-health-automation.md` by the allowlisted publish pipeline. Edit it there, not here.
@@ -82,7 +82,9 @@ plain `Restart=` does not.
 `systemd-run --user -u <name> -E FLEET_NOTIFY=off …` — `fleet-notify` reads the failed unit's
 `Environment` and, on `FLEET_NOTIFY=off`, logs a line and files nothing (#10823). `-p OnFailure=` cannot
 do it, for the reason above. An unreadable unit falls through and files, so a broken read cannot eat a
-real alarm.
+real alarm. The same opt-out belongs on a one-shot job that announces its own outcome on its work item
+before exiting non-zero — otherwise that exit files a duplicate alarm (#10893). A unit whose failure nobody
+else reports keeps the default.
 
 **The scripts are not in this repo** — `~/.claude/ops/{disk-guard,nova-ops-integrity}.sh` in `brain-nova`
 for the nova half, and copies under svc-ops' `~/.claude/ops/{sudo-health,dmv-revenue-integrity}.sh` and
